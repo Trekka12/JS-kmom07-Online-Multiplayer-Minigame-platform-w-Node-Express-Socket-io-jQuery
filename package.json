@@ -1,0 +1,9 @@
+{
+  "name": "socket-multi-room-multiplayer-online-gaming-project",
+  "version": "0.0.1",
+  "description": "my js kmom07 endproject",
+  "dependencies": {
+    "express": "^4.15.2",
+    "socket.io": "^2.0.4"
+  }
+}

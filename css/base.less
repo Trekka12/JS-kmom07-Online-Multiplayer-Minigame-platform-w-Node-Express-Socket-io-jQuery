@@ -1,0 +1,440 @@
+/**
+ * Style with LESS.
+ */
+
+/**
+*	---------------------------------------------------------------------------------
+*	Eric Meyers CSS-Reset v2.0 for HTML5 (http://meyerweb.com/eric/tools/css/reset/)
+*	http://cssreset.com
+*	---------------------------------------------------------------------------------
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+margin: 0;
+padding: 0;
+border: 0;
+font-size: 100%;
+font: inherit;
+vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+/**
+*	---------------------------------------------------------------------------------
+*	HTML5 Elements
+*	---------------------------------------------------------------------------------
+*/
+
+article,aside,details,figcaption,figure,footer,header,hgroup,nav,section{display:block;}
+audio,canvas,video{display:inline-block;*display:inline;*zoom:1;}
+audio:not([controls]){display:none;}
+[hidden]{display:none;}
+
+/**
+*	---------------------------------------------------------------------------------
+*	Micro Clearfix - http://nicolasgallagher.com/micro-clearfix-hack/
+*	---------------------------------------------------------------------------------
+*/
+
+.clearfix(){*zoom:1;
+  &:before, &:after {content:"";display:table;}
+  &:after {clear:both;}
+}
+.wrapper{.clearfix();}
+
+
+
+/**
+*	---------------------------------------------------------------------------------
+*	Colors & properties to be re-used for the website
+*	----------------------------
+*/
+	@black: #000;
+	@white: #fff;
+
+	@gray111: #111;
+	@gray222: #222;
+	@gray333: #333;
+	@gray444: #444;
+	@gray555: #555;
+	@gray888: #888;
+	@grayccc: #ccc;
+	
+	@green: #0f0;
+	@red: #f00;
+	.green {color: @green;}
+
+	@headline-text: 24px;
+	@tiny-text: 10px;
+	
+	em, i {font-style: italic;}
+	strong, b {font-weight: bold;}
+	
+	
+	@mini-text: 10px;
+	@standard-text: 12px;
+	@medium-text: 14px;
+	@larger-text: 18px;
+	
+	
+	span.bull:before {
+		content: "\2022"; //hexcode representing &bull;
+		color: @green;
+		
+	}
+
+	@basic-line-height: 18px;
+
+	.regular-text {
+		font-size: @standard-text;
+		color: @black;
+		font-style: normal;
+		font-weight: normal;
+		line-height: @basic-line-height;
+	}
+
+	@border-2px: 2px solid #333;
+
+
+	@basic-radius: 5px;
+
+	.border-radius(@radius) {
+  		-webkit-border-radius: @radius;
+     	-moz-border-radius: @radius;
+    	border-radius: @radius;
+	}
+
+	//horizontal, vertical, (blur distance) and spread is the four shadow parameters and color as the last one:
+	@fat-shadow: 3px 3px 3px #222;
+	@light-shadow: 1px 1px 2px #222;
+	@flat-shadow: 0px 0px 2px #333;
+	
+	@header-shadow: 0px 4px 4px #222;
+
+	.box-shadow(@shadow-param) {
+  		-webkit-box-shadow: @shadow-param;
+     	-moz-box-shadow: @shadow-param;
+        box-shadow: @shadow-param;
+	}
+	
+	
+	.border-top-bot(@params) {
+		border-top: @params;
+		border-bottom: @params;
+	}
+	
+/**
+ *	
+ *	---------------------------------------------------------------------------------
+ */
+
+/**
+*	---------------------------------------------------------------------------------
+*	Typography
+*	------------------------
+*	 Google fonts included: 
+*	------------------------
+*	- Roboto Slab	-	weight: 400/700
+*	- Armata
+*	- Nunito 		-	weight: 300/400/700
+*	- Doppio One
+*	- Donegal One
+*	- Fenix
+*	- Merienda One
+*	- Average
+*	- Average Sans
+*	- Orienta
+*	- Quando
+*	- Monda			-	weight: 400/700
+*	---------------------------------------------------------------------------------
+*	Find out how to make variable styles in LESS CSS via the manual... for maximum use
+*/
+
+/* Create a mixin for regularily used font style with all the related properties */
+.sans-serif-font {
+	font-family: Arial, sans-serif;
+	.regular-text;
+}
+
+.monospace-font {
+	font-family: monospace;
+	.regular-text;
+}
+
+.headlines(@h-size, @color) {
+	font-size: @h-size;
+	font-family: 'Roboto Slab', sans-serif;
+	font-weight: bold;
+	font-style: normal;
+	/*border-bottom: @border-2px;*/
+	color: @color;
+}
+
+/**
+*	---------------------------------------------------------------------------------
+*		Page Layout
+*	---------------------------------------------------------------------------------
+*/
+
+body {
+	
+}
+
+div#mainContainer {
+	width: 940px; margin: 8px auto;
+	background-color: #444;
+	padding: 24px;
+
+}
+
+a:link, a:visited, a:focus {
+	color: @grayccc;
+}
+
+a:hover, a:active {
+	color: @green;
+}
+
+/**
+*	---------------------------------------------------------------------------------
+*		Header
+*	---------------------------------------------------------------------------------
+*/
+@temp-style-param: 4px solid #ccc;
+header {
+	margin-bottom: 24px;
+	.border-top-bot(@temp-style-param);
+	.box-shadow(@header-shadow);
+	
+	padding: 14px;
+	text-align: center;
+	
+	padding-bottom: 0;
+}
+
+h1 {
+	.headlines(@headline-text, @white);
+	margin-bottom: 14px;
+}
+
+nav#kmomLinks {
+}
+
+nav#kmomLinks ul li#kmomLs a {
+	font-style: italic;
+}
+
+aside {
+	border-top: 1px solid #ccc;
+}
+
+ul.inline-style li {
+	display: inline;
+}
+
+.clearfix {
+	clear: both;
+	/*.clearfix(); clear: both;*/
+}
+
+/**
+*	---------------------------------------------------------------------------------
+*		Content
+*	---------------------------------------------------------------------------------
+*/
+
+div#container {
+	/*height: 260px;*/
+	.box-shadow(@fat-shadow);
+	.border-radius(10px);
+	border: 2px solid #000;
+	
+	margin-bottom: 24px;
+	padding: 12px;
+}
+
+h2 {
+	.headlines(20px, @white);
+	margin-top: 12px; margin-bottom: 16px;
+	
+}
+
+div#container p {
+	//color: @red;
+	font-family: Arial, sans-serif;
+	margin-bottom: 22px;
+	
+}
+
+.regularity {
+	color: #fff;
+	font-family: arial, sans-serif;
+	line-height: 18px;
+	font-size: 14px;
+}
+
+#contentheader {
+	color: #fff;
+	font-family: monospace;
+	font-size: 14px;
+	margin-bottom: 10px;
+}
+
+code {
+	color: #000;
+	
+	background-color: #ccc;
+    border: 1px solid #000;
+    border-radius: 15px;
+    display: inline-block;
+    font-family: monospace;
+    font-size: 12px;
+    margin-bottom: 24px;
+    padding: 12px;
+}
+
+/**
+*	---------------------------------------------------------------------------------
+*		Footer
+*	---------------------------------------------------------------------------------
+*/
+footer p em {
+	color: @white;
+	font-family: Arial, sans-serif;
+	font-size: 14px;
+	border-left: 3px solid #fff; padding-left: 6px;
+	
+}
+
+nav {
+	margin: 12px 0 12px 0;
+	font-family: Arial, sans-serif;
+	color: @grayccc;
+	font-size: @medium-text; //12px
+	line-height: 22px;
+}
+
+nav strong {
+	color: @green;
+	font-size: @medium-text; //12px
+}
+
+nav a {
+	text-decoration: none;
+}
+
+nav a:hover {
+	text-decoration: underline;
+}
+/**
+*	---------------------------------------------------------------------------------
+*		CSS 3.0 Mixins
+*	---------------------------------------------------------------------------------
+*/
+
+.transition(@property: all, @time: 1s, @timing: ease-in-out) {
+  -webkit-transition: @property @time @timing;
+     -moz-transition: @property @time @timing;
+      -ms-transition: @property @time @timing;
+       -o-transition: @property @time @timing;
+          transition: @property @time @timing;
+}
+.transition-property(@property: all) {
+  -webkit-transition-property: @property;
+     -moz-transition-property: @property;
+      -ms-transition-property: @property;
+       -o-transition-property: @property;
+          transition-property: @property;
+}
+.transition-duration(@time: 1s) {
+  -webkit-transition-duration: @time;
+     -moz-transition-duration: @time;
+      -ms-transition-duration: @time;
+       -o-transition-duration: @time;
+          transition-duration: @time;
+}
+.transition-timing-function(@timing: ease-in-out) {
+  -webkit-transition-timing-function: @timing;
+     -moz-transition-timing-function: @timing;
+      -ms-transition-timing-function: @timing;
+       -o-transition-timing-function: @timing;
+          transition-timing-function: @timing;
+}
+
+
+.rotate(@degrees) {
+  -webkit-transform: rotate(@degrees);
+     -moz-transform: rotate(@degrees);
+      -ms-transform: rotate(@degrees);
+       -o-transform: rotate(@degrees);
+          transform: rotate(@degrees);
+}
+.scale(@ratio) {
+  -webkit-transform: scale(@ratio);
+     -moz-transform: scale(@ratio);
+      -ms-transform: scale(@ratio);
+       -o-transform: scale(@ratio);
+          transform: scale(@ratio);
+}
+.skew(@x, @y) {
+  -webkit-transform: skew(@x, @y);
+     -moz-transform: skew(@x, @y);
+      -ms-transform: skew(@x, @y);
+       -o-transform: skew(@x, @y);
+          transform: skew(@x, @y);
+}
+.translate(@x, @y) {
+  -webkit-transform: translate(@x, @y);
+     -moz-transform: translate(@x, @y);
+      -ms-transform: translate(@x, @y);
+       -o-transform: translate(@x, @y);
+          transform: translate(@x, @y);
+}
+.translate3d(@x, @y, @z) {
+  -webkit-transform: translate(@x, @y, @z);
+     -moz-transform: translate(@x, @y, @z);
+      -ms-transform: translate(@x, @y, @z);
+       -o-transform: translate(@x, @y, @z);
+          transform: translate(@x, @y, @z);
+}
+.transform(@functions) {
+  -webkit-transform: @functions;
+     -moz-transform: @functions;
+      -ms-transform: @functions;
+       -o-transform: @functions;
+          transform: @functions;
+}
