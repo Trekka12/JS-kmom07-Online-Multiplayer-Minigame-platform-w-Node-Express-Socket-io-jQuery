@@ -128,6 +128,19 @@ io.on('connection', function(socket) {
 		
 		var lobbyname = data.name;
 		
+		//scroll through roomList checking lobbynames for match, if one is found, redefine lobbyname var with sockets client id appended for uniqueness
+		
+		if(roomList.length > 0) //no use in doing this if roomList is empty
+		{
+			for(var i = 0; i < roomList.length; i++)
+			{
+				if(roomList[i].name == lobbyname) //check for duplicate lobbynames among rooms
+				{
+					lobbyname += socket.cid; //if this dont work do clientList[socket.cid].clientID basically
+				}
+			}
+		}
+		
 		var pw = data.pw;
 		var pwSet = false;
 		//check and filter it - set to none if empty or similar
@@ -149,6 +162,8 @@ io.on('connection', function(socket) {
 		clientList[clientIndex].createdRoom.createdTime = Date.now();
 		
 		console.log("clientList[" + clientIndex + "] after room creation: ", clientList[clientIndex]);
+		
+		//rooms cannot have the same lobbyname --- fix this by adding clientID to lobbyname here as well.
 		
 		roomList.push({name: lobbyname, 
 						pw: (pwSet ? pw : "none"),
@@ -172,12 +187,9 @@ io.on('connection', function(socket) {
 		socket.roomActive = true;
 		clientList[clientIndex].roomActive = true;
 		socket.emit('creator joins room', {username: clientList[clientIndex].username, room: socket.room}); //allows creator of a room to "bypass" pw-requirement whilst other users looking to join will be required to input pw.
+		
 		//socket.emit('join a room', {pwSet: pwSet, pw: pw});
 		//io.in(lobbyname).emit("user entered"); <-- send once user entered room (after pw confirmed or once joined)
-		
-		//alter the chat interface - need a leave button there as well, and we need to deal with what happens when user leaves, etc.
-		
-		//if user is in room - roomActive = true, broadcast to socket.room
 		
 		//if successful create - send update roomlist via broadcast (perhaps also to self?)
 		//somehow need to apply a setTimeout every 1s trigger timer to this event - so list can be kept updated 
