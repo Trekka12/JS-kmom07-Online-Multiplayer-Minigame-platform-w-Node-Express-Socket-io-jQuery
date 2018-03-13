@@ -22,10 +22,10 @@ $(document).ready(function(){
 	
 	//global RegEx patterns used throughout client.js
 	const azAZ09regex = /^[a-zA-Z0-9]+$/;
-	const azAZ09inclWS = /^([a-zA-Z0-9\\s]+)$/; //check so this one works.
+	const azAZ09inclWS = /^([a-zA-Z0-9\s]+)$/; //check so this one works.
 	
 	//global client var declaration
-	var roomLoginTo = -1; //used to keep track of what room client is currently in
+	var roomToLoginTo = -1; //used to keep track of what room client is currently in
 	//var reg = false; //keeps track of whether user registered username or not
 	var typing = false; //keeping track of whether user is typing or not
 	
@@ -130,17 +130,10 @@ $(document).ready(function(){
 	joinRoomForm.hide();
 	roomLogin.hide();
 	chat.hide();
+	canvas.hide();
 	
 	//its a nice user friendly feature not having to manually click the field to write input into
 	usernameField.focus();
-	
-	//$('#createRoomForm').hide();
-	//$('#joinRoomForm').hide();
-	//$('#roomLogin').hide();
-	//$('#chat').hide();
-	
-	//its a nice user friendly feature not having to manually click the field to write input into
-	//$('#username').focus();
 	
 	/*
 	=================================================================
@@ -279,8 +272,6 @@ $(document).ready(function(){
 	
 	
 	$('#chatForm').submit(function() {
-		//if(reg) //username must be registered for client to append messages - in case 2 clients join same time, but only 1 have username registered - then the other one should not get the first ones chat history appended! Simply a safeguard from having chat history unwantedly show
-		//{
 		console.log("inside chatForm submit");
 		
 		//check if first letter is a '/' <- then assume command, if not, assume chat msg
@@ -293,9 +284,6 @@ $(document).ready(function(){
 		{
 			socket.emit('chat message', {msg: m.val(), timestamp: (Date.now())});
 		}
-			
-			
-		//}
 		
 		return false; // breaks function execution
 	});
@@ -614,7 +602,7 @@ $(document).ready(function(){
 		
 		var date = new Date();
 		
-		messages.append($('<li>').text(date.toLocaleTimeString() + " | " + data.username + ": " + data.message);
+		messages.append($('<li>').text(date.toLocaleTimeString() + " | " + data.username + ": " + data.message));
 		
 		//have black text for the message sent by self always (will appear colored for other person in chatroom)
 	});

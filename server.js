@@ -29,6 +29,7 @@ io.on('connection', function(socket) {
 	socket.join('connected'); //join general "connected room" to ease the broadcasting more - on join a "real" room - leave this common "connected" room. To only receive the relevant messages
 	console.log("socket.rooms: ", socket.rooms);
 	console.log("socket.id: ", socket.id);
+	socket.userReg = false;
 	
 	//on connection to the server - check if there are rooms created on the server, if so: load them and initiate roomlist update --- should only happen if user is registered
 	//if(roomList.length > 0) //if roomlist.length > 0, and user is registered (for endproduct)
@@ -110,6 +111,8 @@ io.on('connection', function(socket) {
 		socket.emit('user registered', socket.username); //send back to the registering client that user was successfully regged together with username?
 		
 		console.log("user: " + socket.username + " is registered.");
+		
+		socket.userReg = true;
 		
 		//socket.broadcast.emit('user joined', {
 		//	username: socket.username,
@@ -639,7 +642,7 @@ io.on('connection', function(socket) {
 		
 		var clientToRemoveFromClientList = getClientIndex(socket.cid);
 		
-		if(clientList[clientToRemoveFromClientList].intervalSet.set)
+		if(socket.userReg && clientList[clientToRemoveFromClientList].intervalSet.set)
 		{
 			socket.emit('stop lobby update interval', clientList[clientToRemoveFromClientList].intervalSet.intervalID); //stop intervals on disconnect
 			console.log("emitting stop lobby update interval");
@@ -670,23 +673,24 @@ io.on('connection', function(socket) {
 				console.log("removing created room for client from servers roomList");
 			}
 			socket.roomActive = false;
-			roomTracker -= 1;
+			//roomTracker -= 1;
 		}
 		
 		if(clientList.length == 0) //only when everyone left should first room be available to spark new interval
 		{
 			//what happens with the interval if a client joins AFTER the interval has already begun? check this.
 			firstRoomCreated = false;
+			clientID = 0;
 		}
 		
 		
 		
 		
 		
-		if(clientList.length == 0)
-		{
-			clientID = 0; //reset clientID counter if all clients left site
-		}
+		//if(clientList.length == 0)
+		//{
+		//	clientID = 0; //reset clientID counter if all clients left site
+		//}
 		
 		
 		//if disconnecting user had created a room, delete this room from all lists etc. --> if other client in said room - inform them that owner of the room disconnected, and that they will be returned to the main screen in 5 seconds.
@@ -697,7 +701,7 @@ io.on('connection', function(socket) {
 	
 	
 	
-	socket.on('disconnect', function() {
+	/*socket.on('disconnect', function() {
 		console.log("user disconnected");
 		
 		//decrement clientCounter accordingly
@@ -735,7 +739,7 @@ io.on('connection', function(socket) {
 			username: socket.username,
 			clientCounter: clientCounter
 		});
-	});
+	});*/
 	
 });
 

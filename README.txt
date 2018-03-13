@@ -51,6 +51,20 @@ Add the game graphics to the "room" together with the chat ;)
 My main concern right now is getting it all to actually work.. Then I gotta write redovisningstexter, and integrate into my Me-sida.
 
 
+
+har nu mergat canvas + clientside canvas-relaterade eventhandlers, game paint functions, socket.io chatt, multi-room functionality, username registration, create/join room functionality --- nu börjar det närma sig känns det som :D Bara kvar att fixa så allting verkligen funkar i sync tillsammans (har ju kodat samtliga delar separat tidigare, kräver vissa modifikationer), sen få själva "spelet" att funka när clients väl är inne i rum, och lägga in restriktioner för endproduct så max 2 spelare per rum, rum tas bort fr. lobbylistan när rum är fullt etc :D
+
+- Gå igenom username registration så det funkar proper.
+- Gå igenom create/join room functionaliy så det funkar proper.
+-- Både för första join, samt andra join
+-- Lägg in max 2 player restriction per rum och check för det när join
+-- "ta bort" rum från lobbylist när 2 players i ett rum -- broadcasta uppdatering till samtliga när detta sker... ELLER stylistiskt markera att rum är fullt och disabla möjligheten att joina ... tror enklare logic wise att ta bort från lobbylist dock.. remove helt enkelt från roomList --- spara dock i activeRoomList istället så det kan bli återskapat om annan klient än skaparen lämnar rummet.
+-- När allt det fixat, fixa inRoom interface looks, samt game paint and game logics, readycheck, moves, etc. Jobba med timers för move-turns osv. Det kmr nog bli det svåraste tbh hm :/
+
+
+Shit that can be added in future: real-time form validation - telling how many chars is left for choosing username and lobbyname in realtime ?
+
+
 Mark the actual user in a userlist once connected for itself?
 - broadcast to all within connected room if user joins io.in('connected').broadcast.emit ;)
 

@@ -13,6 +13,8 @@
 
 <link rel="stylesheet/less" type="text/css" href="css/styles.less" />
 
+<script type="text/javascript" src="js/scripts/less-1.7.0.js"></script>
+
 <!--<script src="scripts/jquery-1.11.1.js" type="text/javascript"></script>-->
 <script src="js/scripts/modernizr-custom.js" type="text/javascript"></script>
 
@@ -27,47 +29,51 @@
 	</div>
 
 	<form id="createRoomForm">
-	<!-- Chat room name, PW input field (if empty no PW used - no asking of PW when entering room..), create room button -->
-	<input type="text" id="lobbyName" placeholder="Lobbyname here" required /><label>*</label> <!-- if empty name it room1? etc. counter on server side? to keep track of amounts of created rooms -->
-	<input type="password" id="pw" placeholder="password" />
-	<button id="createRoomBtn">Create Room</button>
+		<!-- Chat room name, PW input field (if empty no PW used - no asking of PW when entering room..), create room button -->
+		<input type="text" id="lobbyName" placeholder="Lobbyname here" required /><label>*</label> <!-- if empty name it room1? etc. counter on server side? to keep track of amounts of created rooms -->
+		<input type="password" id="pw" placeholder="password" />
+		<button id="createRoomBtn">Create Room</button>
 	</form>
 
 	<form id="joinRoomForm">
-	<!-- select-option list with game room name, and how long ago created, then I just gotta figure out how to join -- store the room data on serverside. -->
-	<select size="8" id="roomlist">
-		<!-- Populate options via JS when loading / updating created games list 
-		<option></option>
-		<option></option>
-		<option></option>
-		<option></option>-->
-	</select>
-	<button id="joinRoomBtn">Join room</button>
+		<!-- select-option list with game room name, and how long ago created, then I just gotta figure out how to join -- store the room data on serverside. -->
+		<select size="8" id="roomlist">
+			<!-- Populate options via JS when loading / updating created games list 
+			<option></option>
+			<option></option>
+			<option></option>
+			<option></option>-->
+		</select>
+		<button id="joinRoomBtn">Join room</button>
 	</form>
+	<div class="clearfix"></div>
+	
+	<div id="roomLogin">
+		<form id="roomLoginForm">
+			<input type="text" id="loginPW" placeholder="please enter password" required />
+			<button id="loginRoomBtn">Login</button>
+			<button id="back2mainScreen">Back to lobbylist/main page</button>
+			<p id="loginStatus"></p>
+		</form>
+	</div>
+
+	<div id="chat">
+		<canvas id="canvas" width="800" height="500">
+			Update your browser to enjoy canvas. <!-- point to image map if canvas is not supported for the game ? advanced feature -->
+		</canvas>
+		<ul id="messages"></ul>
+		<form id="chatForm" action="">
+			<input id="m" autocomplete="off" /><button>Send</button>
+			
+		</form>
+		<button id="leaveRoom">Leave room</button>
+	</div>
+
+	<p id="statusMsg"></p>
+	
 </div>
 
-<div id="roomLogin">
-	<form id="roomLoginForm">
-		<input type="text" id="loginPW" placeholder="please enter password" required />
-		<button id="loginRoomBtn">Login</button>
-		<button id="back2mainScreen">Back to lobbylist/main page</button>
-		<p id="loginStatus"></p>
-	</form>
-</div>
 
-<div id="chat">
-	<canvas id="canvas" width="800" height="500">
-		Update your browser to enjoy canvas. <!-- point to image map if canvas is not supported for the game ? advanced feature -->
-	</canvas>
-	<ul id="messages"></ul>
-	<form id="chatForm" action="">
-		<input id="m" autocomplete="off" /><button>Send</button>
-		
-	</form>
-	<button id="leaveRoom">Leave room</button>
-</div>
-
-<p id="statusMsg"></p>
 
 
 <script src="/js/reference_archive_code.js"></script>
