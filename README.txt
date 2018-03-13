@@ -64,6 +64,10 @@ har nu mergat canvas + clientside canvas-relaterade eventhandlers, game paint fu
 
 Shit that can be added in future: real-time form validation - telling how many chars is left for choosing username and lobbyname in realtime ?
 
+rename #chat to #gameRoom later ? possibly
+<b> mark username and roomname when user joins a room
+switch focus to #m once joining room
+
 
 Mark the actual user in a userlist once connected for itself?
 - broadcast to all within connected room if user joins io.in('connected').broadcast.emit ;)

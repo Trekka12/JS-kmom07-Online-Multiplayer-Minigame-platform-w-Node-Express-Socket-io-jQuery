@@ -533,6 +533,7 @@ $(document).ready(function(){
 		
 		createRoomForm.hide();
 		joinRoomForm.hide();
+		canvas.show();
 		chat.show();
 		
 		//append to the chat that username joined the room --- once canvas implemented etc. this is where we draw the text "awaiting opponent" I believe.
