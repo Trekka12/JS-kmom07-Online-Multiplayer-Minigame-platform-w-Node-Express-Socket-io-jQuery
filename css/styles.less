@@ -57,6 +57,7 @@ option[selected=selected] {
 	
 }
 
+input:first-child {margin-top: 12px;}
 
 
 /* 
@@ -126,7 +127,7 @@ form#usernameRegForm button:hover {
 */
 
 #joinRoomForm { 
-	width: 500px; 
+	width: 68%; /*500px; */
 	background-color: #000; 
 	float:right;
 }
@@ -182,7 +183,7 @@ canvas {
 
 #canvas {
 	border: 1px solid #000;
-	margin: 40px 100px;
+	/*margin: 40px 100px;*/
 }
 
 
@@ -192,7 +193,7 @@ canvas {
 	===================================================
 */
 
-input#m {width: 90%; margin-top: 6px; } /* gotta leave room for send button to the right (and cnavas is 800px wide */
+input#m {width: 90%; margin-top: 6px; margin-left:0; border: 1px solid #000;} /* gotta leave room for send button to the right (and cnavas is 800px wide */
 
 #chat {width: 800px; margin: 0 auto;}
 
@@ -204,19 +205,20 @@ form input {
 	border: 0; padding: 10px; width: 90%; margin-right: 0.5%; margin-bottom: 12px;
 }
 
-form#chatForm button#leaveRoom {width: 100%; background-color: #333; color: #fff; border: 1px solid #333;}
-#leaveRoom:hover {color: #000; background-color: #ccc; border:!px solid #000;}
+#leaveRoom {width: 100%; background-color: #333; color: #fff; border: 1px solid #333; margin-left:0;}
+#leaveRoom:hover {color: #000; background-color: #ccc; border: 1px solid #000;}
 
 form#chatForm button {
-	width: 10%; background-color: rgb(130,224,255); border: none; padding: 10px;
+	width: 9%; background-color: rgb(130,224,255); border: none; padding: 10px; margin-left: 0;
 }
 
 #messages {
 	list-style-type: none; 
-	margin: 12px 0; 
+	margin: 12px 0 0 0; 
 	padding: 0; 
 	background-color: #fff; 
 	min-height: 120px;
+	border: 1px solid #000;
 }
 
 #messages li {

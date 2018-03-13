@@ -67,6 +67,7 @@ Shit that can be added in future: real-time form validation - telling how many c
 rename #chat to #gameRoom later ? possibly
 <b> mark username and roomname when user joins a room
 switch focus to #m once joining room
+when logged in --- focus lobbyname form field!
 
 
 Mark the actual user in a userlist once connected for itself?

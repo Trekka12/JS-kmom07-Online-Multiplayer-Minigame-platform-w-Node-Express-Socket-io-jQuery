@@ -360,6 +360,7 @@ $(document).ready(function(){
 		usernameRegSection.hide();
 		createRoomForm.show();
 		joinRoomForm.show();
+		lobbyNameField.focus();
 		
 		
 		
