@@ -27,6 +27,21 @@ window.Trekka12 = (function(window, document, undefined ) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
 	
+	//inspired from: https://codehandbook.org/how-to-remove-duplicates-from-javascript-array/
+	Trekka12.removeDuplicatesFromArray = function (array) {
+		var unique_array = [];
+		for(var i = 0; i < array.length; i++)
+		{
+			if(unique_array.indexOf(array[i]) == -1) 
+			{
+				unique_array.push(array[i]);
+			}
+		}
+		return unique_array;
+	}
+	
+	
+	
 	//generate timeDiff of 2 datetime .now() nmbrs
 	
 	//getArrayElementIndex of specific item in array

@@ -205,8 +205,6 @@ io.on('connection', function(socket) {
 		}
 	});
 	
-	//once a room is full with 2 people - delete / remove it from the selecet-option list
-	//not sure I fixed this functionality yet.. something I gotta work on fixing.
 	
 	/*
 	=================================================================
@@ -258,62 +256,10 @@ io.on('connection', function(socket) {
 		}
 	});
 	
-	/*
-	=================================================================
-			Leave room emit events below
-	=================================================================
-	*/
 	
-	socket.on('leave room', function(roomindex) {
-		console.log("inside of leave room serverside");
-		
-		
-		socket.leave(roomList[roomindex].name);
-		socket.join('connected'); //declare this string as "default channel/room" variable later..
-		//check if its creator that is leaving room, or other client - it makes a difference it matters.
-		
-		console.log("client: " + clientIndex + " left " + roomList[roomindex].name + " room and joined: connected");
-		
-		var clientIndex = getClientIndex(socket.cid);
-		
-		//clientList[clientIndex].createdRoom.name.length > 0 && (
-		if(clientList[clientIndex].createdRoom.name == roomList[roomindex].name)
-		{
-			//then creator is the one leaving
-			//which means we also need to delete the room from roomList and clear the sockets createdRoom data
-			//we also need to check if there are still rooms in roomList after removal, if not - we need to reset "firstCreatedRoom" -- holy hell a lot of stuff to take care of all of sudden :P
-			roomList.splice(roomindex, 1); //remove the entire roomList segment for this room that this socket created
-			clientList[clientIndex].createdRoom.name = "";
-			clientList[clientIndex].createdRoom.pw = "";
-			clientList[clientIndex].createdRoom.createdTime = 0;
-			
-			if(roomList.length == 0)
-			{
-				firstRoomCreated = false;
-			}
-		}
-		
-		//only do this IF rooms in roomlist still exist.. if not, no need to do it ?
-		if(!clientList[clientIndex].intervalSet.set && roomList.length > 0) //no need to update shit if roomlist is empty
-		{
-			console.log("inside of initiate individual roomlist update");
-			console.log("roomList.length: ", roomList.length);
-			socket.emit('initiate individual roomlist update');
-		}
-		
-		socket.room = "connected";
-		
-		socket.roomActive = false;
-		clientList[clientIndex].roomActive = false;
-		
-		socket.emit('leaving room'); //possibly track users in rooms? when 2 users its full u know.. 
-		//notify others that still is in room that someone left..
-		//io.in(roomList[roomindex].name).emit('user left room', username); //pick it up clientside and append message to #m or w/e easypeasy
-		
-		//if creator leaves room, same as on disconnect - inform other client in the room (if there is any - check this), and return them to main screen - also remove room from and all of its data - and issue a broadcast updating the select-option list - unless setTimeout takes care of this already?
-		
-	});
-	
+	//once a room is full with 2 people - delete / remove it from the selecet-option list
+	//not sure I fixed this functionality yet.. something I gotta work on fixing.
+	//do this for when second person / other client joins a room
 	
 	/*
 	=================================================================
@@ -337,7 +283,7 @@ io.on('connection', function(socket) {
 			}
 		}
 		
-		if(roomList[roomIndex].pw !== "none")
+		if(roomList[roomIndex].pw !== "none") //if there is a PW to gain access to room
 		{
 			socket.emit('show login form', roomIndex);
 			
@@ -350,7 +296,7 @@ io.on('connection', function(socket) {
 			
 			//stop interval if it exists when a client joins a room..
 			var clientIndex = getClientIndex(socket.cid);
-			if(clientList[clientIndex].intervalSet.set)
+			if(clientList[clientIndex].intervalSet.set) //stop interval if joining room
 			{
 				socket.emit('stop lobby update interval', clientList[clientIndex].intervalSet.intervalID);
 			}
@@ -410,6 +356,75 @@ io.on('connection', function(socket) {
 			console.log("pw failed");
 		}
 	});
+	
+	
+	
+	/*
+	=================================================================
+			Game logics emit events
+	=================================================================
+	*/
+	
+	
+	
+	/*
+	=================================================================
+			Leave room emit events below
+	=================================================================
+	*/
+	
+	socket.on('leave room', function(roomindex) {
+		console.log("inside of leave room serverside");
+		
+		
+		socket.leave(roomList[roomindex].name);
+		socket.join('connected'); //declare this string as "default channel/room" variable later..
+		//check if its creator that is leaving room, or other client - it makes a difference it matters.
+		
+		console.log("client: " + clientIndex + " left " + roomList[roomindex].name + " room and joined: connected");
+		
+		var clientIndex = getClientIndex(socket.cid);
+		
+		//clientList[clientIndex].createdRoom.name.length > 0 && (
+		if(clientList[clientIndex].createdRoom.name == roomList[roomindex].name)
+		{
+			//then creator is the one leaving
+			//which means we also need to delete the room from roomList and clear the sockets createdRoom data
+			//we also need to check if there are still rooms in roomList after removal, if not - we need to reset "firstCreatedRoom" -- holy hell a lot of stuff to take care of all of sudden :P
+			roomList.splice(roomindex, 1); //remove the entire roomList segment for this room that this socket created
+			clientList[clientIndex].createdRoom.name = "";
+			clientList[clientIndex].createdRoom.pw = "";
+			clientList[clientIndex].createdRoom.createdTime = 0;
+			
+			if(roomList.length == 0)
+			{
+				firstRoomCreated = false;
+			}
+		}
+		
+		//only do this IF rooms in roomlist still exist.. if not, no need to do it ?
+		if(!clientList[clientIndex].intervalSet.set && roomList.length > 0) //no need to update shit if roomlist is empty
+		{
+			console.log("inside of initiate individual roomlist update");
+			console.log("roomList.length: ", roomList.length);
+			socket.emit('initiate individual roomlist update');
+		}
+		
+		socket.room = "connected";
+		
+		socket.roomActive = false;
+		clientList[clientIndex].roomActive = false;
+		
+		socket.emit('leaving room'); //possibly track users in rooms? when 2 users its full u know.. 
+		//notify others that still is in room that someone left..
+		//io.in(roomList[roomindex].name).emit('user left room', username); //pick it up clientside and append message to #m or w/e easypeasy
+		
+		//if creator leaves room, same as on disconnect - inform other client in the room (if there is any - check this), and return them to main screen - also remove room from and all of its data - and issue a broadcast updating the select-option list - unless setTimeout takes care of this already?
+		
+	});
+	
+	
+	
 	
 	
 	

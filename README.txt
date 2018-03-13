@@ -45,8 +45,24 @@ So basically once I got all the parts together in endproduct state, I will go th
 Ok so this "load existing rooms on connect/page update" thingy, might not be needed - since it will probably happen anyways, since users will have to re-register on page update. We will not be "saving" their state, they will be reset on page update.
 What should happen is WHEN user registered nickname successfully, client should be contacted with event to trigger hiding of userreg form and interface section + showing create/join room (+ userlist (+ lobbylist)) - once that is done, it could contact server again to initiate updating of those lobbyrooms (created "x" time ago that is...)
 
+
+Add the game graphics to the "room" together with the chat ;)
+
+My main concern right now is getting it all to actually work.. Then I gotta write redovisningstexter, and integrate into my Me-sida.
+
+
 Mark the actual user in a userlist once connected for itself?
 - broadcast to all within connected room if user joins io.in('connected').broadcast.emit ;)
+
+
+Steps in the process:
+User visits website. User registers nickname.
+User gets to Create/Join rooms. if create - users also enters room.
+If user instead decides to join someone elses already created room - activeUserNmbrInRoom should increment by +1, roomActive should also be set to true (together with what room the user is in somehow)
+
+
+
+
 
 
 Future project: when developing - have editor exract globally defined variables, constants, and functions accessible - to have accessible 24-7 whilst coding, would help Soooo much!

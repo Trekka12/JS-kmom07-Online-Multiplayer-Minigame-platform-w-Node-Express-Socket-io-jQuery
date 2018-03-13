@@ -1,5 +1,7 @@
-$(function() { //short-hand alternative for $('document').ready etc.etc.
-	//var intervalID = null;
+//$(function() { //short-hand alternative for $('document').ready etc.etc.
+$(document).ready(function(){
+	//my code goes here to be executed once ready has been confirmed
+	"use strict";
 	var socket = io();
 	
 	/*
@@ -41,8 +43,81 @@ $(function() { //short-hand alternative for $('document').ready etc.etc.
 	var roomlist = $('#roomlist');
 	var chat = $('#chat');
 	var statusMsgContainer = $('#statusMsg');
+	var canvas = $('#canvas');
+	var canvasElement = document.getElementById("canvas"); //differs from the jQuery selector in what is returned when fetched and what can be done with the returned element - non-jquery returned object can give getContext("2d") e.g.
+	var ctx = canvasElement.getContext("2d");
+	var canvasWidth = canvasElement.getAttribute("width");
+	var canvasHeight = canvasElement.getAttribute("height");
 	var messages = $('#messages');
 	var m = $('#m');
+	
+	//global game vars
+	const gameColors = {	bgColor: "#1f781f",
+							boardColor: "#b05e23",
+							textAndBorderColor: "#000000",
+							plackColor: "#e3e3e3",
+							markedCellColor: "#ffffff"};
+
+	const boardSide = 300;
+	const cellSide = boardSide/3;
+
+	const plackInfo = {	fontSize: 35,
+						fontFamily: "sans-serif",
+						width: 500,
+						height: 50,
+						marginTop: 24};
+	
+						
+	const plackMarginLeft = canvasWidth/2 - plackInfo.width/2; //to center it
+	
+	const plackToTTTSpace = 45; //TTT = TicTacToe
+	
+	const tttBoardMarginTop = plackInfo.marginTop + plackInfo.height + plackToTTTSpace, //45 between plack and TTT board - 114 margin-top total
+		tttBoardMarginLeft = canvasWidth/2 - boardSide/2;
+			
+	const cellPos = {	1: {x: tttBoardMarginLeft, y: tttBoardMarginTop},
+					2: {x: tttBoardMarginLeft + cellSide, 	y: tttBoardMarginTop},
+					3: {x: tttBoardMarginLeft + 2*cellSide, y: tttBoardMarginTop},
+					4: {x: tttBoardMarginLeft, 				y: tttBoardMarginTop + cellSide},
+					5: {x: tttBoardMarginLeft + cellSide, 	y: tttBoardMarginTop + cellSide},
+					6: {x: tttBoardMarginLeft + 2*cellSide, y: tttBoardMarginTop + cellSide},
+					7: {x: tttBoardMarginLeft, 				y: tttBoardMarginTop + 2*cellSide},
+					8: {x: tttBoardMarginLeft + cellSide, 	y: tttBoardMarginTop + 2*cellSide},
+					9: {x: tttBoardMarginLeft + 2*cellSide, y: tttBoardMarginTop + 2*cellSide}};
+					
+	var boardGrid = [0,0,0,0,0,0,0,0,0]; //1 for one player, -1 for another player, 0 if empty
+	
+	const winComboAmount = 8; //3 horizontal, 3 vertical, 2 diagonal = 8
+	const winCombos = {	1: [1,2,3],
+						2: [4,5,6],
+						3: [7,8,9],
+						4: [1,4,7],
+						5: [2,5,8],
+						6: [3,6,9],
+						7: [1,5,9],
+						8: [3,5,7]};
+					
+	//console.log("cellPos 5 = x: " + cellPos[5].x + ", y: " + cellPos[5].y);
+						
+	const textStrings = {	wfo: "Waiting for opponent...",
+							rurdy: "Room full, are you ready?",
+							ulose: "You lose.",
+							uwin: "CONGRATULATIONS, YOU WON!",
+							othersmove: "Opponents is making his/hers move..",
+							mymove: "It's your move!",
+							outoftime: "You forfeit your turn to the opponent (too slow)..",
+							seemDC: "Seems your opponent disconnected, room disappears in 2 minutes."};
+	
+
+	const XOLineThickness = 3;
+	
+	//console.log("all vars decl");
+	
+	var canvasPosition = {
+		x: canvas.offset().left,
+		y: canvas.offset().top
+	};
+	
 	
 	/*
 	=================================================================
@@ -174,6 +249,33 @@ $(function() { //short-hand alternative for $('document').ready etc.etc.
 		
 		joinRoomBtn.prop('disabled', false);
 	});
+	
+	
+	//do nothing in event handler except cancel the event (drag and select)
+	canvasElement.ondragstart = function(e) {
+		if(e && e.preventDefault) { e.preventDefault(); }
+		if(e && e.stopPropagation) { e.stopPropagation(); }
+		return false;
+	}
+	
+	canvasElement.onselectstart = function(e) {
+		if(e && e.preventDefault) { e.preventDefault(); }
+		if(e && e.stopPropagation) { e.stopPropagation(); }
+		return false;
+	}
+	
+	//cancelling mobile window movement
+	document.body.ontouchstart = function(e) {
+		if(e && e.preventDefault) { e.preventDefault(); }
+		if(e && e.stopPropagation) { e.stopPropagation(); }
+		return false;
+	}
+	
+	document.body.ontouchmove = function(e) {
+		if(e && e.preventDefault) { e.preventDefault(); }
+		if(e && e.stopPropagation) { e.stopPropagation(); }
+		return false;
+	}
 	
 	
 	$('#chatForm').submit(function() {
@@ -339,7 +441,7 @@ $(function() { //short-hand alternative for $('document').ready etc.etc.
 	
 	//have a every second timer - if select-option list have alternatives - trigger every second a list update --- turn into web worker in future to get this "updating sequence" out of the day of the actual application + learning web workers? trigger event "update roomList" to update every clients roomList (that is not yet connected to rooms)
 	socket.on('initiate first roomlist update', function() {
-		console.log("inside of initiate roomlist update");
+		console.log("inside of initiate first roomlist update");
 		
 		//check if any of the alternatives are selected, if so, get its value
 		var intervalID = setInterval(function() {
@@ -489,6 +591,14 @@ $(function() { //short-hand alternative for $('document').ready etc.etc.
 		clearInterval(intervalID);
 		console.log("cleared interval of intervalID: ", intervalID);
 	});
+	
+	
+	
+	/*
+	=================================================================
+			Game graphics with Canvas Socket.io event emit handlers
+	=================================================================
+	*/
 	
 	
 	
