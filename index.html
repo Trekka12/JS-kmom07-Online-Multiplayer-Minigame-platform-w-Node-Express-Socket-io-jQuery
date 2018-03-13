@@ -30,7 +30,7 @@
 
 	<form id="createRoomForm">
 		<!-- Chat room name, PW input field (if empty no PW used - no asking of PW when entering room..), create room button -->
-		<input type="text" id="lobbyName" placeholder="Lobbyname here" required /><label>*</label> <!-- if empty name it room1? etc. counter on server side? to keep track of amounts of created rooms -->
+		<input type="text" id="lobbyName" placeholder="Lobbyname here" autocomplete="off" required /><label>*</label> <!-- if empty name it room1? etc. counter on server side? to keep track of amounts of created rooms -->
 		<input type="password" id="pw" placeholder="password" />
 		<button id="createRoomBtn">Create Room</button>
 	</form>
