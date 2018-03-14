@@ -592,6 +592,7 @@ $(document).ready(function(){
 		roomLogin.hide();
 		createRoomForm.hide();
 		joinRoomForm.hide();
+		canvas.show();
 		chat.show();
 		m.focus();
 		
@@ -602,7 +603,26 @@ $(document).ready(function(){
 		//append to the chat that username joined the room --- once canvas implemented etc. this is where we draw the text "awaiting opponent" I believe.
 		appendDatedMsg(messages, "Welcome " + data.username + ", you have joined your created room: " + data.room);
 		
+		//also paint the graphics necessary for when creator have joined his created room:
+		drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
+		//to make it easy, 300x300 tic-tac-toe board size
+		//var TILE_BOARD_SIDE = 300;
+		
+		//paintGameInfoPlack();
+		paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo);
+		
+		
+		drawPlackText(ctx, textStrings.wfo, plackMarginLeft, plackInfo, gameColors);
+		//drawPlackText(textStrings.wfo, plackInfo.fontSize);
+		
+		drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
+		
 		socket.emit('trigger readycheck broadcast for room', data.room);
+	});
+	
+	socket.on('client joined room', function(username) {
+		//when a client joins the room --- creator should be notified by appending message to messages:
+		appendDatedMsg(messages, "User: <b>" + username + "</b> have joined the room.");
 	});
 	
 	socket.on('readycheck', function() {

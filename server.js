@@ -332,9 +332,15 @@ io.on('connection', function(socket) {
 			
 			//test this if this works..
 			activeFullRoomsList.push(roomList[roomIndex]); // push over all the room data over to the activeFullRoomsList to "save" the data while removing it from lobbylist..
+			console.log("activeFullRoomsList after push-copy now contains: ", activeFullRoomsList);
 			roomList.splice(roomIndex, 1); //remove from roomList
 			
+			console.log("roomList after spliced away the joined room consist of: ", roomList);
+			
 			socket.emit('client joins room', {username: clientList[clientIndex].username, room: socket.room}); //creator joins room but for "second" client to join the room..
+			
+			socket.to(socket.room).emit('client joined room', clientList[clientIndex].username);
+			//this emit method sends to all in room EXCEPT sender himself.
 			
 			//which means every time a client/user joins a room that is not the creator - readycheck should commence and broadcast that a user joined the room to all in that room should be done, every time. ALSO room should be "temporarily" removed from lobbylist so no1 else can attempt to join... remove it from roomList BUT keep its roomDetails within activeRoomList (or fullRoomList)
 			
