@@ -231,6 +231,13 @@ $(document).ready(function(){
 		return false;
 	});
 	
+	$('#yesBtn').on('click', function() {
+		
+	});
+
+	$('#noBtn').on('click', function() {
+		
+	});
 	
 	$('#back2mainScreen').on('click', function() {
 		roomLogin.fadeOut(500);
@@ -648,7 +655,11 @@ $(document).ready(function(){
 	
 	socket.on('readycheck', function() {
 		//show the readycheck HTML stuff
+		readycheck.show();
 		
+		//show a HTML progressbar for time a user got to respond
+		//store readycheck issued time serverside
+		//set a timer and if no response in that time from client -- assume its a no - send the no-event to server
 	});
 	
 	socket.on('leaving room', function() {

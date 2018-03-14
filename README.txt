@@ -92,7 +92,7 @@ Deal with event on clientside: "client joined room" - append message to messages
 
 remember to hide canvas mouseclick listeners until readycheck is over.
 
-when client joins a room --- check so that the activeUsersInRoom DONT exceed 2 people. ALSO Hide from roomlist INSTANTLY when a client joins... (instant update of interface)
+when client joins a room --- check so that the activeUsersInRoom DONT exceed 2 people. ALSO Hide from roomlist INSTANTLY when a client joins... (instant update of interface) ---FIXED
 
 FCK - Fix PW joining of room - so the logic is same as for Non-PW rooms!
 
