@@ -43,6 +43,10 @@ $(document).ready(function(){
 	var roomlist = $('#roomlist');
 	var chat = $('#chat');
 	var statusMsgContainer = $('#statusMsg');
+	var readyCheck = $('#readycheck');
+	var readyCheckForm = $('#readyCheckForm');
+	var yesBtn = $('#yesBtn');
+	var noBtn = $('#noBtn');
 	var canvas = $('#canvas');
 	var canvasElement = document.getElementById("canvas"); //differs from the jQuery selector in what is returned when fetched and what can be done with the returned element - non-jquery returned object can give getContext("2d") e.g.
 	var ctx = canvasElement.getContext("2d");
@@ -129,8 +133,9 @@ $(document).ready(function(){
 	createRoomForm.hide();
 	joinRoomForm.hide();
 	roomLogin.hide();
-	chat.hide();
+	readyCheck.hide();
 	canvas.hide();
+	chat.hide();
 	
 	//its a nice user friendly feature not having to manually click the field to write input into
 	usernameField.focus();
@@ -448,6 +453,29 @@ $(document).ready(function(){
 		
 	});
 	
+	socket.on('load roomlist', function(rooms) {
+		console.log("inside load roomlist");
+		
+		console.log("rooms contains: ", rooms);
+		
+		//console.log("selectedValue in update roomlist for all: " + data.selectedValue);
+		
+		roomlist.empty();
+		console.log("amount of rooms: ", rooms.length);
+		
+		var createdStr = "";
+		for(var i = 0; i < rooms.length; i++)
+		{
+			//for every room:
+			createdStr = getTimeDiffString(rooms[i].createdTime);
+			
+			//&#xe033 <- this lock icon unicode didnt quite work
+			roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
+		}
+		//once all rooms loaded --- then initiate update sequence
+		socket.emit('start roomlist update');
+	});
+	
 	
 	socket.on('initiate individual roomlist update', function() {
 		console.log("inside of individual roomlist update");
@@ -536,9 +564,25 @@ $(document).ready(function(){
 		joinRoomForm.hide();
 		canvas.show();
 		chat.show();
+		m.focus();
 		
 		//append to the chat that username joined the room --- once canvas implemented etc. this is where we draw the text "awaiting opponent" I believe.
-		appendDatedMsg(messages, "Welcome " + data.username + ", you have joined your created room: " + data.room);
+		appendDatedMsg(messages, "Welcome <b>" + data.username + "</b>, you have joined your created room: <i>" + data.room + "</i>");
+		
+		//also paint the graphics necessary for when creator have joined his created room:
+		drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
+		//to make it easy, 300x300 tic-tac-toe board size
+		//var TILE_BOARD_SIDE = 300;
+		
+		//paintGameInfoPlack();
+		paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo);
+		
+		
+		drawPlackText(ctx, textStrings.wfo, plackMarginLeft, plackInfo, gameColors);
+		//drawPlackText(textStrings.wfo, plackInfo.fontSize);
+		
+		drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
+		//drawTTTBoard();
 		
 	});
 	
@@ -549,9 +593,21 @@ $(document).ready(function(){
 		createRoomForm.hide();
 		joinRoomForm.hide();
 		chat.show();
+		m.focus();
+		
+		//paint interface on canvas
+		
+		//best to paint readycheck in canvas or out of canvas?
 		
 		//append to the chat that username joined the room --- once canvas implemented etc. this is where we draw the text "awaiting opponent" I believe.
 		appendDatedMsg(messages, "Welcome " + data.username + ", you have joined your created room: " + data.room);
+		
+		socket.emit('trigger readycheck broadcast for room', data.room);
+	});
+	
+	socket.on('readycheck', function() {
+		//show the readycheck HTML stuff
+		
 	});
 	
 	socket.on('leaving room', function() {
@@ -605,6 +661,9 @@ $(document).ready(function(){
 		var date = new Date();
 		
 		messages.append($('<li>').text(date.toLocaleTimeString() + " | " + data.username + ": " + data.message));
+		
+		//scroll to the latest added message, credit to: https://stackoverflow.com/questions/42196287/div-does-not-auto-scroll-to-show-new-messages
+		messages.animate({ scrollTop: messages[0].scrollHeight }, 'fast')
 		
 		//have black text for the message sent by self always (will appear colored for other person in chatroom)
 	});

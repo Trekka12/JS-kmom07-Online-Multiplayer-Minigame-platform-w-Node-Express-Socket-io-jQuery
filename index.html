@@ -56,11 +56,22 @@
 			<p id="loginStatus"></p>
 		</form>
 	</div>
+	
+	<div id="readycheck">
+		<form id="readyCheckForm">
+			<label>R U Rdy? </label><button id="yesBtn">Yes</button> / <button id="noBtn">No</button>
+		</form>
+	</div>
 
 	<div id="chat">
 		<canvas id="canvas" width="800" height="500">
 			Update your browser to enjoy canvas. <!-- point to image map if canvas is not supported for the game ? advanced feature -->
 		</canvas>
+		<div id="boardPieces">
+			<p id="myPieces"><b>Your board pieces:</b> [X, X, X, X]</p>
+			<p id="opponentPieces"><b>Opponent board pieces:</b> [O, O, O, O]</p>
+			<div class="clearfix"></div>
+		</div>
 		<ul id="messages"></ul>
 		<form id="chatForm" action="">
 			<input id="m" autocomplete="off" /><button>Send</button>

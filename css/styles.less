@@ -186,6 +186,28 @@ canvas {
 	/*margin: 40px 100px;*/
 }
 
+/* 
+	===================================================
+			Board pieces tracker area styles 
+	===================================================
+*/
+#boardPieces {
+	width: 100%;
+	font-size: 14px;
+	background-color: #bbb;
+	color: #000;
+	border-bottom: 2px solid #222;
+	border-top: 2px solid #222;
+}
+
+#myPieces, #opponentPieces {padding: 12px;}
+
+#myPieces {float: left; }
+
+#opponentPieces {float: right;}
+
+div#container p {margin-bottom:0;}
+
 
 /* 
 	===================================================
@@ -217,7 +239,8 @@ form#chatForm button {
 	margin: 12px 0 0 0; 
 	padding: 0; 
 	background-color: #fff; 
-	min-height: 120px;
+	height: 120px;
+	overflow-y: auto;
 	border: 1px solid #000;
 }
 

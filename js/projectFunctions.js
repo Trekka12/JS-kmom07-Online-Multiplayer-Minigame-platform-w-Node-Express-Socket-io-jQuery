@@ -162,16 +162,16 @@ function paintX(cellNmbr) {
 					Canvas game funcs
 =================================================================
 */
-function paintGameInfoPlack() {
+function paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo) {
 	
 	ctx.fillStyle = gameColors.plackColor;
 
 	ctx.fillRect(plackMarginLeft, plackInfo.marginTop, plackInfo.width, plackInfo.height);
 }
 
-function drawPlackText(textString, fontSize) {
+function drawPlackText(ctx, textString, plackMarginLeft, plackInfo, gameColors) {
 	
-	ctx.font = fontSize.toString() + "px " + plackInfo.fontFamily;
+	ctx.font = plackInfo.fontSize.toString() + "px " + plackInfo.fontFamily;
 	ctx.fillStyle = gameColors.textAndBorderColor;
 	
 	var textWidth = Math.floor(ctx.measureText(textString).width); //round down
@@ -186,7 +186,7 @@ function drawPlackText(textString, fontSize) {
 	
 }
 
-function drawTTTBoard() {
+function drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide) {
 	//The idea here is to draw the "major" rectangle outline for the three boxes/squares
 	//then paint 3x3 rectangles within this one
 	//lets get started
@@ -497,7 +497,7 @@ function getPosition(e) {
 	return position;
 }
 
-function hitZoneDetection(mx, my) {
+function hitZoneDetection(mx, my, boardSide, cellPos, tttBoardMarginLeft, tttBoardMarginTop, cellSide) {
 	//this function will be used to iterate through our hitzones, check our mouse x and mouse y to see what zone it lands in,
 	//then return that zone nmbr so that XO can be painted
 	

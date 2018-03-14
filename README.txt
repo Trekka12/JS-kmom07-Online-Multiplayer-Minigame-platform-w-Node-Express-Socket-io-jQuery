@@ -65,9 +65,43 @@ har nu mergat canvas + clientside canvas-relaterade eventhandlers, game paint fu
 Shit that can be added in future: real-time form validation - telling how many chars is left for choosing username and lobbyname in realtime ?
 
 rename #chat to #gameRoom later ? possibly
-<b> mark username and roomname when user joins a room
-switch focus to #m once joining room
-when logged in --- focus lobbyname form field!
+<b> mark username and roomname when user joins a room ---FIXED
+switch focus to #m once joining room ---FIXED
+when logged in --- focus lobbyname form field! ---FIXED
+
+alternative could be chat "sticky" fixed to right of game graphics -- and simply have it scroll infinitely?
+
+when second user joins a room, readycheck should be initiated somehow... check if both ready -- if they are -- randomize who goes first, give them O pieces, the other player gets X pieces, somewhere in the interface it should be visually shown how many pieces have been placed and how many is left, maybe show a game timer? (extra feature possibly to consider)
+
+
+Copy an array object over to another array
+array2.push(array1[i]) might work? :D
+
+TODOS:
+Re-Prioritization:
+När ny klient kopplas in, om där finns rum skapat, som INTE är fullt ÄN - ladda in dem i Lobbylistan så dessa klienter kan joina dessa rum!!!
+
+for client connecting when rooms exist already --- update of roomlist should be instantaneous. not 15s delayed... THEN the update should commence AFTER that fact.
+
+
+style the readyCheckForm and readycheck div have it position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background-color. rgba(0,0,0,0.9); margin: 0 auto; 
+Style the buttons and possibly even the label...
+
+socket.on('readycheck') clientside show the readycheck form
+add readycheck button on('click') event handlers and onclick report to server with emit events "readycheck vote" with different values ofc. on serverside deal with it
+
+
+
+
+In the near-distant future - fix functionality so that node.js can run forever basically, and also recover in case of a crash... however I do this  --- need to figure that out as well hm...
+
+consider this: if a user creates a room, and thereby joins, then instantly leaves at the same time that another user connects/tries to connect to the same room in the list - on creator disconnect the room would disappear, so how would this play out hm...???
+
+
+
+
+
+codeArt - showing people with illustrations and text how stuff is created with code on the web - for example show a plain and simple TicTacToe game board and then note all the functions used and how every detail in the picture is created :o Idea for future.
 
 
 Mark the actual user in a userlist once connected for itself?

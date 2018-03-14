@@ -5,8 +5,8 @@ var path = require('path');
 var io = require('socket.io')(http);
 var clientID = 0;
 var roomList = []; //store count of activeClientsInSpecificRoom to see when its full
+var activeFullRoomsList = []; //track rooms when they are "removed" from roomList and thereby roomList update
 var clientList = [];
-//var roomTracker = 0;
 var firstRoomCreated = false;
 
 //my roomList need to track people entering the rooms as well - as replacement for "oneRegisteredUser" -- to determine color of the player in the room in chat once in room
@@ -114,10 +114,23 @@ io.on('connection', function(socket) {
 		
 		socket.userReg = true;
 		
+		//if user reg is completed, check to see if roomList.length have any rooms
+		//if there is - trigger individual update or w/e I called it
+		if(roomList.length > 0)
+		{
+			//then there are rooms created already -- load them and keep them updated!
+			//socket.emit('initiate individual roomlist update');	//call this first AFTER first instant load.
+			socket.emit('load roomlist', roomList);
+		}
+		
 		//socket.broadcast.emit('user joined', {
 		//	username: socket.username,
 		//	userAmount: clientCounter
 		//});
+	});
+	
+	socket.on('start roomlist update', function() {
+		socket.emit('initiate individual roomlist update');
 	});
 	
 	/*
@@ -172,7 +185,8 @@ io.on('connection', function(socket) {
 						pw: (pwSet ? pw : "none"),
 						firstUserJoined: true, 
 						activeUserNmbr: 1,
-						createdTime: clientList[clientIndex].createdRoom.createdTime}); //do I need creator in this?
+						createdTime: clientList[clientIndex].createdRoom.createdTime,
+						readycheck: [{user: "", response: false}, {user: "", response: false}]}); //do I need creator in this?
 		console.log("roomList: ", roomList);
 		//socket.emit('created and joined room', roomTracker);
 		socket.emit('created and joined room', roomList.length-1); //-1 needed for index and since using "push" method - put last in array
@@ -273,6 +287,9 @@ io.on('connection', function(socket) {
 	socket.on('join room', function(selectedRoom) {
 		console.log("inside of join room serverside");
 		
+		//when this is triggered, assume room is full, since this is client joining the room, and room only have capacity of 2
+		
+		
 		//data will be .val() of selected select-option list - which in our case is the room name to be joined for socket.
 		//so when a user attempts to join a specific room - first thing to do is identify the room and check whether or not it is PW protected.
 		
@@ -304,12 +321,24 @@ io.on('connection', function(socket) {
 				socket.emit('stop lobby update interval', clientList[clientIndex].intervalSet.intervalID);
 			}
 			
+			roomList[roomIndex].activeUserNmbr += 1; //should bring it up to 2 in this event
+			
+			//this should bring activeUserNmbr to the value of 2, which in turn should trigger readycheck. And on second user joining room - every client in that room should get the readycheck AND notify in chat that a user joined the room AND 
+			
 			socket.room = roomList[roomIndex].name;
 			console.log("client: " + clientIndex + " left connected room and joined: " + roomList[roomIndex].name);
 			socket.roomActive = true;
 			clientList[clientIndex].roomActive = true;
 			
+			//test this if this works..
+			activeFullRoomsList.push(roomList[roomIndex]); // push over all the room data over to the activeFullRoomsList to "save" the data while removing it from lobbylist..
+			roomList.splice(roomIndex, 1); //remove from roomList
+			
 			socket.emit('client joins room', {username: clientList[clientIndex].username, room: socket.room}); //creator joins room but for "second" client to join the room..
+			
+			//which means every time a client/user joins a room that is not the creator - readycheck should commence and broadcast that a user joined the room to all in that room should be done, every time. ALSO room should be "temporarily" removed from lobbylist so no1 else can attempt to join... remove it from roomList BUT keep its roomDetails within activeRoomList (or fullRoomList)
+			
+			//broadcast to all in the room that a readycheck should be shown in canvas (or outside of canvas)
 		}
 		
 		//if it is, PW must match before anything else, if they dont match - emit to client attempting to connect to a room event saying "pw fail" - need a status message area box in the interface to keep users informed of what is happening - in the final product
@@ -351,6 +380,10 @@ io.on('connection', function(socket) {
 			socket.roomActive = true;
 			clientList[clientIndex].roomActive = true;
 			
+			//test this if this works..
+			activeFullRoomsList.push(roomList[data.roomindex]); // push over all the room data over to the activeFullRoomsList to "save" the data while removing it from lobbylist..
+			roomList.splice(data.roomindex, 1); //remove from roomList
+			
 			socket.emit('client joins room', {username: clientList[clientIndex].username, room: socket.room}); //creator joins room but for "second" client to join the room..
 			
 		}else {
@@ -358,6 +391,11 @@ io.on('connection', function(socket) {
 			socket.emit('room login failed');
 			console.log("pw failed");
 		}
+	});
+	
+	
+	socket.on('trigger readycheck broadcast for room', function(roomname) {
+		io.in(roomname).emit('readycheck'); //shows readycheck form like roomlogin form clientside
 	});
 	
 	
