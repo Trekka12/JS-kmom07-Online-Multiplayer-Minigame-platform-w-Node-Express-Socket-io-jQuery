@@ -586,6 +586,27 @@ $(document).ready(function(){
 		
 	});
 	
+	/*socket.on('instant interface update', function(rooms) {
+		console.log("inside instant interface update");
+		
+		console.log("rooms contains: ", rooms);
+		
+		//console.log("selectedValue in update roomlist for all: " + data.selectedValue);
+		
+		roomlist.empty();
+		console.log("amount of rooms: ", rooms.length);
+		
+		var createdStr = "";
+		for(var i = 0; i < rooms.length; i++)
+		{
+			//for every room:
+			createdStr = getTimeDiffString(rooms[i].createdTime);
+			
+			//&#xe033 <- this lock icon unicode didnt quite work
+			roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
+		}
+	});*/
+	
 	socket.on('client joins room', function(data) {
 		console.log("client joins room");
 		
