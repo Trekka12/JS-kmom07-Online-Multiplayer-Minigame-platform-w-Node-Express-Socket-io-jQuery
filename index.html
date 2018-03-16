@@ -25,14 +25,27 @@
 	<div id="usernameRegSection">
 		<form id="usernameRegForm">
 			<input id="username" autocomplete="off" placeholder="choose your nickname" /><button>register</button>
+			<p id="nickRegStatusMsg"></p>
 		</form>
+		
 	</div>
+	
+	<!--<div id="siteStatsArea">
+		<p><b>Connected total players: </b><span id="totalConnected">15</span></p>
+		<p><b>Players NOT (yet) in a room: </b><span id="notYetInRoom">9</span></p>
+	</div>-->
 
 	<form id="createRoomForm">
 		<!-- Chat room name, PW input field (if empty no PW used - no asking of PW when entering room..), create room button -->
 		<input type="text" id="lobbyName" placeholder="Lobbyname here" autocomplete="off" required /><label>*</label> <!-- if empty name it room1? etc. counter on server side? to keep track of amounts of created rooms -->
 		<input type="password" id="pw" placeholder="password" />
 		<button id="createRoomBtn">Create Room</button>
+		
+		
+		<div id="siteStatsArea">
+			<p><b>Connected total players: </b><span id="totalConnected">15</span></p>
+			<p><b>Players NOT in a room: </b><span id="notYetInRoom">9</span></p>
+		</div>
 	</form>
 
 	<form id="joinRoomForm">
@@ -50,7 +63,7 @@
 	
 	<div id="roomLogin">
 		<form id="roomLoginForm">
-			<input type="text" id="loginPW" placeholder="please enter password" required />
+			<input type="text" id="loginPW" placeholder="please enter password" autocomplete="off" required />
 			<button id="loginRoomBtn">Login</button>
 			<button id="back2mainScreen">Back to lobbylist/main page</button>
 			<p id="loginStatus"></p>
@@ -59,7 +72,8 @@
 	
 	<div id="readycheck">
 		<form id="readyCheckForm">
-			<label>R U Rdy? </label><button id="yesBtn">Yes</button><button id="noBtn">No</button>
+			<label>Room full, are you ready to start a game?</label><button id="yesBtn">Yes</button><button id="noBtn">No</button>
+			<progress value ="0" max="60" id="rCheckProgressBar"></progress>
 		</form>
 	</div>
 

@@ -15,6 +15,8 @@ $(document).ready(function(){
 	const SHORT_FADE_TIME = 500; //ms
 	const TYPING_TIMER_LENGTH = 400; //ms
 	const TIMER_TRIGGER_TIME = 15000; //ms = 15s
+	const GAME_TURN_TIME = 15000;
+	
 	const MIN_USERNAME_CHARS = 2;
 	const MAX_USERNAME_CHARS = 25;
 	const MIN_LOBBYNAME_CHARS = 2;
@@ -32,9 +34,13 @@ $(document).ready(function(){
 	//front-end DOM elements used throughout client.js
 	var usernameRegSection = $('#usernameRegSection');
 	var usernameField = $('#username');
+	var nickRegStatusMsg = $('#nickRegStatusMsg');
 	var createRoomForm = $('#createRoomForm');
 	var lobbyNameField = $('#lobbyName');
 	var pwField = $('#pw');
+	var siteStatsArea = $('#siteStatsArea');
+	var totalConnectedUsers = $('#totalConnected');
+	var notYetInRoomUsers = $('#notYetInRoom');
 	var joinRoomForm = $('#joinRoomForm');
 	var loginPWField = $('#loginPW');
 	var loginStatus = $('#loginStatus');
@@ -47,6 +53,7 @@ $(document).ready(function(){
 	var readyCheckForm = $('#readyCheckForm');
 	var yesBtn = $('#yesBtn');
 	var noBtn = $('#noBtn');
+	var rCheckProgressBar = $('#rCheckProgressBar');
 	var canvas = $('#canvas');
 	var canvasElement = document.getElementById("canvas"); //differs from the jQuery selector in what is returned when fetched and what can be done with the returned element - non-jquery returned object can give getContext("2d") e.g.
 	var ctx = canvasElement.getContext("2d");
@@ -54,6 +61,15 @@ $(document).ready(function(){
 	var canvasHeight = canvasElement.getAttribute("height");
 	var messages = $('#messages');
 	var m = $('#m');
+	var boardPieces = $('#boardPieces');
+	
+	//timer ids
+	var secondClockActionIValID = null;
+	var t2 = null;
+	//var roomListUpdateIValID = null;
+	var intervalID = null;
+	
+	var gameTurnTimer = null;
 	
 	//global game vars
 	const gameColors = {	bgColor: "#1f781f",
@@ -133,9 +149,15 @@ $(document).ready(function(){
 	createRoomForm.hide();
 	joinRoomForm.hide();
 	roomLogin.hide();
+	
 	readyCheck.hide();
+	
+	//save 3 lines of chode here by simply hiding chat instead?
 	canvas.hide();
 	chat.hide();
+	boardPieces.hide();
+	
+	
 	
 	//its a nice user friendly feature not having to manually click the field to write input into
 	usernameField.focus();
@@ -164,11 +186,11 @@ $(document).ready(function(){
 				usernameField.val(''); //just in case
 				
 			}else {
-				statusMsgContainer.text("Your nickname contained whitespaces or foreign characters. Please change it to not have whitespaces (or anything except a-z, A-Z and 0-9).").fadeIn(100).fadeOut(LONG_FADE_TIME);
+				nickRegStatusMsg.text("Your nickname contained whitespaces or foreign characters. Please change it to not have whitespaces (or anything except a-z, A-Z and 0-9).").fadeIn(100).fadeOut(LONG_FADE_TIME);
 			}
 		}else {
 			//if less than 1 character, or more than 25
-			statusMsgContainer.text("Username must be > 1 character long, and less than 25 characters.").fadeOut(LONG_FADE_TIME);
+			nickRegStatusMsg.text("Username must be > 1 character long, and less than 25 characters.").show().fadeOut(LONG_FADE_TIME);
 		}
 		
 		return false; //return false stops default execution, and for .submit this means page update is stopped (which we want)
@@ -189,6 +211,9 @@ $(document).ready(function(){
 			{
 				//only allow input to be a-z A-Z and 0-9 characters between length 2 and 20
 				socket.emit('create room', {name: lobbyName, pw: pwField.val()});
+				
+				
+				//now if any intervals was set upon room creation --- interrupt them... BUT wtf... there shouldnt be any timers here wtf?!?!?!?!
 			}else {
 				statusMsgContainer.text("Your Lobbyname contained characters other than a-z, A-Z and 0-9 - try sticking with the allowed ones.").show().fadeOut(4000);
 			}
@@ -197,6 +222,7 @@ $(document).ready(function(){
 			statusMsgContainer.text("Your Lobbyname need to be between 2 and 20 characters long.").show().fadeOut(4000);
 		}
 		lobbyNameField.val('');
+		pwField.val('');
 		
 		
 		return false;
@@ -232,11 +258,28 @@ $(document).ready(function(){
 	});
 	
 	$('#yesBtn').on('click', function() {
+		//hide readycheck --do that on other receiving of event emitted from server
+		//readyCheck.hide();
+		console.log("registering yesBtn click");
 		
+		
+		//if I want to keep this "clearInterval action" -- if I need to keep it -- then simply pass it along with the emit events!
+		socket.emit('readycheck response', true);
+		
+		
+		
+		//update clientside interface after having received "readycheck completed" or something from server
+		
+		return false;
 	});
 
 	$('#noBtn').on('click', function() {
 		
+		console.log("registering noBtn click");
+		
+		socket.emit('readycheck response', false);
+		
+		return false;
 	});
 	
 	$('#back2mainScreen').on('click', function() {
@@ -374,32 +417,24 @@ $(document).ready(function(){
 		joinRoomForm.show();
 		lobbyNameField.focus();
 		
+	});
+	
+	socket.on('update siteStatsArea', function(clients) {
+		//totalConnectedUsers
+		//notYetInRoomUsers
+		totalConnectedUsers.text(clients.length);
 		
+		var notInRoomCounter = 0;
+		for(var i = 0; i < clients.length; i++)
+		{
+			if(clients[i].roomActive == false)
+			{
+				notInRoomCounter += 1;
+			}
+		}
 		
-		
-		
-		
-		//below parts of this code is within user registered event is more appropriate for when joining the actual individual rooms:
-		/*console.log("registered clients: ", data.reggedClients);
-		
-		if(reg && data.reggedClients <= 2) //a room should not be allowed to have more than 2 people and user must be registered
-		{	
-			//lets go with it and see if I actually need to store username both here.. and serverside, I think serverside might be enough.
-			socket.username = data.username;
-			
-			$('#usernameRegSection').hide();
-			
-			$('#messages').empty(); //had to clear chat history in the odd event that other chat user joined same time as first one... 
-			//after user registration done, show chat controls hm..
-			$('#chat').show();
-			$('#m').focus(); //move focus onto chat input field automatically
-			
-			//
-			appendDatedMsg($('#messages'), "<i>Welcome <b>" + socket.username + "</b> to socket.io chat!</i>");
-			
-		}else {
-			$('#statusMsg').text("The chat room you tried to join, is currently full.").fadeIn().fadeOut(3000);
-		}*/
+		//notYetInRoomUsers = $('#notYetInRoom');
+		notYetInRoomUsers.text(notInRoomCounter);
 		
 	});
 	
@@ -423,7 +458,7 @@ $(document).ready(function(){
 		roomToLoginTo = roomindex;
 	});
 	
-	socket.on('add to roomlist', function(data) {
+	/*socket.on('add to roomlist', function(data) {
 		console.log("inside add to roomlist");
 		
 		//remember to get Date.now() and compare it to room created data to list how long ago it was created - although this data should be regularily updated - say setInterval every second ? Will that get in the way of anything?
@@ -438,14 +473,14 @@ $(document).ready(function(){
 		
 		//after having added game room to all other sockets (not connected to the room) I could socket.emit right here to catch on serverside to send back with socket.emit from server back to each and every non-connected socket ?
 		
-	});
+	});*/
 	
 	//have a every second timer - if select-option list have alternatives - trigger every second a list update --- turn into web worker in future to get this "updating sequence" out of the day of the actual application + learning web workers? trigger event "update roomList" to update every clients roomList (that is not yet connected to rooms)
-	socket.on('initiate first roomlist update', function() {
+	/*socket.on('initiate first roomlist update', function() {
 		console.log("inside of initiate first roomlist update");
 		
 		//check if any of the alternatives are selected, if so, get its value
-		var intervalID = setInterval(function() {
+		intervalID = setInterval(function() {
 			var selectedValue = "";
 			if(roomlist.val())
 			{
@@ -453,12 +488,12 @@ $(document).ready(function(){
 				console.log("select value: ", selectedValue);
 			}
 			console.log("selected value AFTER IF: ", selectedValue);
-			console.log("inside of timeout function should be called every 15s");
+			//console.log("inside of timeout function should be called every 15s");
 			socket.emit('first update roomList', {intervalID: intervalID, selectedValue: selectedValue});
 			
 		}, TIMER_TRIGGER_TIME); //every 15 or so secs
 		
-	});
+	}); //<-- is used for ALL updated lobbys when first room created? */
 	
 	socket.on('load roomlist', function(rooms) {
 		console.log("inside load roomlist");
@@ -469,26 +504,43 @@ $(document).ready(function(){
 		
 		roomlist.empty();
 		console.log("amount of rooms: ", rooms.length);
-		
-		var createdStr = "";
-		for(var i = 0; i < rooms.length; i++)
+		if(rooms.length > 0)
 		{
-			//for every room:
-			createdStr = getTimeDiffString(rooms[i].createdTime);
+			console.log("heja heja");
+			var createdStr = "";
+			for(var i = 0; i < rooms.length; i++)
+			{
+				//for every room:
+				createdStr = getTimeDiffString(rooms[i].createdTime);
+				
+				//&#xe033 <- this lock icon unicode didnt quite work
+				roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
+			}
+			//once all rooms loaded --- then initiate update sequence
 			
-			//&#xe033 <- this lock icon unicode didnt quite work
-			roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
+			if(intervalID == null) //otherwise assume its already running?
+			{
+				console.log("start roomlist update emitted from client here");
+				socket.emit('start roomlist update');
+			}
 		}
-		//once all rooms loaded --- then initiate update sequence
-		socket.emit('start roomlist update');
+	});
+	
+	socket.on('clear intervals', function() {
+		
+		if(intervalID != null)
+		{
+			clearInterval(intervalID);
+			intervalID = null;
+		}
 	});
 	
 	
-	socket.on('initiate individual roomlist update', function() {
+	socket.on('initiate roomlist update', function() {
 		console.log("inside of individual roomlist update");
 		
 		//check if any of the alternatives are selected, if so, get its value
-		var intervalID = setInterval(function() {
+		intervalID = setInterval(function() { //roomListUpdateIValID
 			var selectedValue = "";
 			if($('#roomlist').val())
 			{
@@ -497,7 +549,7 @@ $(document).ready(function(){
 			}
 			console.log("selected value AFTER IF: ", selectedValue);
 			console.log("inside of timeout function should be called every 15s");
-			socket.emit('individual update roomList', {intervalID: intervalID, selectedValue: selectedValue});
+			socket.emit('update roomList', {intervalID: intervalID, selectedValue: selectedValue});
 			
 		}, TIMER_TRIGGER_TIME); //every 15 or so secs
 		
@@ -515,7 +567,7 @@ $(document).ready(function(){
 		console.log("inside of room login failed");
 	});
 	
-	socket.on('update roomList for all', function(rooms) { //called every minute
+	/*socket.on('update roomList for all', function(rooms) { //called every minute
 		//clear select-option list to repaint it with ALL rooms and their respective data from scratch to be easier?
 		//loop through the roomList to recreate every single room in the list
 		console.log("inside update roomlist clientside");
@@ -537,14 +589,15 @@ $(document).ready(function(){
 			roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
 		}
 		
-	});
+	});*/
 	
-	socket.on('individual roomlist update', function(rooms) { //called every minute
+	//socket.on('individual roomlist update', function(rooms) { //called every minute
+	/*socket.on('load roomlist', function(rooms) {
 		//clear select-option list to repaint it with ALL rooms and their respective data from scratch to be easier?
 		//loop through the roomList to recreate every single room in the list
-		console.log("inside individual roomlist update clientside");
+		console.log("inside of load roomlist");
 		
-		console.log("rooms contains: ", rooms);
+		//console.log("rooms contains: ", rooms);
 		
 		//console.log("selectedValue in update roomlist for all: " + data.selectedValue);
 		
@@ -561,7 +614,7 @@ $(document).ready(function(){
 			roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
 		}
 		
-	});
+	});*/
 	
 	//could work for both creator AND client - does the same thing..?
 	socket.on('creator joins room', function(data) {
@@ -570,6 +623,7 @@ $(document).ready(function(){
 		createRoomForm.hide();
 		joinRoomForm.hide();
 		canvas.show();
+		messages.empty();
 		chat.show();
 		m.focus();
 		
@@ -593,27 +647,6 @@ $(document).ready(function(){
 		
 	});
 	
-	/*socket.on('instant interface update', function(rooms) {
-		console.log("inside instant interface update");
-		
-		console.log("rooms contains: ", rooms);
-		
-		//console.log("selectedValue in update roomlist for all: " + data.selectedValue);
-		
-		roomlist.empty();
-		console.log("amount of rooms: ", rooms.length);
-		
-		var createdStr = "";
-		for(var i = 0; i < rooms.length; i++)
-		{
-			//for every room:
-			createdStr = getTimeDiffString(rooms[i].createdTime);
-			
-			//&#xe033 <- this lock icon unicode didnt quite work
-			roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
-		}
-	});*/
-	
 	socket.on('client joins room', function(data) {
 		console.log("client joins room");
 		
@@ -624,12 +657,14 @@ $(document).ready(function(){
 		chat.show();
 		m.focus();
 		
+		messages.empty(); //in case this user was in the room previously we don't want to have them keep the chat history.
+		
 		//paint interface on canvas
 		
 		//best to paint readycheck in canvas or out of canvas?
 		
 		//append to the chat that username joined the room --- once canvas implemented etc. this is where we draw the text "awaiting opponent" I believe.
-		appendDatedMsg(messages, "Welcome " + data.username + ", you have joined your created room: " + data.room);
+		appendDatedMsg(messages, "Welcome <b>" + data.username + "</b>, you have joined your created room: <i>" + data.room + "</i>");
 		
 		//also paint the graphics necessary for when creator have joined his created room:
 		drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
@@ -655,15 +690,148 @@ $(document).ready(function(){
 	
 	socket.on('readycheck', function() {
 		//show the readycheck HTML stuff
-		readycheck.show();
+		readyCheck.show();
+		
+		if(t2 && secondClockActionIValID)
+		{
+			clearInterval(secondClockActionIValID);
+			clearTimeout(t2);
+		}
 		
 		//show a HTML progressbar for time a user got to respond
 		//store readycheck issued time serverside
 		//set a timer and if no response in that time from client -- assume its a no - send the no-event to server
+		rCheckProgressBar.attr('value', 0); //reset
+		
+		var progressBarValue = 0;
+		secondClockActionIValID = setInterval(function() {
+			
+			rCheckProgressBar.attr('value', progressBarValue);
+			progressBarValue += 1;
+			console.log("inside progressbar tick each sec");
+			
+			//socket.emit('individual update roomList', {intervalID: intervalID, selectedValue: selectedValue});
+			
+		}, 1000); //every second it should update the "ticker" and progressbar
+		
+		//somehow set t2 to null if creator or client leaves?
+		
+		t2 = setTimeout(function() {
+			clearInterval(secondClockActionIValID);
+			secondClockActionIValID = null;
+			console.log("clearing progressbar tick interval");
+			socket.emit('readycheck response', false); //if it runs out -- Give out No replies.
+			//socket.emit No Response
+			//after 1 second assume response is "No"
+		}, 62000);
+		
+		/*var t2 = setTimeout(clearMyTimer, 60000);
+		
+		function clearMyTimer() {
+			if(secondClockActionValID) 
+			{
+				clearInterval(secondClockActionValID);
+				secondClockActionValID = null;
+			}
+		}*/
+		
+		
+	});
+	
+	socket.on('a user left the room', function(username) {
+		appendDatedMsg(messages, "User: <b>" + username + "</b> have declined the readycheck and was thereby kicked out of this room.");
+	});
+	
+	socket.on('readycheck yes response given', function() {		
+		readyCheck.hide();
+		
+		//if the interval is still running I should probably stop it somehow hm..
+		if(secondClockActionIValID && t2) //if they answer before timer run out
+		{
+			clearInterval(secondClockActionIValID);
+			secondClockActionIValID = null;
+			clearTimeout(t2);
+			t2 = null;
+			console.log("clearing readycheck clock interval");
+			//socket.emit readycheck yes response
+		}
+		
+		//paint canvas accordingly..
+		
+	});
+	
+	socket.on('stop all readycheck chinanigans', function() {
+		if(secondClockActionIValID && t2)
+		{
+			clearInterval(secondClockActionIValID);
+			secondClockActionIValID = null;
+			clearTimeout(t2);
+			t2 = null;
+		}
+		readyCheck.hide();
+		
+		//paint canvas interface for a yesser (?)
+		
+	});
+	
+	socket.on('kick client from a room', function(rooms) {
+		console.log("inside of kick client from a room");
+		chat.hide();
+		createRoomForm.show();
+		joinRoomForm.show();
+		roomlist.empty();
+		console.log("amount of rooms: ", rooms.length);
+		
+		statusMsgContainer.text("Either you or opponent declined readycheck or chose to leave the room - if creator of room decline readycheck, then room got deleted and all in it kicked, if client that joined room declined readycheck, then simply that client kicked from room.").show().delay(10000).fadeOut(500);
+		
+		//load roomlist instantaneously, and then initiate update .. hmm.
+		if(rooms.length > 0) //only if there are rooms in roomList, if none, room update should occur naturally from creating the room anyways.
+		{
+			console.log("inside of if rooms.length > 0");
+			
+			var createdStr = "";
+			for(var i = 0; i < rooms.length; i++)
+			{
+				//for every room:
+				createdStr = getTimeDiffString(rooms[i].createdTime);
+				
+				//&#xe033 <- this lock icon unicode didnt quite work
+				roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
+			}
+			
+			socket.emit('start roomlist update');
+			
+		}
+		
+	});
+	
+	socket.on('roomleaving data scrubbing', function() {
+		socket.emit('roomleave data scrub');
+	});
+	
+	socket.on('prep for start of game', function() {
+		console.log("prep for start of game");
+		//paint boardPieces
+		//proper canvas message etc.
+		statusMsgContainer.text("prepping for start of game").show();
+		
+		//paint boardPieces
+		
+		
+		
+	});
+	
+	socket.on('your turn in game', function() {
+		statusMsgContainer.text("my turn in game.").show();
+		
+	});
+	
+	socket.on('opponents turn in game', function() {
+		statusMsgContainer.text("opponents turn in game.").show();
 	});
 	
 	socket.on('leaving room', function() {
-		chat.fadeOut(500);
+		chat.hide()
 		createRoomForm.show();
 		joinRoomForm.show();
 		
@@ -687,6 +855,7 @@ $(document).ready(function(){
 	
 	socket.on('stop lobby update interval', function(intervalID) {
 		clearInterval(intervalID);
+		intervalID = null;
 		console.log("cleared interval of intervalID: ", intervalID);
 	});
 	

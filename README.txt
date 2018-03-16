@@ -84,7 +84,10 @@ När ny klient kopplas in, om där finns rum skapat, som INTE är fullt ÄN - ladda 
 Next up : Fix what happens and should happen on client joining a Room from the roomList!
 - Canvas should be .show(), That a user joined should be broadcasted to everyone in the room (in this case the creator -- excluding sender so not to the person that actually joined, he gets his own welcome message either way), canvas should also be painted accordingly, --FIXED
 
-and then the ReadyCheck should be initiated -- meaning that readycheck HTML elements should be shown, and I need to work on adding event handlers for the buttons there on the clientside, also timestamp for when readyCheck was issued need to be remembered and also a timer needs to be issued for 30 seconds to respond to the readycheck - after that deal with the fallout of server-received responses if there are any that is.. Maybe set timer time to 1 minute so I myself can test the system properly since I need to move between tabs on my own computer...
+and then the ReadyCheck should be initiated -- meaning that readycheck HTML elements should be shown, and I need to work on adding event handlers for the buttons there on the clientside, also timestamp for when readyCheck was issued need to be remembered and also a timer needs to be issued for 30 seconds to respond to the readycheck ---FIXED 
+
+
+after that deal with the fallout of server-received responses if there are any that is.. Maybe set timer time to 1 minute so I myself can test the system properly since I need to move between tabs on my own computer...
 
 Deal with event on clientside: "client joined room" - append message to messages for the other client in the room. ---FIXED
 
@@ -95,6 +98,10 @@ remember to hide canvas mouseclick listeners until readycheck is over.
 when client joins a room --- check so that the activeUsersInRoom DONT exceed 2 people. ALSO Hide from roomlist INSTANTLY when a client joins... (instant update of interface) ---FIXED
 
 FCK - Fix PW joining of room - so the logic is same as for Non-PW rooms!
+
+Swedish chars not allowed in lobbyname selection hm... well thats fine I think
+
+remove existing timers if there are any for when client joins a room!
 
 L:560 creator joins room
 L:590 = client joins room
