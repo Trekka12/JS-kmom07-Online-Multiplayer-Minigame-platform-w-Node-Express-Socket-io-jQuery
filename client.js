@@ -26,8 +26,13 @@ $(document).ready(function(){
 	const MAX_LOBBYNAME_CHARS = 20;
 	
 	//global RegEx patterns used throughout client.js
-	const azAZ09regex = /^[a-zA-Z0-9]+$/;
-	const azAZ09inclWS = /^([a-zA-Z0-9\s]+)$/; //check so this one works.
+	//swedish unicode chars to use for regex to use swedish chars for roomname and username:
+	//\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6
+	
+	//const azAZ09regex = /^[a-zA-Z0-9]+$/;
+	//const azAZ09inclWS = /^([a-zA-Z0-9\s]+)$/; //check so this one works.
+	const azAZ09regex = /^[a-zA-Z0-9\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6]+$/;
+	const azAZ09inclWS = /^([a-zA-Z0-9\s\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6]+)$/; //check so this one works.
 	
 	//global client var declaration
 	var roomToLoginTo = -1; //used to keep track of what room client is currently in
