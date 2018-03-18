@@ -35,6 +35,7 @@ $(document).ready(function(){
 	var usernameRegSection = $('#usernameRegSection');
 	var usernameField = $('#username');
 	var nickRegStatusMsg = $('#nickRegStatusMsg');
+	var titleText = $('#title');
 	var createRoomForm = $('#createRoomForm');
 	var lobbyNameField = $('#lobbyName');
 	var pwField = $('#pw');
@@ -418,7 +419,7 @@ $(document).ready(function(){
 	
 	
 	//adjust this response handle to be more "endproduct" suited (infinite clients should be able to connect - however joining a room is a different story - only allow for 2 clients in there...
-	socket.on('user registered', function(data) {
+	socket.on('user registered', function(username) {
 		console.log("inside of user registered.");
 		
 		//what should happen on the clientside if user is registered for the endproduct of the project?: Well, that a user is successfully registered needs to be kept track of... maybe?, usernameRegForm need to be hidden, createdRoomForm and joinRoomForm need to be shown, somehow user should get a interface message that registration was successful
@@ -430,6 +431,8 @@ $(document).ready(function(){
 		createRoomForm.show();
 		joinRoomForm.show();
 		lobbyNameField.focus();
+		
+		titleText.append("Welcome to TicTacToe online Multiplayer gaming portal <span id='usernameColor'>" + username + "</span>");
 		
 	});
 	
@@ -550,6 +553,7 @@ $(document).ready(function(){
 		
 		createRoomForm.hide();
 		joinRoomForm.hide();
+		titleText.hide();
 		canvas.show();
 		boardPieces.hide();
 		messages.empty();
@@ -582,6 +586,7 @@ $(document).ready(function(){
 		roomLogin.hide();
 		createRoomForm.hide();
 		joinRoomForm.hide();
+		titleText.hide();
 		canvas.show();
 		boardPieces.hide();
 		messages.empty();

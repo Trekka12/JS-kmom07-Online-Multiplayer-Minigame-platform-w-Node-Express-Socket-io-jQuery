@@ -629,7 +629,7 @@ io.on('connection', function(socket) {
 						//or determine who should start here already?
 						//RNG between 0 & 1 -> index for player response that holds player names
 						//if for example response 0 got to start, then I can broadcast to all in room EXCEPT this socket, if response 1 got to start - broadcast to this socket to get to start simple -- keep track of starting player as well in roomList?
-						var startingPlayer = randomize(0,1);
+						var startingPlayer = funcs.randomize(0,1);
 						console.log("startingPlayer is response: ", startingPlayer);
 						
 						var startingPlayerUsername = activeFullRoomsList[roomIndex].readycheck[startingPlayer].user;
@@ -769,7 +769,7 @@ io.on('connection', function(socket) {
 					//or determine who should start here already?
 					//RNG between 0 & 1 -> index for player response that holds player names
 					//if for example response 0 got to start, then I can broadcast to all in room EXCEPT this socket, if response 1 got to start - broadcast to this socket to get to start simple -- keep track of starting player as well in roomList?
-					var startingPlayer = randomize(0,1);
+					var startingPlayer = funcs.randomize(0,1);
 					console.log("startingPlayer is response: ", startingPlayer);
 					
 					var startingPlayerUsername = activeFullRoomsList[roomIndex].readycheck[startingPlayer].user;
@@ -1017,6 +1017,10 @@ io.on('connection', function(socket) {
 				socket.to(socket.room).emit('draw lose', {winCells: uniqueWinCells, boardGrid: activeFullRoomsList[roomIndex].boardGrid}); //on a lost game, increment total game counter
 				
 				gameOver = true;
+				
+				//what to do once a win registered serverside:
+				
+				
 				
 				//the only thing that separates draw win and draw lose really is the plack text... oh well
 			}else if(winstats[0].player != 0 && zeroCounter == 0) { //else if no boardPieces left and no winner, paint a draw FOR BOTH
@@ -1402,6 +1406,6 @@ function getClientIndex(clientID) {
 	return clientIndex;
 }
 
-function randomize(min, max) { //random(min, max) {
+/*function randomize(min, max) { //random(min, max) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+}*/

@@ -35,31 +35,35 @@
 		<p><b>Players NOT (yet) in a room: </b><span id="notYetInRoom">9</span></p>
 	</div>-->
 
-	<form id="createRoomForm">
-		<!-- Chat room name, PW input field (if empty no PW used - no asking of PW when entering room..), create room button -->
-		<input type="text" id="lobbyName" placeholder="Lobbyname here" autocomplete="off" required /><label>*</label> <!-- if empty name it room1? etc. counter on server side? to keep track of amounts of created rooms -->
-		<input type="password" id="pw" placeholder="password" />
-		<button id="createRoomBtn">Create Room</button>
-		
-		
-		<div id="siteStatsArea">
-			<p><b>Connected total players: </b><span id="totalConnected">15</span></p>
-			<p><b>Players NOT in a room: </b><span id="notYetInRoom">9</span></p>
-		</div>
-	</form>
+	<div id="mainScreen">
+	
+		<h1 id="title"></h1>
+		<form id="createRoomForm">
+			<!-- Chat room name, PW input field (if empty no PW used - no asking of PW when entering room..), create room button -->
+			<input type="text" id="lobbyName" placeholder="Lobbyname here" autocomplete="off" required /><label>*</label> <!-- if empty name it room1? etc. counter on server side? to keep track of amounts of created rooms -->
+			<input type="password" id="pw" placeholder="password" />
+			<button id="createRoomBtn">Create Room</button>
+			
+			
+			<div id="siteStatsArea">
+				<p><b>Connected total players: </b><span id="totalConnected">15</span></p>
+				<p><b>Players NOT in a room: </b><span id="notYetInRoom">9</span></p>
+			</div>
+		</form>
 
-	<form id="joinRoomForm">
-		<!-- select-option list with game room name, and how long ago created, then I just gotta figure out how to join -- store the room data on serverside. -->
-		<select size="8" id="roomlist">
-			<!-- Populate options via JS when loading / updating created games list 
-			<option></option>
-			<option></option>
-			<option></option>
-			<option></option>-->
-		</select>
-		<button id="joinRoomBtn">Join room</button>
-	</form>
-	<div class="clearfix"></div>
+		<form id="joinRoomForm">
+			<!-- select-option list with game room name, and how long ago created, then I just gotta figure out how to join -- store the room data on serverside. -->
+			<select size="8" id="roomlist">
+				<!-- Populate options via JS when loading / updating created games list 
+				<option></option>
+				<option></option>
+				<option></option>
+				<option></option>-->
+			</select>
+			<button id="joinRoomBtn">Join room</button>
+		</form>
+		<div class="clearfix"></div>
+	</div>
 	
 	<div id="roomLogin">
 		<form id="roomLoginForm">
@@ -107,7 +111,8 @@
 
 
 <script src="/socket.io/socket.io.js" type="text/javascript"></script>
-<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<!--<script src="https://code.jquery.com/jquery-1.11.1.js"></script>-->
+<script src="/js/scripts/jquery-1.11.1.js"></script>
 <script src="/js/projectFunctions.js" type="text/javascript"></script>
 <script src="/client.js" type="text/javascript"></script>
 
