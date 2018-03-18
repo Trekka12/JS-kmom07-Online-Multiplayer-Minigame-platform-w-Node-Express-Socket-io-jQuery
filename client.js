@@ -16,6 +16,9 @@ $(document).ready(function(){
 	const TYPING_TIMER_LENGTH = 400; //ms
 	const TIMER_TRIGGER_TIME = 15000; //ms = 15s
 	const GAME_TURN_TIME = 15000;
+	const READYCHECK_TIME = 30000;
+	const SECOND = 1000;
+	
 	
 	const MIN_USERNAME_CHARS = 2;
 	const MAX_USERNAME_CHARS = 25;
@@ -39,6 +42,8 @@ $(document).ready(function(){
 	var createRoomForm = $('#createRoomForm');
 	var lobbyNameField = $('#lobbyName');
 	var pwField = $('#pw');
+	var wonGames = $('#winGames');
+	var avgGameTime = $('#avgGameTimeNmbr');
 	var siteStatsArea = $('#siteStatsArea');
 	var totalConnectedUsers = $('#totalConnected');
 	var notYetInRoomUsers = $('#notYetInRoom');
@@ -431,6 +436,8 @@ $(document).ready(function(){
 		createRoomForm.show();
 		joinRoomForm.show();
 		lobbyNameField.focus();
+		//wonGames.text('');
+		//avgGameTime.text('');
 		
 		titleText.append("Welcome to TicTacToe online Multiplayer gaming portal <span id='usernameColor'>" + username + "</span>");
 		
@@ -532,6 +539,17 @@ $(document).ready(function(){
 			socket.emit('update roomList', selectedValue); //{intervalID: intervalID, selectedValue: selectedValue});
 			
 		}, TIMER_TRIGGER_TIME); //every 15 or so secs
+		
+	});
+	
+	socket.on('update gameStatsArea', function(gameStats) {
+		/*
+			var wonGames = $('#winGames');
+			var avgGameTime = $('#avgGameTimeNmbr');
+		*/
+		
+		wonGames.text(gameStats.wonGames + "/" + gameStats.totalGames);
+		avgGameTime.text(gameStats.avgGameTime + "s");
 		
 	});
 	
@@ -648,7 +666,7 @@ $(document).ready(function(){
 			
 			//socket.emit('individual update roomList', {intervalID: intervalID, selectedValue: selectedValue});
 			
-		}, 1000); //every second it should update the "ticker" and progressbar
+		}, SECOND); //every second it should update the "ticker" and progressbar
 		
 		//somehow set t2 to null if creator or client leaves?
 		
@@ -659,18 +677,7 @@ $(document).ready(function(){
 			socket.emit('readycheck response', false); //if it runs out -- Give out No replies.
 			//socket.emit No Response
 			//after 1 second assume response is "No"
-		}, 62000);
-		
-		/*var t2 = setTimeout(clearMyTimer, 60000);
-		
-		function clearMyTimer() {
-			if(secondClockActionValID) 
-			{
-				clearInterval(secondClockActionValID);
-				secondClockActionValID = null;
-			}
-		}*/
-		
+		}, READYCHECK_TIME + 2000); //+2000 because takes 2s to get started give or take
 		
 	});
 	
@@ -700,7 +707,7 @@ $(document).ready(function(){
 		roomlist.empty();
 		console.log("amount of rooms: ", rooms.length);
 		
-		statusMsgContainer.text("Either you or opponent declined readycheck or chose to leave the room - if creator of room decline readycheck, then room got deleted and all in it kicked, if client that joined room declined readycheck, then simply that client kicked from room.").show().delay(10000).fadeOut(500);
+		statusMsgContainer.text("Either you or opponent declined readycheck or chose to leave the room or the game was won - if creator of room decline readycheck, then room got deleted and all in it kicked - same goes for finishing a game, if client that joined room declined readycheck, then simply that client kicked from room.").show().delay(10000).fadeOut(500);
 		
 		//load roomlist instantaneously, and then initiate update .. hmm.
 		if(rooms.length > 0) //only if there are rooms in roomList, if none, room update should occur naturally from creating the room anyways.
@@ -718,7 +725,6 @@ $(document).ready(function(){
 			}
 			
 			socket.emit('start roomlist update');
-			
 		}
 		
 	});
@@ -763,16 +769,13 @@ $(document).ready(function(){
 			return false;
 		}
 		
-		
-		
-		
-		
-		
 	});
 	
 	socket.on('your turn in game', function() {
 		console.log("inside of your turn in game");
 		//statusMsgContainer.text("my turn in game.").show();
+		//gameClockElem.show();
+		gameClockElem.css('visibility', 'visible');
 		
 		//clear canvas
 		//paint plack
@@ -834,19 +837,20 @@ $(document).ready(function(){
 				canvas.off(eventName); //detach event listener if hit was made (see if this works)
 			}
 			
-			gameClockElem.hide();
+			//gameClockElem.hide();
+			gameClockElem.css('visibility', 'hidden');
 			
 			return false;
 		});
 		
-		var countdownTime = GAME_TURN_TIME/1000 -1; //does it work to give const value to a var? check this //-1 because it first triggers after 1 second 14 +1 = 15 = 15s turn
+		var countdownTime = GAME_TURN_TIME/1000 -1; //-1 because it first triggers after 1 second 14 +1 = 15 = 15s turn
 		gameClockElem.text("Time left on turn: 15");
 		gameClock = setInterval(function() {
 			//every second our "gameClock should be updated
 			console.log("inside of gameClock ticking every second");
 			gameClockElem.text("Time left on turn: " + countdownTime);
 			countdownTime -= 1;
-		}, 1000);
+		}, SECOND);
 		
 		gameTurnTimer = setTimeout(function() {
 			//what should happen after 15s?
@@ -854,7 +858,8 @@ $(document).ready(function(){
 			//clearInterval(gameClock);
 			//gameClock = null;
 			//socket.emit switch turn -- hmm...
-			gameClockElem.hide();
+			//gameClockElem.hide();
+			gameClockElem.css('visibility', 'hidden');
 			socket.emit('register tictactoe move', -1); //either on 15s but then I want to send move data to serv.. fml...
 			canvas.off(eventName); //detach event listener if timer runs out
 			
@@ -873,16 +878,12 @@ $(document).ready(function(){
 		
 		//and rest is just to wait until "your turn" I suppose
 		
-		
-		
 	});
 	
-	//socket.on('paint move', function(data) {
-	//	console.log("inside of paint move");
-		//data contains: boardPiece "x" or "o" and cellHit
-	//	paintXO(ctx, data.boardPiece, data.cellHit, XOLineThickness, gameColors, cellPos, cellSide);
-		
-	//});
+	socket.on('set starting player', function() {
+		console.log("set starting player");
+		socket.emit('register starting player');
+	});
 	
 	socket.on('paint moves', function(movesArray) {
 		console.log("inside of paint moves");
@@ -908,14 +909,6 @@ $(document).ready(function(){
 	});
 	
 	
-	/*
-		var yourBoardPiecesStartingValue = 4;
-		var opponentBoardPiecesStartingValue = 4;
-		
-		var yourBoardPiecesLeft = null;
-		var opponentBoardPiecesLeft = null;
-	*/
-	
 	socket.on('setYourBoardPiecesValue', function() {
 		console.log("inside of setYourBoardPiecesValue");
 		yourBoardPiecesStartingValue = 5; //starting player always have 1 more piece than other player
@@ -932,13 +925,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('boardPieces paintout', function() {
-		var textString = '';
-		
-		
-		/*
-			yourBoardPiecesStartingValue + ", and opponentBoardPiecesStartingValue holds: " + opponentBoardPiecesStartingValue
-		*/
-		
+		var textString = '';		
 		
 		textString += '<b>Your board pieces:</b> [';
 		if(yourBoardPiecesStartingValue == 5)
@@ -1080,7 +1067,6 @@ $(document).ready(function(){
 		opponentPieces.text('');
 		opponentPieces.append(textString);
 		
-		
 	});
 	
 	socket.on('draw lose', function(data) {
@@ -1154,12 +1140,53 @@ $(document).ready(function(){
 		}
 	});
 	
+	socket.on('update wins', function() {
+		console.log("inside of update wins clientside");
+		socket.emit('updating wins');
+	});
+	
+	socket.on('update total games', function() {
+		console.log("inside of update total games clientside");
+		socket.emit('updating total games');
+	});
+	
+	socket.on('update avg game time', function(gameTime) {
+		console.log("inside of update avg game time clientside");
+		socket.emit('updating avg game time', gameTime);
+	});
+	
 	socket.on('leaving room', function() {
 		console.log("inside of leaving room");
 		chat.hide()
 		createRoomForm.show();
 		joinRoomForm.show();
 		
+	});
+	
+	socket.on('ending game procedure', function() {
+		console.log("inside of ending game procedure clientside");
+		var countdownTime = 10; //-1 because it first triggers after 1 second 14 +1 = 15 = 15s turn
+		gameClockElem.text("You will be returned to create/join lobby room in: " + countdownTime).css('visibility', 'visible');
+		gameClock = setInterval(function() {
+			//every second our "gameClock should be updated
+			console.log("inside of gameClock ticking every second");
+			gameClockElem.text("You will be returned to create/join lobby room in: " + countdownTime);
+			countdownTime -= 1;
+		}, SECOND);
+		
+		gameTurnTimer = setTimeout(function() {
+			//what should happen after 15s?
+			//clear gameClock interval
+			//clearInterval(gameClock);
+			//gameClock = null;
+			//socket.emit switch turn -- hmm...
+			//gameClockElem.hide();
+			gameClockElem.hide()
+			socket.emit('now we leave game');
+			//socket.emit('register tictactoe move', -1); //either on 15s but then I want to send move data to serv.. fml...
+			//canvas.off(eventName); //detach event listener if timer runs out
+			
+		}, 10*SECOND);
 	});
 	
 	socket.on('load existing rooms on connect', function(rooms) {

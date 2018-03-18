@@ -8,6 +8,7 @@ var roomList = []; //store count of activeClientsInSpecificRoom to see when its 
 var activeFullRoomsList = []; //track rooms when they are "removed" from roomList and thereby roomList update
 var clientList = [];
 var firstRoomCreated = false;
+var movesCounter = 0;
 const winCombos = {	1: [1,2,3],
 					2: [4,5,6],
 					3: [7,8,9],
@@ -116,7 +117,8 @@ io.on('connection', function(socket) {
 							lastMessageSent: 0,
 							lastMessage: "",
 							game: {movesMade: 0, boardPiece: "", startingPlayer: false, currentMoveMaker: false},
-							gameStats: {wonGames: 0, totalGames: 0, avgGameTime: 0}});
+							gameStats: {wonGames: 0, totalGames: 0, avgGameTime: 0},
+							gameTimes: []});
 							
 		var clientIndex = getClientIndex(socket.cid);
 		console.log("clientList[" + clientIndex + "]: ", clientList[clientIndex]);
@@ -202,7 +204,8 @@ io.on('connection', function(socket) {
 						createdTime: clientList[clientIndex].createdRoom.createdTime,
 						readycheck: [],
 						startingPlayerCID: -1,
-						boardGrid: [0,0,0,0,0,0,0,0,0]}); //,
+						boardGrid: [0,0,0,0,0,0,0,0,0],
+						movesMade: 0}); //,
 						//playerMovesLeft = {p1: 5, p2: 4}}); //try this first
 						
 						//do I need creator in this?
@@ -664,7 +667,7 @@ io.on('connection', function(socket) {
 							socket.emit('opponents turn in game');
 							
 							//starting the game I have to keep track of how all the pieces on the board for the game are moving alltogether for both sockets, as well as for every socket? - 2 sets of boardPiece arrays to track board movements?
-							
+							socket.to(socket.room).emit('set starting player');
 							
 						}else if(startingPlayer == 1)
 						{
@@ -683,6 +686,9 @@ io.on('connection', function(socket) {
 							
 							socket.emit('your turn in game');
 							socket.to(socket.room).emit('opponents turn in game');
+							
+							clientList[clientIndex].game.startingPlayer = true;
+							
 							//for every turn in the game attach canvas mouseclick listener (correct it so it works in this implementation), then once a move is done --- submit move to server - store it serverside for room and maybe even for socket, on clientside paint the move/update canvas with the move, and pass the turn to other player and also paint for that - waiting on opponent -- dont forget to attach timer fuckers for each move turn oh gawd I facking hate timers in JS...
 							
 						}
@@ -801,6 +807,8 @@ io.on('connection', function(socket) {
 						
 						//starting the game I have to keep track of how all the pieces on the board for the game are moving alltogether for both sockets, as well as for every socket? - 2 sets of boardPiece arrays to track board movements?
 						
+						//set other sockets startingplayer to true
+						socket.to(socket.room).emit('set starting player');
 						
 					}else if(startingPlayer == 1)
 					{
@@ -815,6 +823,8 @@ io.on('connection', function(socket) {
 						io.in(socket.room).emit('boardPieces paintout');
 						socket.emit('your turn in game');
 						socket.to(socket.room).emit('opponents turn in game');
+						
+						clientList[clientIndex].game.startingPlayer = true;
 						//for every turn in the game attach canvas mouseclick listener (correct it so it works in this implementation), then once a move is done --- submit move to server - store it serverside for room and maybe even for socket, on clientside paint the move/update canvas with the move, and pass the turn to other player and also paint for that - waiting on opponent -- dont forget to attach timer fuckers for each move turn oh gawd I facking hate timers in JS...
 						
 					}					
@@ -862,6 +872,12 @@ io.on('connection', function(socket) {
 		}
 	});
 	
+	socket.on('register starting player', function() {
+		var clientIndex = getClientIndex(socket.cid);
+		
+		clientList[clientIndex].game.startingPlayer = true;
+	});
+	
 	
 	socket.on('roomleave data scrub', function() {
 		var clientIndex = getClientIndex(socket.cid);
@@ -880,6 +896,8 @@ io.on('connection', function(socket) {
 		
 		io.in('connected').emit('update siteStatsArea', clientList); //should happen for both creator and client once reaches this point cuz at this point both that was in room should have left the room..
 		
+		socket.emit('update gameStatsArea', clientList[clientIndex].gameStats);
+		
 	});
 	
 	
@@ -895,7 +913,7 @@ io.on('connection', function(socket) {
 		//clientList.activeRoom should provide us with that..
 		console.log("inside of register tictactoe move");
 		
-		
+		var clientIndex = getClientIndex(socket.cid);
 		
 		socket.emit('clear game timers');
 		
@@ -912,6 +930,7 @@ io.on('connection', function(socket) {
 		
 		console.log("boardGrid with pieces placed: ", activeFullRoomsList[roomIndex].boardGrid);
 		
+		var gameOver = false;
 		if(cellHit != -1)
 		{
 			console.log("cellHit was not -1 - aka an actual hit!");
@@ -939,6 +958,9 @@ io.on('connection', function(socket) {
 			}
 			console.log("move was added to boardGrid");
 			
+			clientList[clientIndex].game.movesMade += 1;
+			
+			
 			//check win here?
 			var winstats = funcs.checkWin(activeFullRoomsList[roomIndex].boardGrid);
 			for(var i = 0; i < winstats.length; i++)
@@ -960,9 +982,9 @@ io.on('connection', function(socket) {
 			}
 			console.log("zeroCounter = " + zeroCounter);
 			
-			var gameOver = false;
 			
-			if(winstats[0].player != 0 && zeroCounter > 0) //if a winner actually exists
+			
+			if(winstats[0].player != 0) //wins can happen when zeroCounter is 0 as well && zeroCounter > 0) //if a winner actually exists
 			//there are wins even with only 4 moves -- check if zeroCounter accounts for this
 			{
 				console.log("winner detected");
@@ -1019,15 +1041,74 @@ io.on('connection', function(socket) {
 				gameOver = true;
 				
 				//what to do once a win registered serverside:
+				//add player winstats here to other connected client and update both total games
+				socket.emit('update wins');
+				io.in(socket.room).emit('update total games');
 				
+				//for the Avg time I need a Date object to compare it to
+				var winTimestamp = Date.now();
+				var gameTime = winTimestamp - activeFullRoomsList[roomIndex].createdTime;
+				console.log("gameTime = " + gameTime); //in the update avg game time event - have to convert it to seconds.. possibly minutes and seconds...
+				
+				io.in(socket.room).emit('update avg game time', gameTime); //add all times to clientList.games.time array and divide by the length
+				
+				//after drawn the win stuff, fixed the logics, we wanna return player to main screen
+				//win basically means destroy the room and go back to main page, now we would love to have timer show up for 10 seconds, with realtime countdown and everything, letting them know they will be returned to main screen within that time
+				//so I take it back, still some logics to fix:
+				
+				//remember the following logic will apply to ALL scenarios of gameOver = true;
+				//start by showing the darndest clock?
+				io.in(socket.room).emit('ending game procedure');
+				
+				//activeFullRoomsList.splice(roomIndex, 1);
 				
 				
 				//the only thing that separates draw win and draw lose really is the plack text... oh well
-			}else if(winstats[0].player != 0 && zeroCounter == 0) { //else if no boardPieces left and no winner, paint a draw FOR BOTH
+			}else if(winstats[0].player == 0 && zeroCounter == 0) { //else if no boardPieces left and no winner, paint a draw FOR BOTH
 				console.log("draw detected"); //total games incremented for clients, easy for socket.emit (this socket) - for other client can send emit event to clientside "increment total games" and get backt o serverside to increment total games counter..
 				io.in(socket.room).emit('draw draw', activeFullRoomsList[roomIndex].boardGrid); //paint as always but change placktext again..
 				
 				gameOver = true;
+				
+				io.in(socket.room).emit('update total games');
+				
+				var gameTimstamp = Date.now();
+				var gameTime = gameTimestamp - activeFullRoomsList[roomIndex].createdTime;
+				console.log("gameTime = " + gameTime); //in the update avg game time event - have to convert it to seconds.. possibly minutes and seconds...
+				
+				io.in(socket.room).emit('update avg game time', gameTime);
+				
+				io.in(socket.room).emit('ending game procedure');
+				
+				//activeFullRoomsList.splice(roomIndex, 1);
+				
+				//if draw total games should still increment for both clients
+				//can easily be done for this specific socket, but for the other one a call to client first to then contact server for special event to increment total games has to be made
+				
+				
+			}else if((clientList[clientIndex].game.startingPlayer && clientList[clientIndex].game.movesMade == 5 && winstats[0].player == 0 && zeroCounter > 0) || (!clientList[clientIndex].game.startingPlayer && clientList[clientIndex].game.movesMade == 4 && winstats[0].player == 0 && zeroCounter > 0)) { //player ran out of moves, declare opponent the winner, and shamelly announce lose
+				
+				//win either way if win detected or not
+				socket.to(socket.room).emit('draw win', {winCells: uniqueWinCells, boardGrid: activeFullRoomsList[roomIndex].boardGrid});
+				socket.emit('draw lose', {winCells: uniqueWinCells, boardGrid: activeFullRoomsList[roomIndex].boardGrid});
+				
+				//add player winstats here to other connected client and update both total games
+				socket.to(socket.room).emit('update wins');
+				io.in(socket.room).emit('update total games');
+				
+				//for the Avg time I need a Date object to compare it to
+				var winTimestamp = Date.now();
+				var gameTime = winTimestamp - activeFullRoomsList[roomIndex].createdTime;
+				console.log("gameTime = " + gameTime); //in the update avg game time event - have to convert it to seconds.. possibly minutes and seconds...
+				
+				io.in(socket.room).emit('update avg game time', gameTime); //add all times to clientList.games.time array and divide by the length
+				
+				gameOver = true;
+				
+				io.in(socket.room).emit('ending game procedure');
+				
+				//activeFullRoomsList.splice(roomIndex, 1);
+				
 				
 			}else {
 				//if no win, no lose, no draw:
@@ -1043,11 +1124,9 @@ io.on('connection', function(socket) {
 			
 			//remember this shit should NOT happen if A WIN, A LOSE, or A DRAW --- only otherwise
 		
-		
-			clientList[socket.cid].game.movesMade += 1;
-		
-			//io.in(activeFullRoomsList[roomIndex].name).emit('update boardPieces', activeFullRoomsList[roomIndex].playerMovesLeft);
+		}else {
 		}
+		//activeFullRoomsList[roomIndex].movesMade += 1; //even the no moves count as moves (forfeit moves if timer runs out..
 		
 		if(gameOver == false)
 		{
@@ -1062,6 +1141,92 @@ io.on('connection', function(socket) {
 			}
 		}
 		//clientList.current = true; <- if it is, that means it should be set to false and the other client in the room should have "your turn" while this one gets "opponents turn" genius?
+		
+	});
+	
+	socket.on('updating wins', function() {
+		console.log("inside of updating wins serverside");
+		var clientIndex = getClientIndex(socket.cid);
+		
+		clientList[clientIndex].gameStats.wonGames += 1;
+	});
+	
+	socket.on('updating total games', function() {
+		console.log("inside of updatig total games serverside");
+		
+		var clientIndex = getClientIndex(socket.cid);
+		
+		clientList[clientIndex].gameStats.totalGames += 1;
+	});
+	
+	socket.on('updating avg game time', function(gameTime) {
+		console.log("inside of updating avg game time serverside");
+		//add all times to clientList.games.time array and divide by the length
+		var clientIndex = getClientIndex(socket.cid);
+		
+		clientList[clientIndex].gameTimes.push(gameTime);
+		
+		var avgGameTimeSum = 0;
+		for(var i = 0; i < clientList[clientIndex].gameTimes.length; i++)
+		{
+			avgGameTimeSum += clientList[clientIndex].gameTimes[i]/1000; //make ms into s
+		}
+		avgGameTimeSum = Math.floor(avgGameTimeSum / clientList[clientIndex].gameTimes.length);
+		
+		clientList[clientIndex].gameStats.avgGameTime = avgGameTimeSum;
+	});
+	
+	socket.on('now we leave game', function() {
+		//after drawn the win stuff, fixed the logics, we wanna return player to main screen
+		//win basically means destroy the room and go back to main page, now we would love to have timer show up for 10 seconds, with realtime countdown and everything, letting them know they will be returned to main screen within that time
+		//so I take it back, still some logics to fix:
+		
+		//every socket will reach this point
+		console.log("inside of ending game procedure serverside");
+		
+		var clientIndex = getClientIndex(socket.cid);
+		
+		console.log("clientIndex = " + clientIndex);
+		console.log("socket.cid: ", socket.cid);
+		
+		console.log("activeFullRoomsList contains: ", activeFullRoomsList);
+		console.log("clientList[socket.cid].activeRoom = ", clientList[socket.cid].activeRoom);
+		
+		//get activeFullRoomsList specific roomIndex
+		var roomIndex = -1;
+		for(var i = 0; i < activeFullRoomsList.length; i++) //prepare for more than 1 activeFullRoom in that list..
+		{
+			if(activeFullRoomsList[i].name == clientList[socket.cid].activeRoom)
+			{
+				roomIndex = i;
+			}
+		}
+		
+		console.log("roomIndex printout in now we leave game: ", roomIndex);
+		console.log("activeFullRoomsList[roomIndex] contains: ", activeFullRoomsList[roomIndex]);
+		
+		//if creator of the room, clear created room data activeFullRoomsList[roomIndex]
+		if(clientList[clientIndex].createdRoom.name == activeFullRoomsList[roomIndex].name)
+		{
+			clientList[clientIndex].createdRoom.name = "";
+			clientList[clientIndex].createdRoom.pw = "";
+			clientList[clientIndex].createdRoom.createdTime = 0;
+			clientList[clientIndex].createdRoom.activeRoom = "";
+			clientList[clientIndex].createdRoom.roomActive = false;
+		}
+		
+		
+		socket.emit('kick client from a room', roomList);
+		
+		if(roomList.length == 0)
+		{
+			console.log("send out a beacon to clear all intervals on room leave if no more created rooms.");
+			io.in(socket.room).emit('clear intervals');
+			firstRoomCreated = false;
+		}
+		
+		socket.emit('roomleaving data scrubbing');
+		
 		
 	});
 	
