@@ -1,3 +1,5 @@
+var exports = exports || {}; //thank you earendel from ##javascript @ IRC
+
 function appendDatedMsg(el, str) {
 			var date = new Date();
 			el.append($('<li>').append(date.toLocaleTimeString() + " | " + str));
@@ -70,55 +72,76 @@ function drawBackground(ctx, w, h, color) {
 	ctx.fillRect(0,0,w,h);
 }
 
-function resetGameGraphics() {
+function resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide) {
 	//repaint background, plack (no text or with text?), and base foundation no pieces added to TTTBoard
 	
 	drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
 	
-	paintGameInfoPlack();
+	paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo);
 	
-	drawTTTBoard();
+	drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 }
 
-function resetLineWidth() {
+function resetLineWidth(ctx) {
 	ctx.lineWidth = 1;
 }
 
-function paintXO(xo, cellNmbr, marked = false) {
+function drawMoves(movesArray, ctx, XOLineThickness, gameColors, cellPos, cellSide) {
+	for(var i = 1; i <= movesArray.length; i++)
+		{
+			//cellHit will be i
+			if(movesArray[i-1] == 1)
+			{
+				//paint O
+				paintXO(ctx, "o", i, XOLineThickness, gameColors, cellPos, cellSide);
+				
+			}else if(movesArray[i-1] == -1)
+			{
+				//paint X
+				paintXO(ctx, "x", i, XOLineThickness, gameColors, cellPos, cellSide);
+				
+			}//nothing should happen on 0
+		}
+}
+
+//what is it that checkWin does --- I need somehow to paint all cells BUT win cells then paint Win Cells...
+
+function paintXO(ctx, xo, cellNmbr, XOLineThickness, gameColors, cellPos, cellSide, marked = false) {
 	//to start out - paint X in first box:
 	//will need canvas context, marginleft, canvasWidth, marginTop
 	//set lineWidth, and fillStyle of the pieces.. Black & white. very standard.
 	//call respective proper paint method from within here whenever its needed (saves us from implementing ctx etc from this method directly - and instead is done indirectly from the paint methods)
 	//marked = different bgcolor for the box - overlay box before painting the lines/circle
 	//cellpos = 1-9
+	console.log("inside of paint xo");
 	
 	ctx.lineWidth = XOLineThickness;
 	
 	if(marked)
 	{
 		//paint a background color square at cellpos
-		paintMarkedCell(cellNmbr);
+		paintMarkedCell(ctx, cellNmbr, gameColors, cellPos, cellSide);
 	}
 	
 	if(xo === "x")
 	{
 		//paintX at cellpos
-		paintX(cellNmbr);
+		paintX(ctx, cellNmbr, XOLineThickness, cellPos, cellSide);
 		
 	}else if(xo === "o") //text comparison in JS is done how?
 	{
 		//paintO at cellpos
-		paintO(cellNmbr);
+		paintO(ctx, cellNmbr, XOLineThickness, cellPos, cellSide);
 		
 	}
 }
 
-function paintMarkedCell(cellNmbr) {
+function paintMarkedCell(ctx, cellNmbr, gameColors, cellPos, cellSide) {
 	ctx.fillStyle = gameColors.markedCellColor;
 	ctx.fillRect(cellPos[cellNmbr].x+1, cellPos[cellNmbr].y+1, cellSide-2, cellSide-2);
 }
 
-function paintO(cellNmbr) {
+function paintO(ctx, cellNmbr, XOLineThickness, cellPos, cellSide) {
 	//boardMargins = {} for dot-notation access to data variables
 	//drawCircle for canvas
 	ctx.lineWidth = XOLineThickness;
@@ -130,10 +153,10 @@ function paintO(cellNmbr) {
 	ctx.arc(marginLeft + cellSide/2, marginTop + cellSide/2, 40, 0, 2 * Math.PI);
 	ctx.stroke();
 	
-	resetLineWidth();
+	resetLineWidth(ctx);
 }
 
-function paintX(cellNmbr) {
+function paintX(ctx, cellNmbr, XOLineThickness, cellPos, cellSide) {
 	
 	ctx.lineWidth = XOLineThickness;
 	
@@ -154,7 +177,7 @@ function paintX(cellNmbr) {
 	
 	ctx.stroke();
 	
-	resetLineWidth();
+	resetLineWidth(ctx);
 }
 
 /*
@@ -219,8 +242,11 @@ function drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, bo
 	ctx.stroke();
 }
 
-function drawMultipleCells(cellNmbrs, marked = true) {
+function drawMultipleCells(cellNmbrs, boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide, marked = true) {
 	console.log("inside of drawMultipleCells function");
+	
+	//paintXO(ctx, xo, cellNmbr, XOLineThickness, gameColors, cellPos, cellSide, marked = false)
+	
 	for(var i = 0; i < cellNmbrs.length; i++)
 	{
 		//check pieceType for every single cell
@@ -231,18 +257,17 @@ function drawMultipleCells(cellNmbrs, marked = true) {
 		var piece = "";
 		if(player == 1)
 		{
-			piece = "x";
-			paintXO(piece, cellNmbrs[i], marked);
+			piece = "o";
+			paintXO(ctx, piece, cellNmbrs[i], XOLineThickness, gameColors, cellPos, cellSide, marked);
 		}else if(player == -1)
 		{
-			piece = "o";
-			paintXO(piece, cellNmbrs[i], marked);
+			piece = "x";
+			paintXO(ctx, piece, cellNmbrs[i], XOLineThickness, gameColors, cellPos, cellSide, marked);
 		}
-		
 	}
 }
 
-function drawPiecesExceptWinPieces(winCells) {
+function drawPiecesExceptWinPieces(winCells, boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide) {
 	//först måste denna få winCombo, sen måste den gå igenom boardGrid och göra en kopia av denne fast utan winPieces, sedan måste vi kalla på drawMultipleCells
 	//loop through boardGrid
 			
@@ -279,19 +304,19 @@ function drawPiecesExceptWinPieces(winCells) {
 		{
 			cellNmbrs[counter] = i+1; //boardGrid[i]; //this way cellNmbrs contain what cells to repaint (not wincells) - ofc I only want to repaint the cells that actually hold a mark to paint... how to distinguish this...?
 			
-			counter++;
+			counter += 1;
 		}
 	}
 	
 	console.log("Last printout before draw multiple cells, cellNmbrs contain: ", cellNmbrs);
 	
+	//drawMultipleCells(cellNmbrs, ctx, XOLineThickness, gameColors, cellPos, cellSide, marked = true)
 	
-	
-	drawMultipleCells(cellNmbrs, false);
+	drawMultipleCells(cellNmbrs, boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide, false);
 	
 }
 
-function drawWin(player, winCombo)
+/*function drawWin(player, winCombo, ctx, XOLineThickness, gameColors, cellPos, cellSide)
 {
 	var playerPiece = "";
 	if(player == 1)
@@ -304,41 +329,43 @@ function drawWin(player, winCombo)
 	
 	var cellNmbrs = [];
 	
+	//drawMultipleCells(cellNmbrs, ctx, XOLineThickness, gameColors, cellPos, cellSide, marked = true)
+	
 	switch(winCombo)
 	{
 		case 1:
-		drawMultipleCells([1,2,3]);
+		drawMultipleCells([1,2,3], ctx, XOLineThickness, gameColors, cellPos, cellSide);
 		break;
 		
 		case 2:
-		drawMultipleCells([4,5,6]);
+		drawMultipleCells([4,5,6], ctx, XOLineThickness, gameColors, cellPos, cellSide);
 		break;
 		
 		case 3:
-		drawMultipleCells([7,8,9]);
+		drawMultipleCells([7,8,9], ctx, XOLineThickness, gameColors, cellPos, cellSide);
 		break;
 		
 		case 4:
-		drawMultipleCells([1,4,7]);
+		drawMultipleCells([1,4,7], ctx, XOLineThickness, gameColors, cellPos, cellSide);
 		break;
 		
 		case 5:
-		drawMultipleCells([2,5,8]);
+		drawMultipleCells([2,5,8], ctx, XOLineThickness, gameColors, cellPos, cellSide);
 		break;
 		
 		case 6:
-		drawMultipleCells([3,6,9]);
+		drawMultipleCells([3,6,9], ctx, XOLineThickness, gameColors, cellPos, cellSide);
 		break;
 		
 		case 7:
-		drawMultipleCells([1,5,9]);
+		drawMultipleCells([1,5,9], ctx, XOLineThickness, gameColors, cellPos, cellSide);
 		break;
 		
 		case 8:
-		drawMultipleCells([3,5,7]);
+		drawMultipleCells([3,5,7], ctx, XOLineThickness, gameColors, cellPos, cellSide);
 		break;
 	}
-}
+}*/
 
 function drawTicTacToeGamescene() {
 	//draw background color:
@@ -477,7 +504,7 @@ function drawTicTacToeGamescene() {
 					Game logics funcs
 =================================================================
 */
-function getPosition(e) {
+function getPosition(e, canvasPosition) {
 	var position = {
 		x: null, y: null
 	};
@@ -491,7 +518,9 @@ function getPosition(e) {
 		}
 	}else {
 		position.x = e.pageX - canvasPosition.x;
+		console.log("position.x (inside of getPosition) = " + position.x);
 		position.y = e.pageY - canvasPosition.y;
+		console.log("position.y (inside of getPosition) = " + position.y);
 	}
 	
 	return position;
@@ -517,7 +546,8 @@ function hitZoneDetection(mx, my, boardSide, cellPos, tttBoardMarginLeft, tttBoa
 	}
 }
 
-function checkWin() {
+
+function checkWin(boardGrid) {
 	//if first three are not 0 and are of same type = win, same with second and third row,
 	//same for 1st, 2nd, 3rd vertical rows
 	//and for bottomleft-to-topright diagonal and for topleft-to-bottomright diagonal
@@ -526,7 +556,7 @@ function checkWin() {
 	//iterate through boardGrid and check for these combinations - for this must have a var to keep track of 3 pieces connected - if all match, then win
 	
 	//i could also make 8 different comparison arrays for various winscenarios, and compare the two arrays, might be quicker?
-	//for example [111000000] / [-1-1-1000000] = first win
+	//for example [111000000] / [-1-1-1000000] = first win - dont think quciker
 	
 	
 	//console.log("inside checkWin function, winCombos.length = " + winCombos.length);
@@ -558,11 +588,11 @@ function checkWin() {
 			//winComboCounter++;
 			
 			
-			/*
-				winComboArray[0] => {player: -1, wincombo: 1}
-				what remains now is checking winComboArray after this spectacle and see how many "entries" exist.
-				get cellNmbrs for each wincombo, delete duplicates, paintMarked wincells
-			*/
+			
+				//winComboArray[0] => {player: -1, wincombo: 1}
+				//what remains now is checking winComboArray after this spectacle and see how many "entries" exist.
+				//get cellNmbrs for each wincombo, delete duplicates, paintMarked wincells
+			
 			
 		}
 		
@@ -680,3 +710,46 @@ function checkWin() {
 	
 	return winComboArray;
 }
+
+
+//further "upgrade" this function to be "getArrayValueIndex(arr, needle)? or someth?
+/*function getClientIndex(clientID) {
+	var clientIndex = -1;
+	for(var i = 0; i < clientList.length; i++)
+	{
+		if(clientList[i].clientID == clientID)
+		{
+			clientIndex = i;
+		}
+	}
+	
+	return clientIndex;
+}*/
+
+function randomize(min, max) { //random(min, max) {
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function removeDuplicatesFromArray(array) {
+		var unique_array = [];
+		for(var i = 0; i < array.length; i++)
+		{
+			if(unique_array.indexOf(array[i]) == -1) 
+			{
+				unique_array.push(array[i]);
+			}
+		}
+		return unique_array;
+}
+
+//exports.getClientIndex = getClientIndex(clientID);
+exports.randomize = randomize; //no need to have input vars here, assumed to follow.
+exports.checkWin = checkWin;
+exports.removeDuplicatesFromArray = removeDuplicatesFromArray;
+
+
+// to expose what I want to be able to access from server.js
+//inspired from: https://stackoverflow.com/questions/5797852/in-node-js-how-do-i-include-functions-from-my-other-files
+
+//https://stackoverflow.com/questions/5625569/include-external-js-file-in-node-js-app
+//module.exports.checkWin = checkWin;

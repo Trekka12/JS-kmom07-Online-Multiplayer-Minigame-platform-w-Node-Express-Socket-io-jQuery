@@ -8,6 +8,17 @@ var roomList = []; //store count of activeClientsInSpecificRoom to see when its 
 var activeFullRoomsList = []; //track rooms when they are "removed" from roomList and thereby roomList update
 var clientList = [];
 var firstRoomCreated = false;
+const winCombos = {	1: [1,2,3],
+					2: [4,5,6],
+					3: [7,8,9],
+					4: [1,4,7],
+					5: [2,5,8],
+					6: [3,6,9],
+					7: [1,5,9],
+					8: [3,5,7]};
+//var boardGrid = []; //shit, multiple games means I am going to need 1 boardGrid per GAME room created... --- add it to roomlist 
+var funcs = require('./js/projectFunctions'); //thank you earendel from ##javascript @ IRC
+
 
 //my roomList need to track people entering the rooms as well - as replacement for "oneRegisteredUser" -- to determine color of the player in the room in chat once in room
 //store oneRegisteredUser as another detail variable inside of the roomList item players can join
@@ -34,6 +45,16 @@ io.on('connection', function(socket) {
 	//for(var i = 0; i < lines; i++) {
 	//	console.log('\r\n');
 	//}
+	
+	//var winArray = funcs.checkWin([0,0,0,0,0,0,0,0,0]);
+	
+	//if(winArray.player == 0)
+	//{
+	//	console.log("no win");
+	//}
+	
+	//var rndValue = funcs.randomize(0,6);
+	//console.log("rnd value: ", rndValue);
 	
 	
 	console.log("inside of connect event serverside");
@@ -68,6 +89,8 @@ io.on('connection', function(socket) {
 		socket.join('connected'); //join general "connected room" to ease the broadcasting more - on join a "real" room - leave this common "connected" room. To only receive the relevant messages
 		
 		socket.cid = clientID; // save clientID to the socket
+		//socket.emit('register clientID clientside', socket.cid);
+		
 		console.log("socket.cid = " + socket.cid);
 		
 		//IF clientID == 0 OR !clientNameExisted
@@ -91,7 +114,9 @@ io.on('connection', function(socket) {
 							activeRoom: "",
 							intervalSet: {set: false, intervalID: null},
 							lastMessageSent: 0,
-							lastMessage: ""});
+							lastMessage: "",
+							game: {movesMade: 0, boardPiece: "", startingPlayer: false, currentMoveMaker: false},
+							gameStats: {wonGames: 0, totalGames: 0, avgGameTime: 0}});
 							
 		var clientIndex = getClientIndex(socket.cid);
 		console.log("clientList[" + clientIndex + "]: ", clientList[clientIndex]);
@@ -156,10 +181,10 @@ io.on('connection', function(socket) {
 		var clientIndex = getClientIndex(socket.cid);
 		
 		//if interval is set to true when creating a room (newly connected chap - then clear the interval - no interval function running whilst in the room)
-		if(clientList[clientIndex].intervalSet.set)
-		{
-			socket.emit('stop lobby update interval', clientList[clientIndex].intervalSet.intervalID);
-		}
+		//if(clientList[clientIndex].intervalSet.set)
+		//{
+			socket.emit('stop lobby update interval'); //, clientList[clientIndex].intervalSet.intervalID);
+		//}
 		
 		clientList[clientIndex].createdRoom.name = lobbyname;
 		clientList[clientIndex].createdRoom.pw = (pwSet ? pw : "none");
@@ -176,7 +201,11 @@ io.on('connection', function(socket) {
 						activeUserNmbr: 1,
 						createdTime: clientList[clientIndex].createdRoom.createdTime,
 						readycheck: [],
-						startingPlayerCID: -1}); //do I need creator in this?
+						startingPlayerCID: -1,
+						boardGrid: [0,0,0,0,0,0,0,0,0]}); //,
+						//playerMovesLeft = {p1: 5, p2: 4}}); //try this first
+						
+						//do I need creator in this?
 						//{user: "", response: false}, {user: "", response: false}
 		console.log("roomList: ", roomList);
 		//socket.emit('created and joined room', roomTracker);
@@ -196,20 +225,8 @@ io.on('connection', function(socket) {
 		clientList[clientIndex].roomActive = true;
 		socket.emit('creator joins room', {username: clientList[clientIndex].username, room: socket.room}); //allows creator of a room to "bypass" pw-requirement whilst other users looking to join will be required to input pw.
 		
-		//socket.emit('join a room', {pwSet: pwSet, pw: pw});
-		//io.in(lobbyname).emit("user entered"); <-- send once user entered room (after pw confirmed or once joined)
-		
 		//if successful create - send update roomlist via broadcast (perhaps also to self?)
 		//somehow need to apply a setTimeout every 1s trigger timer to this event - so list can be kept updated 
-		/*socket.broadcast.emit('add to roomlist', {
-			roomname: lobbyname, pwSet: pwSet, createdTime: clientList[clientIndex].createdRoom.createdTime
-		});*/
-		/*socket.to('connected').emit('add to roomlist', {
-			roomname: lobbyname, pwSet: pwSet, createdTime: clientList[clientIndex].createdRoom.createdTime
-			
-			//wouldnt it just be enough otherwise to simply "update" the roomlist for connected clients?
-			
-		});*/
 		
 		console.log("firstRoomCreated: ", firstRoomCreated);
 		if(firstRoomCreated == false)
@@ -230,43 +247,23 @@ io.on('connection', function(socket) {
 	=================================================================
 	*/
 	
-	/*socket.on('first update roomList', function(data) {
+	socket.on('update roomList', function(selectedValue) {
 		var clientIndex = getClientIndex(socket.cid);
 		
-		clientList[clientIndex].intervalSet.set = true;
+		//clientList[clientIndex].intervalSet.set = true;
 		console.log("socket.rooms: ", socket.rooms);
 		console.log("inside update roomList serverside");
-		clientList[clientIndex].intervalSet.intervalID = data.intervalID;
-		console.log("interval ID check serverside: ", data.intervalID);
-		console.log("data contains serverside: ", data);
-		
-		io.in('connected').emit('update roomList for all', roomList); //send roomlist to all connected clients
-		
-		
-		if(data.selectedValue.length > 1)
-		{
-			console.log("sending update selected option serverside");
-			socket.emit('update selected option', data.selectedValue); //send back to client who selected option
-		}
-	});*/
-	
-	socket.on('update roomList', function(data) {
-		var clientIndex = getClientIndex(socket.cid);
-		
-		clientList[clientIndex].intervalSet.set = true;
-		console.log("socket.rooms: ", socket.rooms);
-		console.log("inside update roomList serverside");
-		clientList[clientIndex].intervalSet.intervalID = data.intervalID;
-		console.log("interval ID check serverside: ", data.intervalID);
-		console.log("data contains serverside: ", data);
+		//clientList[clientIndex].intervalSet.intervalID = data.intervalID;
+		//console.log("interval ID check serverside: ", data.intervalID);
+		//console.log("data contains serverside: ", data);
 		//socket.in('connected').broadcast.emit('update roomList for all', {rooms: roomList, selectedValue: data.selectedValue}); //should not be sent to the guy(s) inside of a chat room
 		socket.emit('load roomlist', roomList); //send roomlist to all connected clients
 		
 		
-		if(data.selectedValue.length > 1)
+		if(selectedValue.length > 1)
 		{
 			console.log("sending update selected option serverside");
-			socket.emit('update selected option', data.selectedValue); //send back to client who selected option
+			socket.emit('update selected option', selectedValue); //send back to client who selected option
 		}
 	});
 	
@@ -315,11 +312,11 @@ io.on('connection', function(socket) {
 				
 				//stop interval if it exists when a client joins a room..
 				var clientIndex = getClientIndex(socket.cid);
-				if(clientList[clientIndex].intervalSet.set) //stop interval if joining room
-				{
+				//if(clientList[clientIndex].intervalSet.set) //stop interval if joining room
+				//{
 					console.log("stopping interval on joining room");
-					socket.emit('stop lobby update interval', clientList[clientIndex].intervalSet.intervalID);
-				}
+					socket.emit('stop lobby update interval');
+				//}
 				
 				roomList[roomIndex].activeUserNmbr += 1; //should bring it up to 2 in this event
 				
@@ -389,10 +386,10 @@ io.on('connection', function(socket) {
 			
 			//stop interval if it exists when a client joins a room..
 			var clientIndex = getClientIndex(socket.cid);
-			if(clientList[clientIndex].intervalSet.set)
-			{
-				socket.emit('stop lobby update interval', clientList[clientIndex].intervalSet.intervalID);
-			}
+			//if(clientList[clientIndex].intervalSet.set)
+			//{
+			socket.emit('stop lobby update interval'); //, clientList[clientIndex].intervalSet.intervalID);
+			//}
 			
 			socket.room = roomList[data.roomindex].name;
 			console.log("client: " + clientIndex + " left connected room and joined: " + roomList[data.roomindex].name);
@@ -656,7 +653,13 @@ io.on('connection', function(socket) {
 						{
 							console.log("starting player is first readycheck responder");
 							//if first response gets to start, broadcast to all except this socket in the room (a.k.a: the client)
+							socket.to(socket.room).emit('setYourBoardPiecesValue');
+							socket.emit('setOpponentBoardPieceValue');
 							io.in(socket.room).emit('prep for start of game');
+							//io.in(socket.room).emit('boardPieces paintout');
+							socket.to(socket.room).emit('boardPieces paintout');
+							socket.emit('boardPieces paintout');
+							
 							socket.to(socket.room).emit('your turn in game');
 							socket.emit('opponents turn in game');
 							
@@ -670,7 +673,14 @@ io.on('connection', function(socket) {
 							//io.in(room).emit start the game -- to prep it with everything for both sockets?
 							//then send "personal" emit for the one currently whos turn it is
 							//I have to attach listener when its the players turn? and not when opponents turn?
+							socket.to(socket.room).emit('setOpponentBoardPieceValue');
+							socket.emit('setYourBoardPiecesValue');
 							io.in(socket.room).emit('prep for start of game');
+							//io.in(socket.room).emit('boardPieces paintout');
+							socket.to(socket.room).emit('boardPieces paintout');
+							socket.emit('boardPieces paintout');
+							
+							
 							socket.emit('your turn in game');
 							socket.to(socket.room).emit('opponents turn in game');
 							//for every turn in the game attach canvas mouseclick listener (correct it so it works in this implementation), then once a move is done --- submit move to server - store it serverside for room and maybe even for socket, on clientside paint the move/update canvas with the move, and pass the turn to other player and also paint for that - waiting on opponent -- dont forget to attach timer fuckers for each move turn oh gawd I facking hate timers in JS...
@@ -747,6 +757,7 @@ io.on('connection', function(socket) {
 				//stop all readycheck timers and chinanigans, hide readycheck and load canvas interface in wait for other - the creator
 				if(data == true)
 				{
+					//safe to assume that first response was true, otherwise this response would not reach this far...
 					console.log("second readycheck response from client was Yes");
 					socket.emit('stop all readycheck chinanigans');
 					
@@ -781,9 +792,12 @@ io.on('connection', function(socket) {
 					{
 						console.log("starting player is first readycheck responder");
 						//if first response gets to start, broadcast to all except this socket in the room (a.k.a: the client)
+						socket.to(socket.room).emit('setYourBoardPiecesValue');
+						socket.emit('setOpponentBoardPieceValue');
 						io.in(socket.room).emit('prep for start of game');
+						io.in(socket.room).emit('boardPieces paintout');
 						socket.to(socket.room).emit('your turn in game');
-						socket.emit('opponents turn in game');
+						socket.emit('opponents turn in game'); //this socket is not 0 hence socket.emit
 						
 						//starting the game I have to keep track of how all the pieces on the board for the game are moving alltogether for both sockets, as well as for every socket? - 2 sets of boardPiece arrays to track board movements?
 						
@@ -795,17 +809,15 @@ io.on('connection', function(socket) {
 						//io.in(room).emit start the game -- to prep it with everything for both sockets?
 						//then send "personal" emit for the one currently whos turn it is
 						//I have to attach listener when its the players turn? and not when opponents turn?
+						socket.to(socket.room).emit('setOpponentBoardPieceValue');
+						socket.emit('setYourBoardPiecesValue');
 						io.in(socket.room).emit('prep for start of game');
+						io.in(socket.room).emit('boardPieces paintout');
 						socket.emit('your turn in game');
 						socket.to(socket.room).emit('opponents turn in game');
 						//for every turn in the game attach canvas mouseclick listener (correct it so it works in this implementation), then once a move is done --- submit move to server - store it serverside for room and maybe even for socket, on clientside paint the move/update canvas with the move, and pass the turn to other player and also paint for that - waiting on opponent -- dont forget to attach timer fuckers for each move turn oh gawd I facking hate timers in JS...
 						
-					}
-					
-					
-					
-					
-					
+					}					
 				}else {
 					console.log("second readycheck response received from client was a No");
 					//if a no was sent:
@@ -846,12 +858,8 @@ io.on('connection', function(socket) {
 					socket.emit('kick client from a room', roomList);
 								
 				}
-				
-				
 			}
-			
 		}
-		
 	});
 	
 	
@@ -863,12 +871,6 @@ io.on('connection', function(socket) {
 			socket.leave(socket.room);
 			socket.join("connected");
 		}
-		
-		//clientList[clientIndex].activeRoom = "";
-		//clientList[clientIndex].roomActive = false;
-		
-		//socket.room = "connected";
-		//socket.roomActive = false;
 		
 		clientList[clientIndex].activeRoom = "";
 		clientList[clientIndex].roomActive = false;
@@ -886,9 +888,176 @@ io.on('connection', function(socket) {
 	=================================================================
 			Game logics emit events
 	=================================================================
-	*/
+	*/	
 	
-	socket.on('switch turn', function() {
+	socket.on('register tictactoe move', function(cellHit) {
+		//first I need to find out how I get roomIndex for the room this socket is in
+		//clientList.activeRoom should provide us with that..
+		console.log("inside of register tictactoe move");
+		
+		
+		
+		socket.emit('clear game timers');
+		
+		//get roomIndex
+		
+		var roomIndex = -1;
+		for(var i = 0; i < activeFullRoomsList.length; i++) //prepare for more than 1 activeFullRoom in that list..
+		{
+			if(activeFullRoomsList[i].name == clientList[socket.cid].activeRoom)
+			{
+				roomIndex = i;
+			}
+		}
+		
+		console.log("boardGrid with pieces placed: ", activeFullRoomsList[roomIndex].boardGrid);
+		
+		if(cellHit != -1)
+		{
+			console.log("cellHit was not -1 - aka an actual hit!");
+			for(var i = 1; i <= 9; i++) //looping through all 9 available cells
+			{
+				if(cellHit == i)
+				{
+					activeFullRoomsList[roomIndex].boardGrid[i-1] = (activeFullRoomsList[roomIndex].startingPlayerCID == socket.cid ? 1 : -1); //starting player marked with 1, other -1
+					
+					
+					//io.in(socket.room).emit('update boardPieces');
+					if(activeFullRoomsList[roomIndex].startingPlayerCID == socket.cid)
+					{
+						//activeFullRoomsList[roomIndex].playerMovesLeft.p1 -= 1; //player 1 always the starting player
+						//io.in(socket.room).emit('starting player boardPiece update');
+						io.in(socket.room).emit('boardPieces update', 1);
+						//if sending along clientID and they get "starting player" + clientID they know that Your board pieces = starting player, ergo 5 pieces, whilst same goes for not starting player + clientID = Your board pieces = 4 while opponent should have 5
+					}else
+					{
+						//activeFullRoomsList[roomIndex].playerMovesLeft.p2 -= 1;
+						//io.in(socket.room).emit('not starting player boardPiece update');
+						io.in(socket.room).emit('boardPieces update', -1);
+					}
+				}
+			}
+			console.log("move was added to boardGrid");
+			
+			//check win here?
+			var winstats = funcs.checkWin(activeFullRoomsList[roomIndex].boardGrid);
+			for(var i = 0; i < winstats.length; i++)
+			{
+				console.log("winstats: ", winstats[i]);
+			}
+			
+			
+			//count how many 0's exist in boardGrid to find out if DRAW
+			
+			//loop it through and manually count every 0 there is in it
+			var zeroCounter = 0;
+			for(var i = 0; i < activeFullRoomsList[roomIndex].boardGrid.length; i++)
+			{
+				if(activeFullRoomsList[roomIndex].boardGrid[i] == 0)
+				{
+					zeroCounter += 1;
+				}
+			}
+			console.log("zeroCounter = " + zeroCounter);
+			
+			var gameOver = false;
+			
+			if(winstats[0].player != 0 && zeroCounter > 0) //if a winner actually exists
+			//there are wins even with only 4 moves -- check if zeroCounter accounts for this
+			{
+				console.log("winner detected");
+				//io.in/activeFullRoomsList[roomIndex].name).emit('draw ');
+				
+				//calculate all winpieces cellnmbrs - ONLY if more than 1 win
+				
+				var uniqueWinCells = null; //store the unique ones that will need repainting (if 2 rows complete at win = 1 common cell)
+				if(winstats.length > 1) //if more than 1 completed row at win
+				{
+					var winCellNmbrs = [];
+					for(var i = 0; i < winstats.length; i++) //for every winrow
+					{
+						winCellNmbrs[i] = winCombos[winstats[i].wincombo]; //fetch wincells per row
+					}
+					console.log("winCellNmbrs[0]: ", winCellNmbrs[0]);
+					console.log("winCellNmbrs[1]: ", winCellNmbrs[1]);
+					
+					
+					//once we got all the cellNmbrs in 2 arrays within winCellNmbrs, somehow merge and delete duplicates
+					//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat
+					var winCellNmbrsConcat =  null;
+					
+					if(winstats.length == 2)
+					{
+						winCellNmbrsConcat = winCellNmbrs[0].concat(winCellNmbrs[1]); //merge these two win rows
+					}else if(winstats.length == 3)
+					{
+						winCellNmbrsConcat = winCellNmbrs[0].concat(winCellNmbrs[1], winCellNmbrs[2]); //merge these two win rows
+					}
+					console.log("length of concatenated winCellNmbrs arrays: " + winCellNmbrsConcat.length);
+					
+					for(var i = 0; i < winCellNmbrsConcat.length; i++) 
+					{
+						console.log("Iterated winCellNmbrs " + i + ": " + winCellNmbrsConcat[i]);
+					}
+					
+					uniqueWinCells = funcs.removeDuplicatesFromArray(winCellNmbrsConcat); //remove duplicate (common) cells from win rows
+					console.log("uniqueWinCells: ", uniqueWinCells);
+					
+				}else {
+					uniqueWinCells = winCombos[winstats[0].wincombo]; //fetch wincells per row
+					
+					console.log("single row wincell nmbrs: ", uniqueWinCells);
+				}
+				
+				//drawPiecesExceptWinPieces(winstats.winCombo);
+				
+				//we want to redraw the win pieces as marked cells here.. start by drawing what is not part of the win I think I figured:
+				
+				socket.emit('draw win', {winCells: uniqueWinCells, boardGrid: activeFullRoomsList[roomIndex].boardGrid}); //on a won game, increment wingame counter, and total game counter
+				socket.to(socket.room).emit('draw lose', {winCells: uniqueWinCells, boardGrid: activeFullRoomsList[roomIndex].boardGrid}); //on a lost game, increment total game counter
+				
+				gameOver = true;
+				
+				//the only thing that separates draw win and draw lose really is the plack text... oh well
+			}else if(winstats[0].player != 0 && zeroCounter == 0) { //else if no boardPieces left and no winner, paint a draw FOR BOTH
+				console.log("draw detected"); //total games incremented for clients, easy for socket.emit (this socket) - for other client can send emit event to clientside "increment total games" and get backt o serverside to increment total games counter..
+				io.in(socket.room).emit('draw draw', activeFullRoomsList[roomIndex].boardGrid); //paint as always but change placktext again..
+				
+				gameOver = true;
+				
+			}else {
+				//if no win, no lose, no draw:
+					console.log("paint moves called serverside");
+				io.in(socket.room).emit('paint moves', activeFullRoomsList[roomIndex].boardGrid);
+			}
+			
+			//somehow fit in here if all boardPieces are used up by one player, game over, if no win by then - paint a draw
+			
+			
+			//socket.emit paint move for both clients in the room? //change to paint moves** plural, multiple moves
+			//io.in(socket.room).emit('paint move', {boardPiece: (activeFullRoomsList[roomIndex].startingPlayerCID == socket.cid ? "o" : "x"), cellHit: cellHit});
+			
+			//remember this shit should NOT happen if A WIN, A LOSE, or A DRAW --- only otherwise
+		
+		
+			clientList[socket.cid].game.movesMade += 1;
+		
+			//io.in(activeFullRoomsList[roomIndex].name).emit('update boardPieces', activeFullRoomsList[roomIndex].playerMovesLeft);
+		}
+		
+		if(gameOver == false)
+		{
+			clientList[socket.cid].game.currentMoveMaker = true;
+			
+			if(clientList[socket.cid].game.currentMoveMaker)
+			{
+				socket.emit('opponents turn in game');
+				socket.to(socket.room).emit('your turn in game'); //activeFullRoomsList[roomIndex].name subst. for socket.room
+				io.in(socket.room).emit('paint moves', activeFullRoomsList[roomIndex].boardGrid);
+				clientList[socket.cid].game.currentMoveMaker = false;
+			}
+		}
+		//clientList.current = true; <- if it is, that means it should be set to false and the other client in the room should have "your turn" while this one gets "opponents turn" genius?
 		
 	});
 	
@@ -928,7 +1097,8 @@ io.on('connection', function(socket) {
 		}
 		
 		//only do this IF rooms in roomlist still exist.. if not, no need to do it ?
-		if(!clientList[clientIndex].intervalSet.set && roomList.length > 0) //no need to update shit if roomlist is empty
+		//if(!clientList[clientIndex].intervalSet.set && roomList.length > 0) //no need to update shit if roomlist is empty
+		if(roomList.length > 0) //no need to update shit if roomlist is empty
 		{
 			console.log("inside of initiate roomlist update");
 			console.log("roomList.length: ", roomList.length);
@@ -1113,12 +1283,7 @@ io.on('connection', function(socket) {
 			socket.emit('too fast typing');
 		}
 		
-		
-		
-		
 	});
-	
-	
 	
 	//when the client emits 'isTyping', we broadcast that to other clients
 	socket.on('isTyping', function() {
@@ -1166,9 +1331,10 @@ io.on('connection', function(socket) {
 		
 		var clientToRemoveFromClientList = getClientIndex(socket.cid);
 		
-		if(socket.userReg && clientList[clientToRemoveFromClientList].intervalSet.set)
+		//if(socket.userReg && clientList[clientToRemoveFromClientList].intervalSet.set)
+		if(socket.userReg) // && clientList[clientToRemoveFromClientList].intervalSet.set)
 		{
-			socket.emit('stop lobby update interval', clientList[clientToRemoveFromClientList].intervalSet.intervalID); //stop intervals on disconnect
+			socket.emit('stop lobby update interval'); //, clientList[clientToRemoveFromClientList].intervalSet.intervalID); //stop intervals on disconnect
 			console.log("emitting stop lobby update interval");
 		}
 		
@@ -1212,64 +1378,9 @@ io.on('connection', function(socket) {
 		}
 		
 		
-		
-		
-		
-		
-		
-		//if(clientList.length == 0)
-		//{
-		//	clientID = 0; //reset clientID counter if all clients left site
-		//}
-		
-		
 		//if disconnecting user had created a room, delete this room from all lists etc. --> if other client in said room - inform them that owner of the room disconnected, and that they will be returned to the main screen in 5 seconds.
 		
 	});
-	
-	
-	
-	
-	
-	/*socket.on('disconnect', function() {
-		console.log("user disconnected");
-		
-		//decrement clientCounter accordingly
-		if(clientCounter > 0 && socket.username)
-		{
-			clientCounter -= 1;
-			
-			//var clientIndex = clientList.indexOf(socket.username);
-			//console.log("clientIndex: ", clientIndex);
-			//to find our current user with a more "complex" user data array to scroll through, we gotta iterate through it, look for its username property to match our socket.username before we remove it
-			var clientIndex = -1;
-			for(var i = 0; i < clientList.length; i++)
-			{
-				if(clientList[i].username == socket.username)
-				{
-					clientIndex = i;
-				}
-			}
-			console.log("clientIndex: ", clientIndex);
-			if(clientList[clientIndex].userColor == "#0000ff")
-			{
-				oneRegisteredUser = false;
-			}
-			
-			if(clientIndex > -1)
-			{
-				//remove value from array with splice: https://stackoverflow.com/questions/5767325/how-do-i-remove-a-particular-element-from-an-array-in-javascript
-				clientList.splice(clientIndex, 1);
-				console.log("clientList after removal of client: ", clientList);
-			}
-		}
-		
-		//also globally echo that the client left
-		socket.broadcast.emit('userLeft', {
-			username: socket.username,
-			clientCounter: clientCounter
-		});
-	});*/
 	
 });
 

@@ -62,6 +62,9 @@ $(document).ready(function(){
 	var messages = $('#messages');
 	var m = $('#m');
 	var boardPieces = $('#boardPieces');
+	var myPieces = $('#myPieces');
+	var opponentPieces = $('#opponentPieces');
+	var gameClockElem = $('#gameClockElem');
 	
 	//timer ids
 	var secondClockActionIValID = null;
@@ -70,6 +73,7 @@ $(document).ready(function(){
 	var intervalID = null;
 	
 	var gameTurnTimer = null;
+	var gameClock = null;
 	
 	//global game vars
 	const gameColors = {	bgColor: "#1f781f",
@@ -83,7 +87,7 @@ $(document).ready(function(){
 
 	const plackInfo = {	fontSize: 35,
 						fontFamily: "sans-serif",
-						width: 500,
+						width: 600,
 						height: 50,
 						marginTop: 24};
 	
@@ -105,17 +109,17 @@ $(document).ready(function(){
 					8: {x: tttBoardMarginLeft + cellSide, 	y: tttBoardMarginTop + 2*cellSide},
 					9: {x: tttBoardMarginLeft + 2*cellSide, y: tttBoardMarginTop + 2*cellSide}};
 					
-	var boardGrid = [0,0,0,0,0,0,0,0,0]; //1 for one player, -1 for another player, 0 if empty
+	//var boardGrid = [0,0,0,0,0,0,0,0,0]; //1 for one player, -1 for another player, 0 if empty
 	
 	const winComboAmount = 8; //3 horizontal, 3 vertical, 2 diagonal = 8
-	const winCombos = {	1: [1,2,3],
+	/*const winCombos = {	1: [1,2,3],
 						2: [4,5,6],
 						3: [7,8,9],
 						4: [1,4,7],
 						5: [2,5,8],
 						6: [3,6,9],
 						7: [1,5,9],
-						8: [3,5,7]};
+						8: [3,5,7]};*/
 					
 	//console.log("cellPos 5 = x: " + cellPos[5].x + ", y: " + cellPos[5].y);
 						
@@ -123,6 +127,7 @@ $(document).ready(function(){
 							rurdy: "Room full, are you ready?",
 							ulose: "You lose.",
 							uwin: "CONGRATULATIONS, YOU WON!",
+							adraw: "It's a draw!",
 							othersmove: "Opponents is making his/hers move..",
 							mymove: "It's your move!",
 							outoftime: "You forfeit your turn to the opponent (too slow)..",
@@ -133,11 +138,20 @@ $(document).ready(function(){
 	
 	//console.log("all vars decl");
 	
-	var canvasPosition = {
-		x: canvas.offset().left,
-		y: canvas.offset().top
-	};
 	
+	
+	//var socketCID = -1;
+	
+	var yourBoardPiecesStartingValue = 4;
+	var opponentBoardPiecesStartingValue = 4;
+	
+	var yourBoardPiecesLeft = null;
+	var opponentBoardPiecesLeft = null;
+	
+	//socket.on('register clientID clientside', function(clientID) {
+	//	console.log("inside of registering clientID clientside");
+	//	socketCID = clientID;
+	//});
 	
 	/*
 	=================================================================
@@ -300,7 +314,7 @@ $(document).ready(function(){
 	
 	
 	//do nothing in event handler except cancel the event (drag and select)
-	canvasElement.ondragstart = function(e) {
+	/*canvasElement.ondragstart = function(e) {
 		if(e && e.preventDefault) { e.preventDefault(); }
 		if(e && e.stopPropagation) { e.stopPropagation(); }
 		return false;
@@ -323,7 +337,7 @@ $(document).ready(function(){
 		if(e && e.preventDefault) { e.preventDefault(); }
 		if(e && e.stopPropagation) { e.stopPropagation(); }
 		return false;
-	}
+	}*/
 	
 	
 	$('#chatForm').submit(function() {
@@ -458,43 +472,6 @@ $(document).ready(function(){
 		roomToLoginTo = roomindex;
 	});
 	
-	/*socket.on('add to roomlist', function(data) {
-		console.log("inside add to roomlist");
-		
-		//remember to get Date.now() and compare it to room created data to list how long ago it was created - although this data should be regularily updated - say setInterval every second ? Will that get in the way of anything?
-		
-		var createdStr = getTimeDiffString(data.createdTime);
-		
-		//Unicode lock icon: &#xe033; - put in front of lobby if PW protected
-		
-		
-		//append option to our select list with proper room info
-		roomlist.append($('<option>').attr('value', data.roomname).append((data.pwSet ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + data.roomname + "</b> <i>(created " + createdStr + " ago)</i>"));
-		
-		//after having added game room to all other sockets (not connected to the room) I could socket.emit right here to catch on serverside to send back with socket.emit from server back to each and every non-connected socket ?
-		
-	});*/
-	
-	//have a every second timer - if select-option list have alternatives - trigger every second a list update --- turn into web worker in future to get this "updating sequence" out of the day of the actual application + learning web workers? trigger event "update roomList" to update every clients roomList (that is not yet connected to rooms)
-	/*socket.on('initiate first roomlist update', function() {
-		console.log("inside of initiate first roomlist update");
-		
-		//check if any of the alternatives are selected, if so, get its value
-		intervalID = setInterval(function() {
-			var selectedValue = "";
-			if(roomlist.val())
-			{
-				selectedValue = roomlist.val();
-				console.log("select value: ", selectedValue);
-			}
-			console.log("selected value AFTER IF: ", selectedValue);
-			//console.log("inside of timeout function should be called every 15s");
-			socket.emit('first update roomList', {intervalID: intervalID, selectedValue: selectedValue});
-			
-		}, TIMER_TRIGGER_TIME); //every 15 or so secs
-		
-	}); //<-- is used for ALL updated lobbys when first room created? */
-	
 	socket.on('load roomlist', function(rooms) {
 		console.log("inside load roomlist");
 		
@@ -547,9 +524,9 @@ $(document).ready(function(){
 				selectedValue = $('#roomlist').val();
 				console.log("select value: ", selectedValue);
 			}
-			console.log("selected value AFTER IF: ", selectedValue);
+			console.log("selected value : ", selectedValue);
 			console.log("inside of timeout function should be called every 15s");
-			socket.emit('update roomList', {intervalID: intervalID, selectedValue: selectedValue});
+			socket.emit('update roomList', selectedValue); //{intervalID: intervalID, selectedValue: selectedValue});
 			
 		}, TIMER_TRIGGER_TIME); //every 15 or so secs
 		
@@ -567,55 +544,6 @@ $(document).ready(function(){
 		console.log("inside of room login failed");
 	});
 	
-	/*socket.on('update roomList for all', function(rooms) { //called every minute
-		//clear select-option list to repaint it with ALL rooms and their respective data from scratch to be easier?
-		//loop through the roomList to recreate every single room in the list
-		console.log("inside update roomlist clientside");
-		
-		console.log("rooms contains: ", rooms);
-		
-		//console.log("selectedValue in update roomlist for all: " + data.selectedValue);
-		
-		roomlist.empty();
-		console.log("amount of rooms: ", rooms.length);
-		
-		var createdStr = "";
-		for(var i = 0; i < rooms.length; i++)
-		{
-			//for every room:
-			createdStr = getTimeDiffString(rooms[i].createdTime);
-			
-			//&#xe033 <- this lock icon unicode didnt quite work
-			roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
-		}
-		
-	});*/
-	
-	//socket.on('individual roomlist update', function(rooms) { //called every minute
-	/*socket.on('load roomlist', function(rooms) {
-		//clear select-option list to repaint it with ALL rooms and their respective data from scratch to be easier?
-		//loop through the roomList to recreate every single room in the list
-		console.log("inside of load roomlist");
-		
-		//console.log("rooms contains: ", rooms);
-		
-		//console.log("selectedValue in update roomlist for all: " + data.selectedValue);
-		
-		roomlist.empty();
-		console.log("amount of rooms: ", rooms.length);
-		
-		var createdStr = "";
-		for(var i = 0; i < rooms.length; i++)
-		{
-			//for every room:
-			createdStr = getTimeDiffString(rooms[i].createdTime);
-			
-			//&#xe033 <- this lock icon unicode didnt quite work
-			roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
-		}
-		
-	});*/
-	
 	//could work for both creator AND client - does the same thing..?
 	socket.on('creator joins room', function(data) {
 		console.log("creator joins room");
@@ -623,6 +551,7 @@ $(document).ready(function(){
 		createRoomForm.hide();
 		joinRoomForm.hide();
 		canvas.show();
+		boardPieces.hide();
 		messages.empty();
 		chat.show();
 		m.focus();
@@ -654,10 +583,12 @@ $(document).ready(function(){
 		createRoomForm.hide();
 		joinRoomForm.hide();
 		canvas.show();
+		boardPieces.hide();
+		messages.empty();
 		chat.show();
 		m.focus();
 		
-		messages.empty(); //in case this user was in the room previously we don't want to have them keep the chat history.
+		 //in case this user was in the room previously we don't want to have them keep the chat history.
 		
 		//paint interface on canvas
 		
@@ -742,24 +673,6 @@ $(document).ready(function(){
 		appendDatedMsg(messages, "User: <b>" + username + "</b> have declined the readycheck and was thereby kicked out of this room.");
 	});
 	
-	socket.on('readycheck yes response given', function() {		
-		readyCheck.hide();
-		
-		//if the interval is still running I should probably stop it somehow hm..
-		if(secondClockActionIValID && t2) //if they answer before timer run out
-		{
-			clearInterval(secondClockActionIValID);
-			secondClockActionIValID = null;
-			clearTimeout(t2);
-			t2 = null;
-			console.log("clearing readycheck clock interval");
-			//socket.emit readycheck yes response
-		}
-		
-		//paint canvas accordingly..
-		
-	});
-	
 	socket.on('stop all readycheck chinanigans', function() {
 		if(secondClockActionIValID && t2)
 		{
@@ -811,26 +724,433 @@ $(document).ready(function(){
 	
 	socket.on('prep for start of game', function() {
 		console.log("prep for start of game");
+		boardPieces.show();
 		//paint boardPieces
 		//proper canvas message etc.
-		statusMsgContainer.text("prepping for start of game").show();
+		//statusMsgContainer.text("prepping for start of game").show();
 		
-		//paint boardPieces
+		//paint boardPieces // populate with ALL pieces - or simply show pre-programmed... either wa works...
+		
+		
+		//do nothing in event handler except cancel the event (drag and select)
+		canvasElement.ondragstart = function(e) {
+			if(e && e.preventDefault) { e.preventDefault(); }
+			if(e && e.stopPropagation) { e.stopPropagation(); }
+			return false;
+		}
+		
+		canvasElement.onselectstart = function(e) {
+			if(e && e.preventDefault) { e.preventDefault(); }
+			if(e && e.stopPropagation) { e.stopPropagation(); }
+			return false;
+		}
+		
+		//cancelling mobile window movement
+		document.body.ontouchstart = function(e) {
+			if(e && e.preventDefault) { e.preventDefault(); }
+			if(e && e.stopPropagation) { e.stopPropagation(); }
+			return false;
+		}
+		
+		document.body.ontouchmove = function(e) {
+			if(e && e.preventDefault) { e.preventDefault(); }
+			if(e && e.stopPropagation) { e.stopPropagation(); }
+			return false;
+		}
+		
+		
+		
 		
 		
 		
 	});
 	
 	socket.on('your turn in game', function() {
-		statusMsgContainer.text("my turn in game.").show();
+		console.log("inside of your turn in game");
+		//statusMsgContainer.text("my turn in game.").show();
+		
+		//clear canvas
+		//paint plack
+		//tttboard
+		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
+		
+		//paint placktext
+		drawPlackText(ctx, textStrings.mymove, plackMarginLeft, plackInfo, gameColors);
+		
+		
+		
+		var eventName = Modernizr.touch ? 'touchstart' : 'click';
+		console.log("eventName: ", eventName);
+		
+		canvas.on(eventName, function(e) {
+			e.preventDefault();
+			
+			console.log("inside of canvas click");
+			
+			//I'm thinking something like this:
+			//a click on canvas occurs - that click needs to be sent to our server to be stored and dealt with logicwise, then turn should switch
+			//so basically all we wanna do here, is register the click, send it to the server, store it and deal with it there per client
+			//the drawing of shit etc is clientside sure, but the dealing with the game logics, is serverside for sure.
+			
+			
+			//using pageX and pageY to get mouse pos relative to browser window
+			/*var mouse = {
+				x: e.pageX - canvasPosition.x,
+				y: e.pageY - canvasPosition,y
+			};*/
+			var canvasPosition = {
+				x: canvas.offset().left,
+				y: canvas.offset().top
+			};
+			
+			console.log("canvasPosition.x (canvas.offset().left): ", canvasPosition.x);
+			console.log("canvasPosition.y (canvas.offset().top): ", canvasPosition.y);
+			
+			var position = getPosition(e, canvasPosition);
+			//this gives us local coordiantes which consider (0,0) origin at to-left of canvas element
+			
+			console.log("canvas click/touch detected at pos: ", position);
+			
+			/*var mx = 0, my = 0;
+			mx = e.clientX - canvas.offsetLeft;
+			my = e.clientY - canvas.offsetTop;*/
+				
+			var cellHit = hitZoneDetection(position.x, position.y, boardSide, cellPos, tttBoardMarginLeft, tttBoardMarginTop, cellSide);
+			
+			console.log("cellHit = " + cellHit);
+			
+			//after we found out what cell got hit, we should let the server know..
+			//see action taken below -- looping through boardGrid, which is exactly what should be done serverside to store within roomlists boardGrid
+			
+			if(cellHit != -1)
+			{
+				console.log("registering tictactoe move");
+				socket.emit('register tictactoe move', cellHit);
+				canvas.off(eventName); //detach event listener if hit was made (see if this works)
+			}
+			
+			gameClockElem.hide();
+			
+			return false;
+		});
+		
+		var countdownTime = GAME_TURN_TIME/1000 -1; //does it work to give const value to a var? check this //-1 because it first triggers after 1 second 14 +1 = 15 = 15s turn
+		gameClockElem.text("Time left on turn: 15");
+		gameClock = setInterval(function() {
+			//every second our "gameClock should be updated
+			console.log("inside of gameClock ticking every second");
+			gameClockElem.text("Time left on turn: " + countdownTime);
+			countdownTime -= 1;
+		}, 1000);
+		
+		gameTurnTimer = setTimeout(function() {
+			//what should happen after 15s?
+			//clear gameClock interval
+			//clearInterval(gameClock);
+			//gameClock = null;
+			//socket.emit switch turn -- hmm...
+			gameClockElem.hide();
+			socket.emit('register tictactoe move', -1); //either on 15s but then I want to send move data to serv.. fml...
+			canvas.off(eventName); //detach event listener if timer runs out
+			
+		}, GAME_TURN_TIME);
 		
 	});
 	
 	socket.on('opponents turn in game', function() {
-		statusMsgContainer.text("opponents turn in game.").show();
+		//statusMsgContainer.text("opponents turn in game.").show();
+		console.log("opponents turn in game");
+		
+		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
+		
+		//paint placktext
+		drawPlackText(ctx, textStrings.othersmove, plackMarginLeft, plackInfo, gameColors);
+		
+		//and rest is just to wait until "your turn" I suppose
+		
+		
+		
+	});
+	
+	//socket.on('paint move', function(data) {
+	//	console.log("inside of paint move");
+		//data contains: boardPiece "x" or "o" and cellHit
+	//	paintXO(ctx, data.boardPiece, data.cellHit, XOLineThickness, gameColors, cellPos, cellSide);
+		
+	//});
+	
+	socket.on('paint moves', function(movesArray) {
+		console.log("inside of paint moves");
+		console.log("movesArray.length: ", movesArray.length);
+		
+		//"scroll through each movesArray index, check if 1, -1, or 0 and paint accordingly
+		//that seemed easy enough.. we'll see how it turns out..
+		for(var i = 1; i <= movesArray.length; i++)
+		{
+			//cellHit will be i
+			if(movesArray[i-1] == 1)
+			{
+				//paint O
+				paintXO(ctx, "o", i, XOLineThickness, gameColors, cellPos, cellSide);
+				
+			}else if(movesArray[i-1] == -1)
+			{
+				//paint X
+				paintXO(ctx, "x", i, XOLineThickness, gameColors, cellPos, cellSide);
+				
+			}//nothing should happen on 0
+		}
+	});
+	
+	
+	/*
+		var yourBoardPiecesStartingValue = 4;
+		var opponentBoardPiecesStartingValue = 4;
+		
+		var yourBoardPiecesLeft = null;
+		var opponentBoardPiecesLeft = null;
+	*/
+	
+	socket.on('setYourBoardPiecesValue', function() {
+		console.log("inside of setYourBoardPiecesValue");
+		yourBoardPiecesStartingValue = 5; //starting player always have 1 more piece than other player
+		yourBoardPiecesLeft = yourBoardPiecesStartingValue;
+		opponentBoardPiecesLeft = 4;
+	});
+	
+	socket.on('setOpponentBoardPieceValue', function() {
+		console.log("inside of setOpponentBoardPieceValue");
+		opponentBoardPiecesStartingValue = 5;
+		opponentBoardPiecesLeft = opponentBoardPiecesStartingValue;
+		yourBoardPiecesLeft = 4;
+	});
+	
+	
+	socket.on('boardPieces paintout', function() {
+		var textString = '';
+		
+		
+		/*
+			yourBoardPiecesStartingValue + ", and opponentBoardPiecesStartingValue holds: " + opponentBoardPiecesStartingValue
+		*/
+		
+		
+		textString += '<b>Your board pieces:</b> [';
+		if(yourBoardPiecesStartingValue == 5)
+		{
+			for(var i = 0; i < yourBoardPiecesLeft; i++)
+			{
+				if(i < yourBoardPiecesLeft-1) //< or !=
+				{
+					textString += 'O, ';
+				}else {
+					textString += 'O';
+				}
+			}
+		}else {
+			for(var i = 0; i < yourBoardPiecesLeft; i++)
+			{
+				if(i < yourBoardPiecesLeft-1) //< or !=
+				{
+					textString += 'X, ';
+				}else {
+					textString += 'X';
+				}
+			}
+		}
+		textString += ']';
+		//and append hereafter
+		myPieces.text('');
+		myPieces.append(textString);
+		
+		//this also means that opponent is X so we can paint their values too
+		textString = '<b>Opponent board pieces:</b> [';
+		if(opponentBoardPiecesStartingValue == 5)
+		{
+			for(var i = 0; i < opponentBoardPiecesLeft; i++)
+			{
+				if(i < opponentBoardPiecesLeft-1)
+				{
+					textString += 'O, ';
+				}else {
+					textString += 'O';
+				}
+			}
+		}else {
+			for(var i = 0; i < opponentBoardPiecesLeft; i++)
+			{
+				if(i < opponentBoardPiecesLeft-1)
+				{
+					textString += 'X, ';
+				}else {
+					textString += 'X';
+				}
+			}
+		}
+		textString += ']';
+		opponentPieces.text('');
+		opponentPieces.append(textString);
+	});
+	
+	socket.on('boardPieces update', function(player) {
+		console.log("this clients yourBoardPiecesStartingValue holds: " + yourBoardPiecesStartingValue + ", and opponentBoardPiecesStartingValue holds: " + opponentBoardPiecesStartingValue);
+		
+		var textString = '';
+		
+		if((yourBoardPiecesStartingValue == 5 && player == 1) || 
+			(yourBoardPiecesStartingValue == 4 && player == -1))
+		{
+			yourBoardPiecesLeft -= 1;
+		}else if((opponentBoardPiecesStartingValue == 5 && player == 1) ||
+				(opponentBoardPiecesStartingValue == 4 && player == -1)) 
+		{
+			opponentBoardPiecesLeft -= 1;
+		}
+		
+		textString += '<b>Your board pieces:</b> [';
+		if(yourBoardPiecesLeft != 0)
+		{
+			if(yourBoardPiecesStartingValue == 5)
+			{
+				for(var i = 0; i < yourBoardPiecesLeft; i++)
+				{
+					if(i < yourBoardPiecesLeft-1) //< or !=
+					{
+						textString += 'O, ';
+					}else {
+						textString += 'O';
+					}
+				}
+			}else
+			{
+				for(var i = 0; i < yourBoardPiecesLeft; i++)
+				{
+					if(i < yourBoardPiecesLeft-1) //< or !=
+					{
+						textString += 'X, ';
+					}else {
+						textString += 'X';
+					}
+				}
+			}
+		}else if(yourBoardPiecesLeft == 0)
+		{
+			textString += '-';
+		}
+		textString += ']';
+		//and append hereafter
+		myPieces.text('');
+		myPieces.append(textString);
+		
+		//this also means that opponent is X so we can paint their values too
+		textString = '<b>Opponent board pieces:</b> [';
+		if(opponentBoardPiecesLeft != 0)
+		{
+			if(opponentBoardPiecesStartingValue == 5)
+			{
+				for(var i = 0; i < opponentBoardPiecesLeft; i++)
+				{
+					if(i < opponentBoardPiecesLeft-1)
+					{
+						textString += 'O, ';
+					}else {
+						textString += 'O';
+					}
+				}
+			}else {
+				for(var i = 0; i < opponentBoardPiecesLeft; i++)
+				{
+					if(i < opponentBoardPiecesLeft-1)
+					{
+						textString += 'X, ';
+					}else {
+						textString += 'X';
+					}
+				}
+			}
+		}else if(opponentBoardPiecesLeft == 0) {
+			textString += '-';
+		}
+		textString += ']';
+		opponentPieces.text('');
+		opponentPieces.append(textString);
+		
+		
+	});
+	
+	socket.on('draw lose', function(data) {
+		console.log("inside of draw lose");
+		
+		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
+		
+		//paint placktext
+		drawPlackText(ctx, textStrings.ulose, plackMarginLeft, plackInfo, gameColors);
+		
+		//remember on lose screen the winner pieces should also be marked painted!!! and board restored to winstate
+		
+		drawPiecesExceptWinPieces(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
+		
+		drawMultipleCells(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
+		
+	});
+	
+	socket.on('draw win', function(data) {
+		console.log("inside of draw win");
+		
+		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
+		
+		//paint placktext
+		drawPlackText(ctx, textStrings.uwin, plackMarginLeft, plackInfo, gameColors);
+		
+		
+		drawPiecesExceptWinPieces(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
+		
+		drawMultipleCells(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
+		
+	});
+	
+	socket.on('draw draw', function(movesArray) {
+		console.log("inside of draw draw");
+		
+		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
+		
+		//paint placktext
+		drawPlackText(ctx, textStrings.adraw, plackMarginLeft, plackInfo, gameColors);
+		
+		for(var i = 1; i <= movesArray.length; i++)
+		{
+			//cellHit will be i
+			if(movesArray[i-1] == 1)
+			{
+				//paint O
+				paintXO(ctx, "o", i, XOLineThickness, gameColors, cellPos, cellSide);
+				
+			}else if(movesArray[i-1] == -1)
+			{
+				//paint X
+				paintXO(ctx, "x", i, XOLineThickness, gameColors, cellPos, cellSide);
+				
+			}//nothing should happen on 0
+		}
+	});
+	
+	socket.on('clear game timers', function() {
+		console.log("inside of clear game timers");
+		if(gameClock)
+		{
+			clearInterval(gameClock);
+			gameClock = null;
+		}
+		
+		if(gameTurnTimer)
+		{
+			clearTimeout(gameTurnTimer);
+			gameTurnTimer = null;
+		}
 	});
 	
 	socket.on('leaving room', function() {
+		console.log("inside of leaving room");
 		chat.hide()
 		createRoomForm.show();
 		joinRoomForm.show();
@@ -853,10 +1173,11 @@ $(document).ready(function(){
 		
 	});
 	
-	socket.on('stop lobby update interval', function(intervalID) {
+	//socket.on('stop lobby update interval', function(intervalID) {
+	socket.on('stop lobby update interval', function() {
 		clearInterval(intervalID);
-		intervalID = null;
 		console.log("cleared interval of intervalID: ", intervalID);
+		intervalID = null;
 	});
 	
 	
