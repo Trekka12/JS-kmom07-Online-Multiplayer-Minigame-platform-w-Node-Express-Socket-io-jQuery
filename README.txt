@@ -3,7 +3,7 @@
 
 ##Project process
 I struggled a lot at first to get started with this project, which lead me to "postpone" it a few years because I couldn't understand how I would possibly start, I envisioned exactly how I wanted everything to be, and work and look but I lacked the necessary knowledge and energy truth be told, and idea of approach to get started and making it work.
-After a few years though, I decided to get started again, this time I also struggled quite a bit at first, but then I decided to separate the project into "smaller pieces" or "units" as some might call them(?), where I divided the code I needed for the entirety of the project into a few groups that I needed to figure out and master before I could put everything together. This probably also helped minimize development time, as well as debugging efforts throughout the entire project - since it allowed me to focus on specific smaller areas, instead of having to step-through the massive interface just to reach the problemarea.
+After a few years though, I decided to get started again, this time I also struggled quite a bit at first, but then I decided to separate the project into "smaller pieces" or "units" as some might call them(?), where I divided the code I needed for the entirety of the project into a few groups that I needed to figure out and master before I could put everything together. This probably also helped minimize development time, as well as debugging efforts throughout the entire project - since it allowed me to focus on specific smaller areas, instead of having to step-through the massive interface just to reach the problemarea. I also put up a personal deadline for this project of a months time to help me keep motivated and productive and driven towards that goal.
 The areas I decided to divide my project into was the following:
 - Canvas, graphics and Tic Tac Toe specific graphics as well as basic game logics
 - Node.js, Socket.io and Express.js realtime chat application with some additional quality-of-life features
@@ -19,21 +19,21 @@ And here we are now...
 + Ability to create "game rooms" (room names allow swedish characters)
 + Ability to join created "game rooms"
 + ability to socket.io realtime chat within "game rooms"
-+ ability to see within "game rooms" when someone is typing
++ ability to see inside of "game rooms" when someone is typing
 + timestamped chat messages (toLocaleString used)
 + User chat messages are colored red/blue depending on startingPlayer
 + Readycheck feature when 2 people join a room
 + room is temporarily "removed" from roomlist when 2 users have joined it (only 2 users allowed in one room)
-+ Roomlist shows created rooms with their designated roomname, as well as "created time ago" feature updated every 15th
-+ Mainscreen (after username register) shows Game statistics such as Won games, total games, avg game time + total connected players (those who have registered) and players NOT in room currently
-+ Rooms can also be created with a password to "lock" the room and require login to join the room
++ Roomlist shows created rooms with their designated roomname, as well as "created time ago" feature updated every 15th second
++ Mainscreen (after username registered) shows Game statistics such as Won games, total games, avg game time + total connected players (those who have registered) and players NOT in room currently
++ Rooms can also be created with a password to "lock" the room and require login to join the room (helps if 2 users that know each other wish to play together)
 + Username is length restricted and use RegEx to validate for and only allow a-zA-Z0-9 + swedish characters but NO whitespace characters
 + roomname is also length restricted and also use RegEx to validate for same as username BUT Allows whitespace in the name
 + Interface show "status messages" for user for example when username is not complying with limitations set - same for roomname
 + input is escaped using .val()
 + Application uses Modernizr for feature detection and YepNope for Polyfill compensation
-+ Application is prepared for Touch event as alternative to Mouseclick - not tested yet though but code base for it is there
-+ projectFunctions.js uses module exports to export useful functions to be used within server.js
++ Application is prepared for Touch event as alternative to Mouseclick - not tested yet though but code base for it is there and applied to project
++ projectFunctions.js uses module exports to export useful functions to be used within server.js and separate "functions" to be used from the actual client.js and server.js files to keep them as "clean" as possible
 + Chat have "special features" - one is to type command /changeNick to change username, the other is to press "ARROW_UP" to recreate last typed message (including command)
 + Chat is also equipped with Anti-Spam feature that won't allow messages within 500ms of each other
 + Rooms have a Leave room button for convenience
@@ -44,7 +44,7 @@ And here we are now...
 + Roomlogin form that appears when trying to join PW protected rooms can be escaped with the push of a button to return to roomlist if one changes mind of joining the PW protected room
 + upon creating a room - that user gets catapulted automatically to join the room (no need to enter PW if PW protected room was created obviously since it was the creator catapulted into it)
 + TimerID tracking variables are declared globally for easier clearing of them throughout the interface
-+ semantic constants are declared to help the understanding of the code
++ semantic constants are declared to help ease the understanding of the code
 + useful functions used by client.js or server.js are placed within projectFunctions
 + automatic focus is set to both username textfield when loaded, as well as the room lobbyname textfield once that has been loaded
 + if a user left the room - the other user connected to the same room is informed in the chat
@@ -65,7 +65,7 @@ And here we are now...
 + JSDOC commenting style have been applied for all functions - and project has been well-documented in general
 + repeated use of similiar logic/functionality has been compressed into reusable functions to ease the code as well as to make it more efficient
 + socket.io Multiple room functionality is used (obviously)
-+ users alternate between 2 types of rooms - game rooms and default room (connected) - helps with the maintenance and update of interface information for individual connected and registered sockets
++ users alternate between 2 types of rooms - game rooms and default room (connected) - helps with the maintenance and update of interface information for individual connected- and registered sockets
 
 ##Features currently being worked on
 + Have node.js run "forever" even with terminal shut down, also have it auto instant restart upon potential crash and have it add error message to a logfile if there is a crash

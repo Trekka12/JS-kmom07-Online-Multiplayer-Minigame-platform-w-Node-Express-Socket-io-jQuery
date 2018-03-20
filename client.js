@@ -29,10 +29,10 @@ $(document).ready(function(){
 	//swedish unicode chars to use for regex to use swedish chars for roomname and username:
 	//\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6
 	
-	//const azAZ09regex = /^[a-zA-Z0-9]+$/;
-	//const azAZ09inclWS = /^([a-zA-Z0-9\s]+)$/; //check so this one works.
-	const azAZ09regex = /^[a-zA-Z0-9\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6]+$/;
-	const azAZ09inclWS = /^([a-zA-Z0-9\s\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6]+)$/; //check so this one works.
+	//const azAZ09regex = /^[a-zA-Z0-9]+$/; //without whitesapce and swedish chars
+	//const azAZ09inclWS = /^([a-zA-Z0-9\s]+)$/; //with whitespace
+	const azAZ09regex = /^[a-zA-Z0-9\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6]+$/; //unicodes represent swedish chars lowercase and uppercase according to: http://www.geocities.ws/click2speak/unicode/chars_sv.html (thanks devsnek @ ##javascript IRC)
+	const azAZ09inclWS = /^([a-zA-Z0-9\s\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6]+)$/; //
 	
 	//global client var declaration
 	var roomToLoginTo = -1; //used to keep track of what room client is currently in
@@ -78,13 +78,13 @@ $(document).ready(function(){
 	var gameClockElem = $('#gameClockElem');
 	
 	//timer ids
-	var secondClockActionIValID = null;
-	var t2 = null;
-	//var roomListUpdateIValID = null;
-	var intervalID = null;
+	var secondClockActionIValID = null; //readycheck interval ID
+	var t2 = null; //readycheck timeout ID
 	
-	var gameTurnTimer = null;
-	var gameClock = null;
+	var intervalID = null; //roomlist update inteval ID
+	
+	var gameTurnTimer = null; //gameturn timeout ID
+	var gameClock = null; //game clock interval ID
 	
 	//global game vars
 	const gameColors = {	bgColor: "#1f781f",
@@ -93,8 +93,8 @@ $(document).ready(function(){
 							plackColor: "#e3e3e3",
 							markedCellColor: "#ffffff"};
 
-	const boardSide = 300;
-	const cellSide = boardSide/3;
+	const boardSide = 300; //our tic tac toe box width
+	const cellSide = boardSide/3; //our tic tac toe cell width
 
 	const plackInfo = {	fontSize: 35,
 						fontFamily: "sans-serif",
@@ -107,7 +107,7 @@ $(document).ready(function(){
 	
 	const plackToTTTSpace = 45; //TTT = TicTacToe
 	
-	const tttBoardMarginTop = plackInfo.marginTop + plackInfo.height + plackToTTTSpace, //45 between plack and TTT board - 114 margin-top total
+	const tttBoardMarginTop = plackInfo.marginTop + plackInfo.height + plackToTTTSpace, //45 between plack and TTT board ~ 114 margin-top total
 		tttBoardMarginLeft = canvasWidth/2 - boardSide/2;
 			
 	const cellPos = {	1: {x: tttBoardMarginLeft, y: tttBoardMarginTop},
@@ -119,20 +119,8 @@ $(document).ready(function(){
 					7: {x: tttBoardMarginLeft, 				y: tttBoardMarginTop + 2*cellSide},
 					8: {x: tttBoardMarginLeft + cellSide, 	y: tttBoardMarginTop + 2*cellSide},
 					9: {x: tttBoardMarginLeft + 2*cellSide, y: tttBoardMarginTop + 2*cellSide}};
-					
-	//var boardGrid = [0,0,0,0,0,0,0,0,0]; //1 for one player, -1 for another player, 0 if empty
 	
 	const winComboAmount = 8; //3 horizontal, 3 vertical, 2 diagonal = 8
-	/*const winCombos = {	1: [1,2,3],
-						2: [4,5,6],
-						3: [7,8,9],
-						4: [1,4,7],
-						5: [2,5,8],
-						6: [3,6,9],
-						7: [1,5,9],
-						8: [3,5,7]};*/
-					
-	//console.log("cellPos 5 = x: " + cellPos[5].x + ", y: " + cellPos[5].y);
 						
 	const textStrings = {	wfo: "Waiting for opponent...",
 							rurdy: "Room full, are you ready?",
@@ -147,22 +135,13 @@ $(document).ready(function(){
 
 	const XOLineThickness = 3;
 	
-	//console.log("all vars decl");
-	
-	
-	
-	//var socketCID = -1;
-	
+	//help us determine who is starting player
 	var yourBoardPiecesStartingValue = 4;
 	var opponentBoardPiecesStartingValue = 4;
 	
+	//keep track of boardPieces to be painted after each move made
 	var yourBoardPiecesLeft = null;
 	var opponentBoardPiecesLeft = null;
-	
-	//socket.on('register clientID clientside', function(clientID) {
-	//	console.log("inside of registering clientID clientside");
-	//	socketCID = clientID;
-	//});
 	
 	/*
 	=================================================================
@@ -201,7 +180,6 @@ $(document).ready(function(){
 		if(usernameField.val().length >= MIN_USERNAME_CHARS && usernameField.val().length <= MAX_USERNAME_CHARS)
 		{
 			//secondary check - indirectly check to see if it contains spaces with regex by checking that it contains only a-z, A-Z and 0-9 - if it does also contain whitespace: inform user and have them change it to without whitespaces (personal preference)
-			//if(/^[a-zA-Z0-9]+$/.test($('#username').val()))
 			if(azAZ09regex.test(usernameField.val()))
 			{
 				socket.emit('user registration', usernameField.val()); 
@@ -231,7 +209,6 @@ $(document).ready(function(){
 		if(lobbyName.length >= MIN_LOBBYNAME_CHARS && lobbyName.length <= MAX_LOBBYNAME_CHARS)
 		{
 			//true if .val() holds value?
-			//if(/^([a-zA-Z0-9\s]+)$/.test(lobbyName)) //regex pattern to allow for whitespaces
 			if(azAZ09inclWS.test(lobbyName)) //regex pattern to allow for whitespaces
 			{
 				//only allow input to be a-z A-Z and 0-9 characters between length 2 and 20
@@ -254,9 +231,7 @@ $(document).ready(function(){
 	});
 	
 	
-	$('#joinRoomForm').submit(function() {
-		//socket.emit('join room', roomname); //get data from selected option in list to send to server to know what room to join for specific socket
-		
+	$('#joinRoomForm').submit(function() {		
 		//when a socket / client / user selects room and presses "join room", they should by all accounts join the perverbial room by hiding create room, and join room sections, and show chat room - and also connecet to the specific room they selected. should be easy enough I figure :)
 		
 		//fade in the login section if there is a pw for the room in question attempting to be joined
@@ -284,7 +259,6 @@ $(document).ready(function(){
 	
 	$('#yesBtn').on('click', function() {
 		//hide readycheck --do that on other receiving of event emitted from server
-		//readyCheck.hide();
 		console.log("registering yesBtn click");
 		
 		
@@ -321,35 +295,7 @@ $(document).ready(function(){
 		console.log("checking .val() if shows selected: " + roomlist.val());
 		
 		joinRoomBtn.prop('disabled', false);
-	});
-	
-	
-	//do nothing in event handler except cancel the event (drag and select)
-	/*canvasElement.ondragstart = function(e) {
-		if(e && e.preventDefault) { e.preventDefault(); }
-		if(e && e.stopPropagation) { e.stopPropagation(); }
-		return false;
-	}
-	
-	canvasElement.onselectstart = function(e) {
-		if(e && e.preventDefault) { e.preventDefault(); }
-		if(e && e.stopPropagation) { e.stopPropagation(); }
-		return false;
-	}
-	
-	//cancelling mobile window movement
-	document.body.ontouchstart = function(e) {
-		if(e && e.preventDefault) { e.preventDefault(); }
-		if(e && e.stopPropagation) { e.stopPropagation(); }
-		return false;
-	}
-	
-	document.body.ontouchmove = function(e) {
-		if(e && e.preventDefault) { e.preventDefault(); }
-		if(e && e.stopPropagation) { e.stopPropagation(); }
-		return false;
-	}*/
-	
+	});	
 	
 	$('#chatForm').submit(function() {
 		console.log("inside chatForm submit");
@@ -441,16 +387,13 @@ $(document).ready(function(){
 		createRoomForm.show();
 		joinRoomForm.show();
 		lobbyNameField.focus();
-		//wonGames.text('');
-		//avgGameTime.text('');
 		
 		titleText.append("Welcome to TicTacToe online Multiplayer gaming portal <span id='usernameColor'>" + username + "</span>");
 		
 	});
 	
 	socket.on('update siteStatsArea', function(clients) {
-		//totalConnectedUsers
-		//notYetInRoomUsers
+
 		totalConnectedUsers.text(clients.length);
 		
 		var notInRoomCounter = 0;
@@ -462,7 +405,6 @@ $(document).ready(function(){
 			}
 		}
 		
-		//notYetInRoomUsers = $('#notYetInRoom');
 		notYetInRoomUsers.text(notInRoomCounter);
 		
 	});
@@ -491,8 +433,6 @@ $(document).ready(function(){
 		console.log("inside load roomlist");
 		
 		console.log("rooms contains: ", rooms);
-		
-		//console.log("selectedValue in update roomlist for all: " + data.selectedValue);
 		
 		roomlist.empty();
 		console.log("amount of rooms: ", rooms.length);
@@ -532,7 +472,7 @@ $(document).ready(function(){
 		console.log("inside of individual roomlist update");
 		
 		//check if any of the alternatives are selected, if so, get its value
-		intervalID = setInterval(function() { //roomListUpdateIValID
+		intervalID = setInterval(function() {
 			var selectedValue = "";
 			if($('#roomlist').val())
 			{
@@ -541,17 +481,13 @@ $(document).ready(function(){
 			}
 			console.log("selected value : ", selectedValue);
 			console.log("inside of timeout function should be called every 15s");
-			socket.emit('update roomList', selectedValue); //{intervalID: intervalID, selectedValue: selectedValue});
+			socket.emit('update roomList', selectedValue);
 			
 		}, TIMER_TRIGGER_TIME); //every 15 or so secs
 		
 	});
 	
 	socket.on('update gameStatsArea', function(gameStats) {
-		/*
-			var wonGames = $('#winGames');
-			var avgGameTime = $('#avgGameTimeNmbr');
-		*/
 		
 		wonGames.text(gameStats.wonGames + "/" + gameStats.totalGames);
 		avgGameTime.text(gameStats.avgGameTime + "s");
@@ -589,17 +525,13 @@ $(document).ready(function(){
 		//also paint the graphics necessary for when creator have joined his created room:
 		drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
 		//to make it easy, 300x300 tic-tac-toe board size
-		//var TILE_BOARD_SIDE = 300;
 		
-		//paintGameInfoPlack();
 		paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo);
 		
 		
 		drawPlackText(ctx, textStrings.wfo, plackMarginLeft, plackInfo, gameColors);
-		//drawPlackText(textStrings.wfo, plackInfo.fontSize);
 		
 		drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
-		//drawTTTBoard();
 		
 	});
 	
@@ -620,22 +552,17 @@ $(document).ready(function(){
 		
 		//paint interface on canvas
 		
-		//best to paint readycheck in canvas or out of canvas?
-		
 		//append to the chat that username joined the room --- once canvas implemented etc. this is where we draw the text "awaiting opponent" I believe.
 		appendDatedMsg(messages, "Welcome <b>" + data.username + "</b>, you have joined your created room: <i>" + data.room + "</i>");
 		
 		//also paint the graphics necessary for when creator have joined his created room:
 		drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
 		//to make it easy, 300x300 tic-tac-toe board size
-		//var TILE_BOARD_SIDE = 300;
 		
-		//paintGameInfoPlack();
 		paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo);
 		
 		
 		drawPlackText(ctx, textStrings.wfo, plackMarginLeft, plackInfo, gameColors);
-		//drawPlackText(textStrings.wfo, plackInfo.fontSize);
 		
 		drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 		
@@ -646,6 +573,34 @@ $(document).ready(function(){
 		//when a client joins the room --- creator should be notified by appending message to messages:
 		appendDatedMsg(messages, "User: <b>" + username + "</b> have joined the room.");
 	});
+	
+	socket.on('load existing rooms on connect', function(rooms) {
+		console.log("inside of load existing rooms on connect and init update");
+		
+		//start by painting all the rooms and their timers, then initiate the update sequence.
+		var createdStr = "";
+		for(var i = 0; i < rooms.length; i++)
+		{
+			//for every room
+			createdStr = getTimeDiffString(rooms[i].createdTime);
+			
+			//&#xe033 <- this lock icon unicode didnt quite work
+			roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
+		}
+	});
+	
+	socket.on('stop lobby update interval', function() {
+		clearInterval(intervalID);
+		console.log("cleared interval of intervalID: ", intervalID);
+		intervalID = null;
+	});
+	
+	
+	/*
+	=================================================================
+			Readycheck Socket.io event emit handlers
+	=================================================================
+	*/
 	
 	socket.on('readycheck', function() {
 		//show the readycheck HTML stuff
@@ -668,8 +623,6 @@ $(document).ready(function(){
 			rCheckProgressBar.attr('value', progressBarValue);
 			progressBarValue += 1;
 			console.log("inside progressbar tick each sec");
-			
-			//socket.emit('individual update roomList', {intervalID: intervalID, selectedValue: selectedValue});
 			
 		}, SECOND); //every second it should update the "ticker" and progressbar
 		
@@ -699,8 +652,6 @@ $(document).ready(function(){
 			t2 = null;
 		}
 		readyCheck.hide();
-		
-		//paint canvas interface for a yesser (?)
 		
 	});
 	
@@ -737,6 +688,53 @@ $(document).ready(function(){
 	socket.on('roomleaving data scrubbing', function() {
 		socket.emit('roomleave data scrub');
 	});
+	
+	/*
+	=================================================================
+			Start game Socket.io event emit handlers
+	=================================================================
+	*/
+	
+	socket.on('set starting player', function() {
+		console.log("set starting player");
+		socket.emit('register starting player');
+	});	
+	
+	//setMyValue = 5, then opponentValue 4 easy
+	socket.on('set board piece client value', function(value) {
+		yourBoardPiecesStartingValue = value;
+		yourBoardPiecesLeft = yourBoardPiecesStartingValue;
+		
+		var oppValue = 0;
+		if(value == 4)
+		{
+			oppValue = 5;
+		}else {
+			oppValue = 4;
+		}
+		opponentBoardPiecesStartingValue = oppValue;
+		opponentBoardPiecesLeft = opponentBoardPiecesStartingValue;
+	});
+	
+	/*socket.on('setYourBoardPiecesValue', function(value) {
+		console.log("inside of setYourBoardPiecesValue");
+		yourBoardPiecesStartingValue = value; //starting player always have 1 more piece than other player
+		yourBoardPiecesLeft = yourBoardPiecesStartingValue;
+		opponentBoardPiecesStartingValue = ((value == 5 ? value-1 : value+1) || (value == 4 ? value+1 : value-1));
+		opponentBoardPiecesLeft = opponentBoardPiecesStartingValue;
+		console.log("yourBoardPiecesStartingValue: ", yourBoardPiecesStartingValue);
+		console.log("opponentBoardPiecesStartingValue: ", opponentBoardPiecesStartingValue);
+	});
+	
+	socket.on('setOpponentBoardPieceValue', function(value) {
+		console.log("inside of setOpponentBoardPieceValue");
+		opponentBoardPiecesStartingValue = value;
+		opponentBoardPiecesLeft = opponentBoardPiecesStartingValue;
+		yourBoardPiecesStartingValue = ((value == 5 ? value-1 : value+1) || (value == 4 ? value+1 : value-1));
+		yourBoardPiecesLeft = yourBoardPiecesStartingValue;
+		console.log("yourBoardPiecesStartingValue: ", yourBoardPiecesStartingValue);
+		console.log("opponentBoardPiecesStartingValue: ", opponentBoardPiecesStartingValue);
+	});*/
 	
 	socket.on('prep for start of game', function() {
 		console.log("prep for start of game");
@@ -778,8 +776,7 @@ $(document).ready(function(){
 	
 	socket.on('your turn in game', function() {
 		console.log("inside of your turn in game");
-		//statusMsgContainer.text("my turn in game.").show();
-		//gameClockElem.show();
+
 		gameClockElem.css('visibility', 'visible');
 		
 		//clear canvas
@@ -787,9 +784,7 @@ $(document).ready(function(){
 		//tttboard
 		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 		
-		//paint placktext
 		drawPlackText(ctx, textStrings.mymove, plackMarginLeft, plackInfo, gameColors);
-		
 		
 		
 		var eventName = Modernizr.touch ? 'touchstart' : 'click';
@@ -842,7 +837,6 @@ $(document).ready(function(){
 				canvas.off(eventName); //detach event listener if hit was made (see if this works)
 			}
 			
-			//gameClockElem.hide();
 			gameClockElem.css('visibility', 'hidden');
 			
 			return false;
@@ -863,13 +857,17 @@ $(document).ready(function(){
 			//clearInterval(gameClock);
 			//gameClock = null;
 			//socket.emit switch turn -- hmm...
-			//gameClockElem.hide();
 			gameClockElem.css('visibility', 'hidden');
 			socket.emit('register tictactoe move', -1); //either on 15s but then I want to send move data to serv.. fml...
 			canvas.off(eventName); //detach event listener if timer runs out
 			
+			
 		}, GAME_TURN_TIME);
 		
+	});
+	
+	socket.on('increment moves', function() {
+		socket.emit('incrementing moves');
 	});
 	
 	socket.on('opponents turn in game', function() {
@@ -877,57 +875,18 @@ $(document).ready(function(){
 		console.log("opponents turn in game");
 		
 		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
-		
-		//paint placktext
+
 		drawPlackText(ctx, textStrings.othersmove, plackMarginLeft, plackInfo, gameColors);
 		
 		//and rest is just to wait until "your turn" I suppose
 		
 	});
 	
-	socket.on('set starting player', function() {
-		console.log("set starting player");
-		socket.emit('register starting player');
-	});
-	
-	socket.on('paint moves', function(movesArray) {
-		console.log("inside of paint moves");
-		console.log("movesArray.length: ", movesArray.length);
-		
-		//"scroll through each movesArray index, check if 1, -1, or 0 and paint accordingly
-		//that seemed easy enough.. we'll see how it turns out..
-		for(var i = 1; i <= movesArray.length; i++)
-		{
-			//cellHit will be i
-			if(movesArray[i-1] == 1)
-			{
-				//paint O
-				paintXO(ctx, "o", i, XOLineThickness, gameColors, cellPos, cellSide);
-				
-			}else if(movesArray[i-1] == -1)
-			{
-				//paint X
-				paintXO(ctx, "x", i, XOLineThickness, gameColors, cellPos, cellSide);
-				
-			}//nothing should happen on 0
-		}
-	});
-	
-	
-	socket.on('setYourBoardPiecesValue', function() {
-		console.log("inside of setYourBoardPiecesValue");
-		yourBoardPiecesStartingValue = 5; //starting player always have 1 more piece than other player
-		yourBoardPiecesLeft = yourBoardPiecesStartingValue;
-		opponentBoardPiecesLeft = 4;
-	});
-	
-	socket.on('setOpponentBoardPieceValue', function() {
-		console.log("inside of setOpponentBoardPieceValue");
-		opponentBoardPiecesStartingValue = 5;
-		opponentBoardPiecesLeft = opponentBoardPiecesStartingValue;
-		yourBoardPiecesLeft = 4;
-	});
-	
+	/*
+	=================================================================
+			Playing the game Socket.io event emit handlers
+	=================================================================
+	*/
 	
 	socket.on('boardPieces paintout', function() {
 		var textString = '';		
@@ -987,6 +946,18 @@ $(document).ready(function(){
 		textString += ']';
 		opponentPieces.text('');
 		opponentPieces.append(textString);
+	});
+	
+	socket.on('decrement boardPieces', function() {
+		console.log("inside of decrement boardPieces clientside");
+		yourBoardPiecesLeft -= 1;
+		opponentBoardPiecesLeft += 1;
+	});
+	
+	socket.on('increment boardPieces', function() {
+		console.log("inside of increment boardPieces clientside");
+		yourBoardPiecesLeft += 1;
+		opponentBoardPiecesLeft -= 1;
 	});
 	
 	socket.on('boardPieces update', function(player) {
@@ -1074,62 +1045,6 @@ $(document).ready(function(){
 		
 	});
 	
-	socket.on('draw lose', function(data) {
-		console.log("inside of draw lose");
-		
-		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
-		
-		//paint placktext
-		drawPlackText(ctx, textStrings.ulose, plackMarginLeft, plackInfo, gameColors);
-		
-		//remember on lose screen the winner pieces should also be marked painted!!! and board restored to winstate
-		
-		drawPiecesExceptWinPieces(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		
-		drawMultipleCells(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		
-	});
-	
-	socket.on('draw win', function(data) {
-		console.log("inside of draw win");
-		
-		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
-		
-		//paint placktext
-		drawPlackText(ctx, textStrings.uwin, plackMarginLeft, plackInfo, gameColors);
-		
-		
-		drawPiecesExceptWinPieces(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		
-		drawMultipleCells(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		
-	});
-	
-	socket.on('draw draw', function(movesArray) {
-		console.log("inside of draw draw");
-		
-		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
-		
-		//paint placktext
-		drawPlackText(ctx, textStrings.adraw, plackMarginLeft, plackInfo, gameColors);
-		
-		for(var i = 1; i <= movesArray.length; i++)
-		{
-			//cellHit will be i
-			if(movesArray[i-1] == 1)
-			{
-				//paint O
-				paintXO(ctx, "o", i, XOLineThickness, gameColors, cellPos, cellSide);
-				
-			}else if(movesArray[i-1] == -1)
-			{
-				//paint X
-				paintXO(ctx, "x", i, XOLineThickness, gameColors, cellPos, cellSide);
-				
-			}//nothing should happen on 0
-		}
-	});
-	
 	socket.on('clear game timers', function() {
 		console.log("inside of clear game timers");
 		if(gameClock)
@@ -1170,7 +1085,7 @@ $(document).ready(function(){
 	
 	socket.on('ending game procedure', function() {
 		console.log("inside of ending game procedure clientside");
-		var countdownTime = 10; //-1 because it first triggers after 1 second 14 +1 = 15 = 15s turn
+		var countdownTime = 10; 
 		gameClockElem.text("You will be returned to create/join lobby room in: " + countdownTime).css('visibility', 'visible');
 		gameClock = setInterval(function() {
 			//every second our "gameClock should be updated
@@ -1180,44 +1095,12 @@ $(document).ready(function(){
 		}, SECOND);
 		
 		gameTurnTimer = setTimeout(function() {
-			//what should happen after 15s?
-			//clear gameClock interval
-			//clearInterval(gameClock);
-			//gameClock = null;
-			//socket.emit switch turn -- hmm...
-			//gameClockElem.hide();
+			
 			gameClockElem.hide()
 			socket.emit('now we leave game');
-			//socket.emit('register tictactoe move', -1); //either on 15s but then I want to send move data to serv.. fml...
-			//canvas.off(eventName); //detach event listener if timer runs out
 			
 		}, 10*SECOND);
-	});
-	
-	socket.on('load existing rooms on connect', function(rooms) {
-		console.log("inside of load existing rooms on connect and init update");
-		
-		//start by painting all the rooms and their timers, then initiate the update sequence.
-		var createdStr = "";
-		for(var i = 0; i < rooms.length; i++)
-		{
-			//for every room
-			createdStr = getTimeDiffString(rooms[i].createdTime);
-			
-			//&#xe033 <- this lock icon unicode didnt quite work
-			roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
-		}
-		
-	});
-	
-	//socket.on('stop lobby update interval', function(intervalID) {
-	socket.on('stop lobby update interval', function() {
-		clearInterval(intervalID);
-		console.log("cleared interval of intervalID: ", intervalID);
-		intervalID = null;
-	});
-	
-	
+	});	
 	
 	/*
 	=================================================================
@@ -1225,7 +1108,82 @@ $(document).ready(function(){
 	=================================================================
 	*/
 	
+	socket.on('paint moves', function(movesArray) {
+		console.log("inside of paint moves");
+		console.log("movesArray.length: ", movesArray.length);
+		
+		//"scroll through each movesArray index, check if 1, -1, or 0 and paint accordingly
+		//that seemed easy enough.. we'll see how it turns out..
+		for(var i = 1; i <= movesArray.length; i++)
+		{
+			//cellHit will be i
+			if(movesArray[i-1] == 1)
+			{
+				//paint O
+				paintXO(ctx, "o", i, XOLineThickness, gameColors, cellPos, cellSide);
+				
+			}else if(movesArray[i-1] == -1)
+			{
+				//paint X
+				paintXO(ctx, "x", i, XOLineThickness, gameColors, cellPos, cellSide);
+				
+			}//nothing should happen on 0
+		}
+	});
 	
+	socket.on('draw lose', function(data) {
+		console.log("inside of draw lose");
+		
+		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
+		
+		drawPlackText(ctx, textStrings.ulose, plackMarginLeft, plackInfo, gameColors);
+		
+		//remember on lose screen the winner pieces should also be marked painted!!! and board restored to winstate
+		
+		drawPiecesExceptWinPieces(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
+		
+		drawMultipleCells(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
+		
+	});
+	
+	socket.on('draw win', function(data) {
+		console.log("inside of draw win");
+		
+		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
+		
+		drawPlackText(ctx, textStrings.uwin, plackMarginLeft, plackInfo, gameColors);
+		
+		
+		drawPiecesExceptWinPieces(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
+		
+		drawMultipleCells(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
+		
+	});
+	
+	socket.on('draw draw', function(movesArray) {
+		console.log("inside of draw draw");
+		
+		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
+		
+		//paint placktext
+		drawPlackText(ctx, textStrings.adraw, plackMarginLeft, plackInfo, gameColors);
+		
+		for(var i = 1; i <= movesArray.length; i++)
+		{
+			//cellHit will be i
+			if(movesArray[i-1] == 1)
+			{
+				//paint O
+				paintXO(ctx, "o", i, XOLineThickness, gameColors, cellPos, cellSide);
+				
+			}else if(movesArray[i-1] == -1)
+			{
+				//paint X
+				paintXO(ctx, "x", i, XOLineThickness, gameColors, cellPos, cellSide);
+				
+			}//nothing should happen on 0
+		}
+	});
 	
 	
 	/*

@@ -316,57 +316,6 @@ function drawPiecesExceptWinPieces(winCells, boardGrid, ctx, XOLineThickness, ga
 	
 }
 
-/*function drawWin(player, winCombo, ctx, XOLineThickness, gameColors, cellPos, cellSide)
-{
-	var playerPiece = "";
-	if(player == 1)
-	{
-		playerPiece = "x";
-	}else if(player == -1)
-	{
-		playerPiece = "o";
-	}
-	
-	var cellNmbrs = [];
-	
-	//drawMultipleCells(cellNmbrs, ctx, XOLineThickness, gameColors, cellPos, cellSide, marked = true)
-	
-	switch(winCombo)
-	{
-		case 1:
-		drawMultipleCells([1,2,3], ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		break;
-		
-		case 2:
-		drawMultipleCells([4,5,6], ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		break;
-		
-		case 3:
-		drawMultipleCells([7,8,9], ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		break;
-		
-		case 4:
-		drawMultipleCells([1,4,7], ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		break;
-		
-		case 5:
-		drawMultipleCells([2,5,8], ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		break;
-		
-		case 6:
-		drawMultipleCells([3,6,9], ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		break;
-		
-		case 7:
-		drawMultipleCells([1,5,9], ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		break;
-		
-		case 8:
-		drawMultipleCells([3,5,7], ctx, XOLineThickness, gameColors, cellPos, cellSide);
-		break;
-	}
-}*/
-
 function drawTicTacToeGamescene() {
 	//draw background color:
 	drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
@@ -487,12 +436,6 @@ function drawTicTacToeGamescene() {
 				//console.log("And the Winner is player: " + winstats.winner);
 			}
 		}
-		
-		
-		
-		
-		
-		
 		
 		return false; //why this here? hm.. prevent event bubbling?
 	});
@@ -712,20 +655,6 @@ function checkWin(boardGrid) {
 }
 
 
-//further "upgrade" this function to be "getArrayValueIndex(arr, needle)? or someth?
-/*function getClientIndex(clientID) {
-	var clientIndex = -1;
-	for(var i = 0; i < clientList.length; i++)
-	{
-		if(clientList[i].clientID == clientID)
-		{
-			clientIndex = i;
-		}
-	}
-	
-	return clientIndex;
-}*/
-
 function randomize(min, max) { //random(min, max) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -742,7 +671,6 @@ function removeDuplicatesFromArray(array) {
 		return unique_array;
 }
 
-//exports.getClientIndex = getClientIndex(clientID);
 exports.randomize = randomize; //no need to have input vars here, assumed to follow.
 exports.checkWin = checkWin;
 exports.removeDuplicatesFromArray = removeDuplicatesFromArray;

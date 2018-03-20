@@ -656,8 +656,11 @@ io.on('connection', function(socket) {
 						{
 							console.log("starting player is first readycheck responder");
 							//if first response gets to start, broadcast to all except this socket in the room (a.k.a: the client)
-							socket.to(socket.room).emit('setYourBoardPiecesValue');
-							socket.emit('setOpponentBoardPieceValue');
+							//socket.to(socket.room).emit('setYourBoardPiecesValue', 4);
+							//socket.emit('setOpponentBoardPieceValue', 5);
+							socket.to(socket.room).emit('set board piece client value', 5);
+							socket.emit('set board piece client value', 4);
+							
 							io.in(socket.room).emit('prep for start of game');
 							//io.in(socket.room).emit('boardPieces paintout');
 							socket.to(socket.room).emit('boardPieces paintout');
@@ -676,8 +679,11 @@ io.on('connection', function(socket) {
 							//io.in(room).emit start the game -- to prep it with everything for both sockets?
 							//then send "personal" emit for the one currently whos turn it is
 							//I have to attach listener when its the players turn? and not when opponents turn?
-							socket.to(socket.room).emit('setOpponentBoardPieceValue');
-							socket.emit('setYourBoardPiecesValue');
+							//socket.to(socket.room).emit('setOpponentBoardPieceValue', 4);
+							//socket.emit('setYourBoardPiecesValue', 5);
+							socket.emit('set board piece client value', 5);
+							socket.to(socket.room).emit('set board piece client value', 4);
+							
 							io.in(socket.room).emit('prep for start of game');
 							//io.in(socket.room).emit('boardPieces paintout');
 							socket.to(socket.room).emit('boardPieces paintout');
@@ -798,8 +804,11 @@ io.on('connection', function(socket) {
 					{
 						console.log("starting player is first readycheck responder");
 						//if first response gets to start, broadcast to all except this socket in the room (a.k.a: the client)
-						socket.to(socket.room).emit('setYourBoardPiecesValue');
-						socket.emit('setOpponentBoardPieceValue');
+						//socket.emit('setYourBoardPiecesValue', 4);
+						//socket.to(socket.room).emit('setOpponentBoardPieceValue', 5);
+						socket.emit('set board piece client value', 4);
+						socket.to(socket.room).emit('set board piece client value', 5);
+						
 						io.in(socket.room).emit('prep for start of game');
 						io.in(socket.room).emit('boardPieces paintout');
 						socket.to(socket.room).emit('your turn in game');
@@ -817,8 +826,12 @@ io.on('connection', function(socket) {
 						//io.in(room).emit start the game -- to prep it with everything for both sockets?
 						//then send "personal" emit for the one currently whos turn it is
 						//I have to attach listener when its the players turn? and not when opponents turn?
-						socket.to(socket.room).emit('setOpponentBoardPieceValue');
-						socket.emit('setYourBoardPiecesValue');
+						
+						//socket.to(socket.room).emit('setOpponentBoardPieceValue', 4);
+						//socket.emit('setYourBoardPiecesValue', 5);
+						socket.emit('set board piece client value', 5);
+						socket.to(socket.room).emit('set board piece client value', 4);
+						
 						io.in(socket.room).emit('prep for start of game');
 						io.in(socket.room).emit('boardPieces paintout');
 						socket.emit('your turn in game');
@@ -1072,7 +1085,7 @@ io.on('connection', function(socket) {
 				
 				io.in(socket.room).emit('update total games');
 				
-				var gameTimstamp = Date.now();
+				var gameTimestamp = Date.now();
 				var gameTime = gameTimestamp - activeFullRoomsList[roomIndex].createdTime;
 				console.log("gameTime = " + gameTime); //in the update avg game time event - have to convert it to seconds.. possibly minutes and seconds...
 				
@@ -1086,7 +1099,10 @@ io.on('connection', function(socket) {
 				//can easily be done for this specific socket, but for the other one a call to client first to then contact server for special event to increment total games has to be made
 				
 				
-			}else if((clientList[clientIndex].game.startingPlayer && clientList[clientIndex].game.movesMade == 5 && winstats[0].player == 0 && zeroCounter > 0) || (!clientList[clientIndex].game.startingPlayer && clientList[clientIndex].game.movesMade == 4 && winstats[0].player == 0 && zeroCounter > 0)) { //player ran out of moves, declare opponent the winner, and shamelly announce lose
+			} /*else if((clientList[clientIndex].game.startingPlayer && clientList[clientIndex].game.movesMade == 5 && winstats[0].player == 0 && zeroCounter > 0) || (!(clientList[clientIndex].game.startingPlayer) && clientList[clientIndex].game.movesMade == 4 && winstats[0].player == 0 && zeroCounter > 0)) { //player ran out of moves, declare opponent the winner, and shamelly announce lose
+				console.log("inside of if starting player is set -or not set, and zerocounter > 0 event");
+				console.log("startingplayer contains: ", clientList[clientIndex].game.startingPlayer);
+				console.log("movesMade contains: ", clientList[clientIndex].game.movesMade);
 				
 				//win either way if win detected or not
 				socket.to(socket.room).emit('draw win', {winCells: uniqueWinCells, boardGrid: activeFullRoomsList[roomIndex].boardGrid});
@@ -1110,7 +1126,8 @@ io.on('connection', function(socket) {
 				//activeFullRoomsList.splice(roomIndex, 1);
 				
 				
-			}else {
+			}*/
+			else {
 				//if no win, no lose, no draw:
 					console.log("paint moves called serverside");
 				io.in(socket.room).emit('paint moves', activeFullRoomsList[roomIndex].boardGrid);
@@ -1125,6 +1142,33 @@ io.on('connection', function(socket) {
 			//remember this shit should NOT happen if A WIN, A LOSE, or A DRAW --- only otherwise
 		
 		}else {
+			//if it was -1 -- aka forfeit of turn -- decrement this sockets moves, while incrementing opponents
+			console.log("if forfeit of turn on serverside");
+			var clientIndex = getClientIndex(socket.cid);
+			
+			clientList[clientIndex].game.movesMade -= 1;
+			socket.emit('decrement boardPieces');
+			
+			socket.to(socket.room).emit('increment moves');
+			socket.to(socket.room).emit('increment boardPieces');
+			
+			io.in(socket.room).emit('boardPieces update', 0);
+			
+			
+			/*if(activeFullRoomsList[roomIndex].startingPlayerCID == socket.cid)
+			{
+				//activeFullRoomsList[roomIndex].playerMovesLeft.p1 -= 1; //player 1 always the starting player
+				//io.in(socket.room).emit('starting player boardPiece update');
+				io.in(socket.room).emit('boardPieces update', 1);
+				//if sending along clientID and they get "starting player" + clientID they know that Your board pieces = starting player, ergo 5 pieces, whilst same goes for not starting player + clientID = Your board pieces = 4 while opponent should have 5
+			}else
+			{
+				//activeFullRoomsList[roomIndex].playerMovesLeft.p2 -= 1;
+				//io.in(socket.room).emit('not starting player boardPiece update');
+				io.in(socket.room).emit('boardPieces update', -1);
+			}*/
+			
+			//update boardPieces as well!
 		}
 		//activeFullRoomsList[roomIndex].movesMade += 1; //even the no moves count as moves (forfeit moves if timer runs out..
 		
@@ -1142,6 +1186,13 @@ io.on('connection', function(socket) {
 		}
 		//clientList.current = true; <- if it is, that means it should be set to false and the other client in the room should have "your turn" while this one gets "opponents turn" genius?
 		
+	});
+	
+	socket.on('incrementing moves', function() {
+		console.log("incrementing moves serverside");
+		var clientIndex = getClientIndex(socket.cid);
+		
+		clientList[clientIndex].game.movesMade += 1;
 	});
 	
 	socket.on('updating wins', function() {
