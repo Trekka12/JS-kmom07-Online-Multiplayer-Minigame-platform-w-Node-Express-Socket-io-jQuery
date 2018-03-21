@@ -66,6 +66,10 @@ And here we are now...
 + repeated use of similiar logic/functionality has been compressed into reusable functions to ease the code as well as to make it more efficient
 + socket.io Multiple room functionality is used (obviously)
 + users alternate between 2 types of rooms - game rooms and default room (connected) - helps with the maintenance and update of interface information for individual connected- and registered sockets
++ chat has a built-in feature to auto-scroll down to the latest typed message in the chatbox
++ Clientside disconnect detection which will "update page" on connection break - causing the application to "restart" in interface to match the data-reset that occured if/when node was restarted.
++ Both username registration and lobbyname registration got Anti-nameclash-feature that avoids duplicates of the same name.
++ Game room chat feature have user textColor embedding, if client is typing, hes doing so in black textcolor, whilst if other connected socket is typing, his text is displayed with blue textcolor.
 
 ##Features currently being worked on
 + Have node.js run "forever" even with terminal shut down, also have it auto instant restart upon potential crash and have it add error message to a logfile if there is a crash
@@ -79,6 +83,8 @@ And here we are now...
 ##Features explored but was found not suited
 + Considered using HTML5 Web Workers for dealing with task such as background updating roomlist - but turned out this was not possible due to the fact that HTML5 Web Workers don't support manipulation of DOM elements.
 + consider and look into replacing var with let for variable declaration - Will stick with my var, since I am basing my project on EcmaScript 5 at this time and let seem to be part of ES6
++ Considered loading JS files via Require, found this to be too much of a hassle for this particular project (lack of time to invest figuring it all out and making it efficient)
++ Application is prepared to give punishment for chat spamming , but chosen not to implement due to not wanting to punish my visitors for now.
 
 ------------
 
@@ -93,3 +99,5 @@ And here we are now...
 + Possibly see if I can fix so user session is remembered despite disconnect ? "Pick up where left off" - might not be as implicable for me in this case, as if it was only chat rooms, now its game rooms as well...
 + Doublecheck if swedish characters affect anything like joining of room, leaving room, reconnecting room etc.
 + Extend the project to support more "mini-games" and not _only_ TicTacToe, but maybe also sinking ships, rock-paper-scissor, etc. and have players select what game room type* they wish to have when creating new rooms :)
++ Could add persistent storage and profiles to registered users so that games won, avg game time, their usernames, total games, etc. is remembered - together with a "proper" login/new here-registration approach once entering the site, instead of just username registration - but not looking for this at the moment though.
++ Fix proper 404 page on disconnect served up via Express - un-manipulateble by client

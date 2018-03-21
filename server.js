@@ -9,6 +9,7 @@ var activeFullRoomsList = []; //track rooms when they are "removed" from roomLis
 var clientList = [];
 var firstRoomCreated = false;
 var movesCounter = 0;
+const DEFAULT_ROOM = "connected";
 const winCombos = {	1: [1,2,3],
 					2: [4,5,6],
 					3: [7,8,9],
@@ -87,7 +88,7 @@ io.on('connection', function(socket) {
 			}
 		}
 		
-		socket.join('connected'); //join general "connected room" to ease the broadcasting more - on join a "real" room - leave this common "connected" room. To only receive the relevant messages
+		socket.join(DEFAULT_ROOM); //join general "connected room" to ease the broadcasting more - on join a "real" room - leave this common "connected" room. To only receive the relevant messages
 		
 		socket.cid = clientID; // save clientID to the socket
 		//socket.emit('register clientID clientside', socket.cid);
@@ -123,7 +124,7 @@ io.on('connection', function(socket) {
 		var clientIndex = getClientIndex(socket.cid);
 		console.log("clientList[" + clientIndex + "]: ", clientList[clientIndex]);
 		
-		io.in('connected').emit('update siteStatsArea', clientList);
+		io.in(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
 		
 		clientID += 1; //increment for every user ever created - but never remove on disconnect
 			
@@ -218,7 +219,7 @@ io.on('connection', function(socket) {
 		//perhaps I can use roomList.length to get a more accurate number for roomindex?
 		
 		//after room has been created - send the user into the room itself!
-		socket.leave('connected');
+		socket.leave(DEFAULT_ROOM);
 		
 		socket.join(lobbyname);
 		
@@ -236,11 +237,11 @@ io.on('connection', function(socket) {
 		{
 			//socket.broadcast.emit('initiate first roomlist update'); //if multiple sockets connected and first room is created - send out 'initiate roomlist interval updater'
 			
-			socket.to('connected').emit('load roomlist', roomList);
+			socket.to(DEFAULT_ROOM).emit('load roomlist', roomList);
 			firstRoomCreated = true;
 		}
 		
-		socket.to('connected').emit('update siteStatsArea', clientList);
+		socket.to(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
 	});
 	
 	
@@ -291,14 +292,14 @@ io.on('connection', function(socket) {
 		//so when a user attempts to join a specific room - first thing to do is identify the room and check whether or not it is PW protected.
 		
 		//check if the room has password set
-		var roomIndex = -1;
-		for(var i = 0; i < roomList.length; i++)
-		{
-			if(roomList[i].name == selectedRoom)
-			{
-				roomIndex = i;
-			}
-		}
+		var roomIndex = getRoomIndex(selectedRoom, roomList); //-1;
+		//for(var i = 0; i < roomList.length; i++)
+		//{
+		//	if(roomList[i].name == selectedRoom)
+		//	{
+		//		roomIndex = i;
+		//	}
+		//}
 		
 		if(roomList[roomIndex].pw !== "none") //if there is a PW to gain access to room
 		{
@@ -309,7 +310,7 @@ io.on('connection', function(socket) {
 			//if successful send successful login and do all the necessary serverside actions to login user to room
 			if(roomList[roomIndex].activeUserNmbr < 2)
 			{
-				socket.leave('connected');
+				socket.leave(DEFAULT_ROOM);
 			
 				socket.join(roomList[roomIndex].name);
 				
@@ -334,13 +335,23 @@ io.on('connection', function(socket) {
 				
 				//test this if this works..
 				activeFullRoomsList.push(roomList[roomIndex]); // push over all the room data over to the activeFullRoomsList to "save" the data while removing it from lobbylist..
+				var newRoomIndex = -1;
+				for(var i = 0; i < activeFullRoomsList.length; i++)
+				{
+					if(activeFullRoomsList[i].name == socket.room)
+					{
+						newRoomIndex = i;
+					}
+				}
+				io.in(socket.room).emit('update roomToLoginTo index', newRoomIndex); //when both joins we need to update this since room changed listcontainer and thereby also got new index
+				
 				console.log("activeFullRoomsList after push-copy now contains: ", activeFullRoomsList);
 				roomList.splice(roomIndex, 1); //remove from roomList
 				
 				console.log("roomList after spliced away the joined room consist of: ", roomList);
 				
 				//socket.to('connected').emit('instant interface update', roomList);
-				socket.to('connected').emit('load roomlist', roomList);
+				socket.to(DEFAULT_ROOM).emit('load roomlist', roomList);
 				//update interface for all looking at it instantly when someone joined the room so no1 else can join the room cuz its full.
 				
 				socket.emit('client joins room', {username: clientList[clientIndex].username, room: socket.room}); //creator joins room but for "second" client to join the room..
@@ -352,7 +363,7 @@ io.on('connection', function(socket) {
 				
 				//broadcast to all in the room that a readycheck should be shown in canvas (or outside of canvas)
 				
-				socket.to('connected').emit('update siteStatsArea', clientList);
+				socket.to(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
 			}else {
 				//if not less than 2... activeUserNmbr --- then user will not be able to join.
 				//simple precaution.
@@ -383,7 +394,7 @@ io.on('connection', function(socket) {
 		{
 			console.log("pws matched, joining room");
 			//if successful send successful login and do all the necessary serverside actions to login user to room
-			socket.leave('connected');
+			socket.leave(DEFAULT_ROOM);
 		
 			socket.join(roomList[data.roomindex].name);
 			
@@ -436,14 +447,14 @@ io.on('connection', function(socket) {
 		
 		//step 1: roomList identify what index our room has
 		//step 2: use that index to reach readycheck array inside of that room
-		var roomIndex = -1;
-		for(var i = 0; i < activeFullRoomsList.length; i++)
-		{
-			if(activeFullRoomsList[i].name == socket.room)
-			{
-				roomIndex = i;
-			}
-		}
+		var roomIndex = getRoomIndex(socket.room, activeFullRoomsList); //-1;
+		//for(var i = 0; i < activeFullRoomsList.length; i++)
+		//{
+		//	if(activeFullRoomsList[i].name == socket.room)
+		//	{
+		//		roomIndex = i;
+		//	}
+		//}
 		
 		var clientIndex = getClientIndex(socket.cid);
 		
@@ -507,7 +518,7 @@ io.on('connection', function(socket) {
 					//I cant do socket.leave from the creators end - gotta do that on the clients end...
 					//if I send out io.in the room - that would reach both client and creator
 					socket.leave(activeFullRoomsList[roomIndex].name);
-					socket.join('connected'); //this way next line emit only reaches client who is left in the room
+					socket.join(DEFAULT_ROOM); //this way next line emit only reaches client who is left in the room
 					console.log("creator left room: " + activeFullRoomsList[roomIndex].name + " and joined connected");
 					
 					
@@ -517,7 +528,7 @@ io.on('connection', function(socket) {
 					clientList[clientIndex].activeRoom = "";
 					clientList[clientIndex].roomActive = false;
 					
-					socket.room = "connected";
+					socket.room = DEFAULT_ROOM;
 					socket.roomActive = false;
 					
 					//broadcast to all in connected new siteStatsArea
@@ -566,13 +577,13 @@ io.on('connection', function(socket) {
 					clientList[clientIndex].activeRoom = "";
 					clientList[clientIndex].roomActive = false;
 					
-					socket.room = "connected";
+					socket.room = DEFAULT_ROOM;
 					socket.roomActive = false;
 					
 					activeFullRoomsList[roomIndex].activeUserNmbr -= 1;
 					
 					socket.leave(activeFullRoomsList[roomIndex].name);
-					socket.join("connected");
+					socket.join(DEFAULT_ROOM);
 					
 					socket.emit('stop all readycheck chinanigans');
 					socket.to(activeFullRoomsList[roomIndex].name).emit('a user left the room', clientList[clientIndex].username);
@@ -731,7 +742,7 @@ io.on('connection', function(socket) {
 					//I cant do socket.leave from the creators end - gotta do that on the clients end...
 					//if I send out io.in the room - that would reach both client and creator
 					socket.leave(activeFullRoomsList[roomIndex].name);
-					socket.join('connected'); //this way next line emit only reaches client who is left in the room
+					socket.join(DEFAULT_ROOM); //this way next line emit only reaches client who is left in the room
 					
 					
 					clientList[clientIndex].createdRoom.name = "";
@@ -740,7 +751,7 @@ io.on('connection', function(socket) {
 					clientList[clientIndex].activeRoom = "";
 					clientList[clientIndex].roomActive = false;
 					
-					socket.room = "connected";
+					socket.room = DEFAULT_ROOM;
 					socket.roomActive = false;
 					
 					
@@ -853,7 +864,7 @@ io.on('connection', function(socket) {
 					clientList[clientIndex].activeRoom = "";
 					clientList[clientIndex].roomActive = false;
 					
-					socket.room = "connected";
+					socket.room = DEFAULT_ROOM;
 					socket.roomActive = false;
 					
 					activeFullRoomsList[roomIndex].activeUserNmbr -= 1;
@@ -861,7 +872,7 @@ io.on('connection', function(socket) {
 					console.log("activeFullRoomsList AFTER -1 on activeUserNmbr: ", activeFullRoomsList[roomIndex]);
 					
 					socket.leave(activeFullRoomsList[roomIndex].name);
-					socket.join("connected");
+					socket.join(DEFAULT_ROOM);
 					
 					socket.to(activeFullRoomsList[roomIndex].name).emit('a user left the room', clientList[clientIndex].username); //on this send back to clear readychecks?
 					
@@ -895,19 +906,19 @@ io.on('connection', function(socket) {
 	socket.on('roomleave data scrub', function() {
 		var clientIndex = getClientIndex(socket.cid);
 		
-		if(socket.room != "connected")
+		if(socket.room != DEFAULT_ROOM)
 		{
 			socket.leave(socket.room);
-			socket.join("connected");
+			socket.join(DEFAULT_ROOM);
 		}
 		
 		clientList[clientIndex].activeRoom = "";
 		clientList[clientIndex].roomActive = false;
 		
-		socket.room = "connected";
+		socket.room = DEFAULT_ROOM;
 		socket.roomActive = false;
 		
-		io.in('connected').emit('update siteStatsArea', clientList); //should happen for both creator and client once reaches this point cuz at this point both that was in room should have left the room..
+		io.in(DEFAULT_ROOM).emit('update siteStatsArea', clientList); //should happen for both creator and client once reaches this point cuz at this point both that was in room should have left the room..
 		
 		socket.emit('update gameStatsArea', clientList[clientIndex].gameStats);
 		
@@ -932,6 +943,8 @@ io.on('connection', function(socket) {
 		
 		//get roomIndex
 		
+		console.log("activeFullRoomsList contains: ", activeFullRoomsList);
+		
 		var roomIndex = -1;
 		for(var i = 0; i < activeFullRoomsList.length; i++) //prepare for more than 1 activeFullRoom in that list..
 		{
@@ -940,6 +953,8 @@ io.on('connection', function(socket) {
 				roomIndex = i;
 			}
 		}
+		
+		console.log("roomIndex = " + roomIndex);
 		
 		console.log("boardGrid with pieces placed: ", activeFullRoomsList[roomIndex].boardGrid);
 		
@@ -1099,35 +1114,7 @@ io.on('connection', function(socket) {
 				//can easily be done for this specific socket, but for the other one a call to client first to then contact server for special event to increment total games has to be made
 				
 				
-			} /*else if((clientList[clientIndex].game.startingPlayer && clientList[clientIndex].game.movesMade == 5 && winstats[0].player == 0 && zeroCounter > 0) || (!(clientList[clientIndex].game.startingPlayer) && clientList[clientIndex].game.movesMade == 4 && winstats[0].player == 0 && zeroCounter > 0)) { //player ran out of moves, declare opponent the winner, and shamelly announce lose
-				console.log("inside of if starting player is set -or not set, and zerocounter > 0 event");
-				console.log("startingplayer contains: ", clientList[clientIndex].game.startingPlayer);
-				console.log("movesMade contains: ", clientList[clientIndex].game.movesMade);
-				
-				//win either way if win detected or not
-				socket.to(socket.room).emit('draw win', {winCells: uniqueWinCells, boardGrid: activeFullRoomsList[roomIndex].boardGrid});
-				socket.emit('draw lose', {winCells: uniqueWinCells, boardGrid: activeFullRoomsList[roomIndex].boardGrid});
-				
-				//add player winstats here to other connected client and update both total games
-				socket.to(socket.room).emit('update wins');
-				io.in(socket.room).emit('update total games');
-				
-				//for the Avg time I need a Date object to compare it to
-				var winTimestamp = Date.now();
-				var gameTime = winTimestamp - activeFullRoomsList[roomIndex].createdTime;
-				console.log("gameTime = " + gameTime); //in the update avg game time event - have to convert it to seconds.. possibly minutes and seconds...
-				
-				io.in(socket.room).emit('update avg game time', gameTime); //add all times to clientList.games.time array and divide by the length
-				
-				gameOver = true;
-				
-				io.in(socket.room).emit('ending game procedure');
-				
-				//activeFullRoomsList.splice(roomIndex, 1);
-				
-				
-			}*/
-			else {
+			} else {
 				//if no win, no lose, no draw:
 					console.log("paint moves called serverside");
 				io.in(socket.room).emit('paint moves', activeFullRoomsList[roomIndex].boardGrid);
@@ -1153,20 +1140,6 @@ io.on('connection', function(socket) {
 			socket.to(socket.room).emit('increment boardPieces');
 			
 			io.in(socket.room).emit('boardPieces update', 0);
-			
-			
-			/*if(activeFullRoomsList[roomIndex].startingPlayerCID == socket.cid)
-			{
-				//activeFullRoomsList[roomIndex].playerMovesLeft.p1 -= 1; //player 1 always the starting player
-				//io.in(socket.room).emit('starting player boardPiece update');
-				io.in(socket.room).emit('boardPieces update', 1);
-				//if sending along clientID and they get "starting player" + clientID they know that Your board pieces = starting player, ergo 5 pieces, whilst same goes for not starting player + clientID = Your board pieces = 4 while opponent should have 5
-			}else
-			{
-				//activeFullRoomsList[roomIndex].playerMovesLeft.p2 -= 1;
-				//io.in(socket.room).emit('not starting player boardPiece update');
-				io.in(socket.room).emit('boardPieces update', -1);
-			}*/
 			
 			//update boardPieces as well!
 		}
@@ -1244,14 +1217,14 @@ io.on('connection', function(socket) {
 		console.log("clientList[socket.cid].activeRoom = ", clientList[socket.cid].activeRoom);
 		
 		//get activeFullRoomsList specific roomIndex
-		var roomIndex = -1;
-		for(var i = 0; i < activeFullRoomsList.length; i++) //prepare for more than 1 activeFullRoom in that list..
-		{
-			if(activeFullRoomsList[i].name == clientList[socket.cid].activeRoom)
-			{
-				roomIndex = i;
-			}
-		}
+		var roomIndex = getRoomIndex(clientList[socket.cid].activeRoom, activeFullRoomsList); //-1;
+		//for(var i = 0; i < activeFullRoomsList.length; i++) //prepare for more than 1 activeFullRoom in that list..
+		//{
+		//	if(activeFullRoomsList[i].name == clientList[socket.cid].activeRoom)
+		//	{
+		//		roomIndex = i;
+		//	}
+		//}
 		
 		console.log("roomIndex printout in now we leave game: ", roomIndex);
 		console.log("activeFullRoomsList[roomIndex] contains: ", activeFullRoomsList[roomIndex]);
@@ -1291,24 +1264,30 @@ io.on('connection', function(socket) {
 		console.log("inside of leave room serverside");
 		
 		
-		socket.leave(roomList[roomindex].name);
-		socket.join('connected'); //declare this string as "default channel/room" variable later..
+		socket.leave(activeFullRoomsList[roomindex].name);
+		socket.join(DEFAULT_ROOM); //declare this string as "default channel/room" variable later..
 		//check if its creator that is leaving room, or other client - it makes a difference it matters.
 		
-		console.log("client: " + clientIndex + " left " + roomList[roomindex].name + " room and joined: connected");
+		console.log("client: " + clientIndex + " left " + activeFullRoomsList[roomindex].name + " room and joined: connected");
 		
 		var clientIndex = getClientIndex(socket.cid);
 		
 		//clientList[clientIndex].createdRoom.name.length > 0 && (
-		if(clientList[clientIndex].createdRoom.name == roomList[roomindex].name)
+		if(clientList[clientIndex].createdRoom.name == activeFullRoomsList[roomindex].name)
 		{
 			//then creator is the one leaving
 			//which means we also need to delete the room from roomList and clear the sockets createdRoom data
 			//we also need to check if there are still rooms in roomList after removal, if not - we need to reset "firstCreatedRoom" -- holy hell a lot of stuff to take care of all of sudden :P
-			roomList.splice(roomindex, 1); //remove the entire roomList segment for this room that this socket created
+			activeFullRoomsList.splice(roomindex, 1); //remove the entire roomList segment for this room that this socket created
 			clientList[clientIndex].createdRoom.name = "";
 			clientList[clientIndex].createdRoom.pw = "";
 			clientList[clientIndex].createdRoom.createdTime = 0;
+			
+			//do the same here as when creator leaves by declining readycheck...
+			
+			//there is more to reset here...
+			
+			//fck... also need to kick the other player ugh.. 
 			
 			if(roomList.length == 0)
 			{
@@ -1325,7 +1304,7 @@ io.on('connection', function(socket) {
 			socket.emit('initiate roomlist update');
 		}
 		
-		socket.room = "connected";
+		socket.room = DEFAULT_ROOM;
 		
 		socket.roomActive = false;
 		clientList[clientIndex].roomActive = false;
@@ -1336,7 +1315,7 @@ io.on('connection', function(socket) {
 		
 		//if creator leaves room, same as on disconnect - inform other client in the room (if there is any - check this), and return them to main screen - also remove room from and all of its data - and issue a broadcast updating the select-option list - unless setTimeout takes care of this already?
 		
-		io.in('connected').emit('update siteStatsArea', clientList);
+		io.in(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
 		
 	});
 	
@@ -1363,10 +1342,11 @@ io.on('connection', function(socket) {
 			{
 				if(clientList[i].username == socket.username)
 				{
-					clientNameExist = true;
+					//clientNameExist = true;
 					clientIndex = i;
 				}
 			}
+			
 			clientList[clientIndex].lastMessage = command;
 			console.log("in command storing lastMessage as: ", clientList[clientIndex].lastMessage);
 			
@@ -1409,8 +1389,16 @@ io.on('connection', function(socket) {
 						//	}
 						//}
 						
-						console.log("clientList: ", clientList);
-						console.log("clientIndex: ", clientIndex);
+						for(var i = 0; i < clientList.length; i++)
+						{
+							if(newnick == clientList[i].username)
+							{
+								clientNameExist = true;
+							}
+						}
+						
+						//console.log("clientList: ", clientList);
+						//console.log("clientIndex: ", clientIndex);
 						
 						var oldNick = socket.username;
 						
@@ -1439,7 +1427,7 @@ io.on('connection', function(socket) {
 						
 						socket.emit('username successfully changed', socket.username);
 						
-						socket.broadcast.emit('username change', {oldNick: oldNick, newNick: socket.username});
+						socket.to(socket.room).emit('username change', {oldNick: oldNick, newNick: socket.username});
 						
 						
 						//socket.username = newnick;
@@ -1448,7 +1436,6 @@ io.on('connection', function(socket) {
 						socket.emit('unacceptable characters');
 					}
 				}
-				
 			}
 		}else {
 			//if it was a command, but not with sufficient data send back and inform user
@@ -1487,20 +1474,22 @@ io.on('connection', function(socket) {
 			console.log("msgTimestamp: " + clientList[clientIndex].lastMessageSent);
 			
 			socket.emit('new message', {
-				username: socket.username, //"user" + clientCounter,
-				textColor: textColor,
+				username: socket.username,
+				textColor: "#000000",
 				message: data.msg
 			});
 			
-			socket.broadcast.emit('new message', {
+			//socket.broadcast.emit('new message', {
+			socket.to(socket.room).emit('new message', {
 				username: socket.username, //"user" + clientCounter,
-				textColor: textColor,
+				textColor: "#5BAEC9",
 				message: data.msg
 			});
 		}else
 		{
 			//if messages was sent too close onto each other --- inform the user
 			socket.emit('too fast typing');
+			//typerTimeout = 5000; I could punish my visitors by giving them typerTimeout -- check in the if(timeDiff >= 500) block, OR if typerTimeout != 5000, then another if/else block saying if typerTimeout 5000 check if timeDiff >= 5000 - then allow next message to pass on by
 		}
 		
 	});
@@ -1508,7 +1497,7 @@ io.on('connection', function(socket) {
 	//when the client emits 'isTyping', we broadcast that to other clients
 	socket.on('isTyping', function() {
 		console.log("server side receiving isTyping emit");
-		socket.broadcast.emit('isTyping', {
+		socket.to(socket.room).emit('isTyping', {
 			username: socket.username
 		});
 	});
@@ -1516,14 +1505,14 @@ io.on('connection', function(socket) {
 	//when client emits stopTyping, we broadcast that to other clients as well
 	socket.on('stopTyping', function() {
 		console.log("server side receiving stopTyping emit");
-		socket.broadcast.emit('stopTyping', {
-			username: socket.username
-		});
+		socket.to(socket.room).emit('stopTyping'); //, {
+	//		username: socket.username
+	//	});
 	});
 	
 	socket.on('stopTypingEnter', function() {
 		console.log("server side receving stopTypingEnter emit");
-		socket.broadcast.emit('stopTypingEnter', {username: socket.username});
+		socket.to(socket.room).emit('stopTypingEnter'); //, {username: socket.username});
 	});
 	
 	socket.on('recreate last message', function() {
@@ -1565,7 +1554,7 @@ io.on('connection', function(socket) {
 			console.log("clientList[" + clientToRemoveFromClientList + "] removed from ClientList.");
 		}
 		
-		socket.to('connected').emit('update siteStatsArea', clientList);
+		socket.to(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
 		
 		//must somehow here take into account and check if activeFullRoomsList has the room and it should be removed from this one, it will come... patience..
 		
@@ -1622,6 +1611,14 @@ function getClientIndex(clientID) {
 	return clientIndex;
 }
 
-/*function randomize(min, max) { //random(min, max) {
-		return Math.floor(Math.random() * (max - min + 1)) + min;
-}*/
+function getRoomIndex(selectedRoom, array) {
+	var roomIndex = -1;
+	for(var i = 0; i < array.length; i++)
+	{
+		if(array[i].name == selectedRoom)
+		{
+			roomIndex = i;
+		}
+	}
+	return roomIndex;
+}

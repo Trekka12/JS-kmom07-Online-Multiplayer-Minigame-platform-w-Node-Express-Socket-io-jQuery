@@ -40,6 +40,9 @@ $(document).ready(function(){
 	var typing = false; //keeping track of whether user is typing or not
 	
 	//front-end DOM elements used throughout client.js
+	var container = $('#container');
+	var dcArea = $('#dcArea');
+	var dcText = $('#dcText');
 	var usernameRegSection = $('#usernameRegSection');
 	var usernameField = $('#username');
 	var nickRegStatusMsg = $('#nickRegStatusMsg');
@@ -85,6 +88,11 @@ $(document).ready(function(){
 	
 	var gameTurnTimer = null; //gameturn timeout ID
 	var gameClock = null; //game clock interval ID
+	
+	var reconnectTimer = null;
+	
+	//var lastTypingTime = 0;
+	var typingTimeout = null;
 	
 	//global game vars
 	const gameColors = {	bgColor: "#1f781f",
@@ -150,6 +158,8 @@ $(document).ready(function(){
 	*/
 	
 	//hide the parts of the interface not to be shown at client connect
+	dcArea.hide();
+	
 	createRoomForm.hide();
 	joinRoomForm.hide();
 	roomLogin.hide();
@@ -165,6 +175,14 @@ $(document).ready(function(){
 	
 	//its a nice user friendly feature not having to manually click the field to write input into
 	usernameField.focus();
+	
+	socket.on('connect', function() {
+		if(reconnectTimer != null)
+		{
+			clearInterval(reconnectTimer);
+			reconnectTimer = null;
+		}
+	});
 	
 	/*
 	=================================================================
@@ -303,6 +321,7 @@ $(document).ready(function(){
 		//check if first letter is a '/' <- then assume command, if not, assume chat msg
 		if(m.val().substr(0,1) === "/")
 		{
+			console.log("sending a command");
 			socket.emit('command', m.val());
 			m.val('');
 			
@@ -331,29 +350,45 @@ $(document).ready(function(){
 	
 	$('#m').on('input', function() {
 		console.log("someone is typing now");
-		if(typing === false)
-		{
+		//if(typing === false)
+		//{
 			//on textfield input - type out whos/that someone is typing
 			socket.emit('isTyping'); //sending typing from client to server
 			console.log("typing");
-			typing = true;
-		}
-		var lastTypingTime = (new Date()).getTime();
-		
-		setTimeout(function() {
-			var typingTimer = (new Date()).getTime();
+			//typing = true;
+		//}
+		//lastTypingTime = (new Date()).getTime();
+		//console.log("lastTypingTime = " + lastTypingTime/1000);
 			
-			var timeDiff = typingTimer - lastTypingTime;
-			console.log("setTimeout timeDiff: ", timeDiff);
+	});
+	
+	
+	//https://schier.co/blog/2014/12/08/wait-for-user-to-stop-typing-using-javascript.html
+	$('#m').on('keyup', function() {
+		console.log("inside on keyup - aka stopped typing");
+		clearTimeout(typingTimeout);
+	
+		typingTimeout = setTimeout(function() {
+			//var typingTimer = (new Date()).getTime();
+			//console.log("typingTimer = " + typingTimer/1000);
 			
-			if(timeDiff >= TYPING_TIMER_LENGTH && typing === true)
-			{
+			//var timeDiff = typingTimer - lastTypingTime;
+			//console.log("setTimeout timeDiff: ", timeDiff);
+			
+			//if(timeDiff >= TYPING_TIMER_LENGTH && typing === true)
+			//{
+			
+			//if(typing === true)
+			//{
 				socket.emit('stopTyping');
-				typing = false;
+				//typing = false;
 				console.log("stopped typing by timeout");
-			}
+				//clearTimeout(typingTimeout);
+				//typingTimeout = null;
+			//}
+			//}
 		}, TYPING_TIMER_LENGTH);
-			
+		
 	});
 	
 	
@@ -429,6 +464,10 @@ $(document).ready(function(){
 		roomToLoginTo = roomindex;
 	});
 	
+	socket.on('update roomToLoginTo index', function(newRoomIndex) {
+		roomToLoginTo = newRoomIndex;
+	});
+	
 	socket.on('load roomlist', function(rooms) {
 		console.log("inside load roomlist");
 		
@@ -490,7 +529,15 @@ $(document).ready(function(){
 	socket.on('update gameStatsArea', function(gameStats) {
 		
 		wonGames.text(gameStats.wonGames + "/" + gameStats.totalGames);
-		avgGameTime.text(gameStats.avgGameTime + "s");
+		
+		if(gameStats.avgGameTime >= 60)
+		{
+			var min = Math.floor(gameStats.avgGameTime / 60);
+			var s = gameStats.avgGameTime % 60;
+			avgGameTime.text(min + "min & " + s + "s");
+		}else {
+			avgGameTime.text(gameStats.avgGameTime + "s");
+		}
 		
 	});
 	
@@ -1197,10 +1244,10 @@ $(document).ready(function(){
 		
 		var date = new Date();
 		
-		messages.append($('<li>').text(date.toLocaleTimeString() + " | " + data.username + ": " + data.message));
+		messages.append($('<li>').css('color', data.textColor).text(date.toLocaleTimeString() + " | " + data.username + ": " + data.message)); //this way (simple fix) opponent will always have blue color while the user himself will always type with black text, "quick-n-diry" ;) - if more users - this could be made more complex and thorough.
 		
 		//scroll to the latest added message, credit to: https://stackoverflow.com/questions/42196287/div-does-not-auto-scroll-to-show-new-messages
-		messages.animate({ scrollTop: messages[0].scrollHeight }, 'fast')
+		messages.animate({ scrollTop: messages[0].scrollHeight }, 'fast');
 		
 		//have black text for the message sent by self always (will appear colored for other person in chatroom)
 	});
@@ -1216,10 +1263,10 @@ $(document).ready(function(){
 		statusMsgContainer.text(user.username + " is typing...").show();
 	});
 		
-	socket.on('stopTyping', function(user) {
+	socket.on('stopTyping', function() { //user
 		//same here - what to happen on receiving broadcast that a user stopped typing
 		console.log("clientside stopTyping");
-		statusMsgContainer.fadeOut();
+		statusMsgContainer.hide(); //fadeOut();
 	});
 	
 	socket.on('stopTypingEnter', function() {
@@ -1255,7 +1302,7 @@ $(document).ready(function(){
 	
 	socket.on('too fast typing', function() {
 		//what should happen when user gets "too fast typing", well, we want user to be informed
-		statusMsgContainer.text("You typed too fast, One message per 1/2 second is allowed. Try again in a little while.").show().fadeOut(4000);
+		statusMsgContainer.text("You typed too fast, One message per 1/2 second is allowed. Try again in a little while.").show().delay(2000).fadeOut(500);
 		//set a timeout and then allow user to type again? show an active timer of how long they must wait? -- advanced (chose to skip this advanced additional feature and focus on whats important).
 	});
 	
@@ -1264,5 +1311,55 @@ $(document).ready(function(){
 		m.text(lastMessage);
 		m.val(lastMessage);
 	});
+	
+	socket.on('disconnect', function() {
+		console.log("application lost connection with server, restart of application will occur on reconnection");
+		
+		//my crude solution will be to try reconnecting every 20s
+		/*reconnectTimer = setInterval(function() {
+			console.log("attempting page reload to see if server is back up and running again.");
+			//location.reload(true);
+			//socket.socket.connect(); //wth is this supposed to be lel?
+			socket.io.reconnect();
+		}, 20*SECOND);*/
+		
+		//show DC screen "server went down or your internet did." for example
+		
+		container.hide();
+		
+		dcArea.fadeIn(500);
+		
+		//location.reload(true); //reload page without cache - simplest solution if node goes down
+		//alternatively what could be done here is message the server with a specific event - on server when this event is received, everything is reset --- or recreated (recreation would however require that the data before server went down was stored in DB or similar persistent data storage, a feature I am not looking to implement at this time).
+	});
+	
+	socket.on('reconnect', function() {
+            console.log('reconnect fired!');
+			
+			dcText.text("");
+			
+			var counter = 5;
+			
+			dcText.append('Connection re-established,<br />we will reconnect you in 5 seconds.');
+			
+			var countDownTimer = setInterval(function() {
+				counter -= 1;
+				
+				dcText.text('');
+				dcText.append('Connection re-established,<br />we will reconnect you in ' + counter + ' seconds.');
+				//clearInterval(countDownTimer);
+				//countDownTimer = null;
+			}, SECOND);
+			
+			
+			var reconTimer = setTimeout(function() {
+				location.reload(true); //reload page without cache - simplest solution if node goes down
+				clearTimeout(reconTimer);
+				clearInterval(countDownTimer);
+				countDownTimer = null;
+				reconTimer = null;
+			}, 5000);
+			
+        });
 	
 });
