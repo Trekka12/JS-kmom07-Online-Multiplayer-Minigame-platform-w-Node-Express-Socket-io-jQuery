@@ -70,6 +70,7 @@ And here we are now...
 + Clientside disconnect detection which will "update page" on connection break - causing the application to "restart" in interface to match the data-reset that occured if/when node was restarted.
 + Both username registration and lobbyname registration got Anti-nameclash-feature that avoids duplicates of the same name.
 + Game room chat feature have user textColor embedding, if client is typing, hes doing so in black textcolor, whilst if other connected socket is typing, his text is displayed with blue textcolor.
++ added textcolor for users in chat to distinguish between them.
 
 ##Features currently being worked on
 + Have node.js run "forever" even with terminal shut down, also have it auto instant restart upon potential crash and have it add error message to a logfile if there is a crash
