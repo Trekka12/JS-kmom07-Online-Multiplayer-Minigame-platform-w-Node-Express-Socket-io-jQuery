@@ -1586,165 +1586,181 @@ io.on('connection', function(socket) {
 	
 	
 	socket.on('command', function(command) {
-		if(command.length > 14) // /changenick + 1 whitespace == 12 characters, minimum chars for nick is 2 => 14
+		
+		var clientIndex = getClientIndex(socket.cid);
+		
+		if(socket.userReg == true && clientList[clientIndex].roomActive == true)
 		{
-			//store command as last message here
-			var clientNameExist = false;
-			var clientIndex = -1;
-			for(var i = 0; i < clientList.length; i++)
+		
+			if(command.length > 14) // /changenick + 1 whitespace == 12 characters, minimum chars for nick is 2 => 14
 			{
-				if(clientList[i].username == socket.username)
-				{
-					//clientNameExist = true;
-					clientIndex = i;
-				}
-			}
-			
-			clientList[clientIndex].lastMessage = command;
-			console.log("in command storing lastMessage as: ", clientList[clientIndex].lastMessage);
-			
-			var theCommand = command.substr(1,10);
-			console.log("command: ", command);
-			var type = "";
-			console.log("theCommand: " + theCommand);
-			console.log("theCommand length: " + theCommand.length);
-			//console.log()
-			if(theCommand == "changenick")
-			{
-				console.log("inside of changenick ifstatement");
-				//type = msg.substr(1,11);
-				//console.log("commandType/messagetype: " + type);
-				//treat the rest of the changenick message as a possible new username to add:
-				//- it cant be empty, and it musn't be less than 2 characters, or over 25 characters
-				//console.log("command.length: " + command.length);
-				//var commandLength = command.length;
+				//store command as last message here
 				
-				var newnick = command.substr(12); //-1 bcuz of "crapchar" at the end it seems
-				//console.log("newnick creation gives with substr: " + command.substr(11, commandLength-5) + ", with length of: " + command.substr(11, commandLength-5).length);
-				//console.log("newnick:" + newnick);
-				//console.log("newnick length: " + newnick.length);
+				//var clientIndex = -1;
+				//for(var i = 0; i < clientList.length; i++)
+				//{
+				//	if(clientList[i].username == socket.username)
+				//	{
+						//clientNameExist = true;
+				//		clientIndex = i;
+				//	}
+				//}
 				
-				if(newnick.length > 1 && newnick.length <= 25)
+				clientList[clientIndex].lastMessage = command;
+				console.log("in command storing lastMessage as: ", clientList[clientIndex].lastMessage);
+				
+				var theCommand = command.substr(1,10);
+				console.log("command: ", command);
+				var type = "";
+				console.log("theCommand: " + theCommand);
+				console.log("theCommand length: " + theCommand.length);
+				//console.log()
+				if(theCommand == "changenick")
 				{
-					if(/^[a-zA-Z0-9]+$/.test(newnick))
+					console.log("inside of changenick ifstatement");
+					//type = msg.substr(1,11);
+					//console.log("commandType/messagetype: " + type);
+					//treat the rest of the changenick message as a possible new username to add:
+					//- it cant be empty, and it musn't be less than 2 characters, or over 25 characters
+					//console.log("command.length: " + command.length);
+					//var commandLength = command.length;
+					
+					var newnick = command.substr(12); //-1 bcuz of "crapchar" at the end it seems
+					//console.log("newnick creation gives with substr: " + command.substr(11, commandLength-5) + ", with length of: " + command.substr(11, commandLength-5).length);
+					//console.log("newnick:" + newnick);
+					//console.log("newnick length: " + newnick.length);
+					
+					if(newnick.length > 1 && newnick.length <= 25)
 					{
-						
-						//time to fix this part - first start by checking if username exist already or not - and remedy the situation.
-						//var clientNameExist = false;
-						//var clientIndex = -1;
-						//clientIndex = -1;
-						//for(var i = 0; i < clientList.length; i++)
-						//{
-						//	if(clientList[i].username == socket.username)
-						//	{
-						//		clientNameExist = true;
-						//		clientIndex = i;
-						//	}
-						//}
-						
-						for(var i = 0; i < clientList.length; i++)
+						if(/^[a-zA-Z0-9]+$/.test(newnick))
 						{
-							if(newnick == clientList[i].username)
+							var clientNameExist = false;
+							//time to fix this part - first start by checking if username exist already or not - and remedy the situation.
+							//var clientNameExist = false;
+							//var clientIndex = -1;
+							//clientIndex = -1;
+							//for(var i = 0; i < clientList.length; i++)
+							//{
+							//	if(clientList[i].username == socket.username)
+							//	{
+							//		clientNameExist = true;
+							//		clientIndex = i;
+							//	}
+							//}
+							
+							for(var i = 0; i < clientList.length; i++)
 							{
-								clientNameExist = true;
+								if(newnick == clientList[i].username)
+								{
+									clientNameExist = true;
+								}
 							}
-						}
-						
-						//console.log("clientList: ", clientList);
-						//console.log("clientIndex: ", clientIndex);
-						
-						var oldNick = socket.username;
-						
-						//IF clientID == 0 OR !clientNameExisted
-						if(clientID === 0 || !clientNameExist)
-						{
-							console.log("inside changenick for clientID === 0 || !clientNameExist.");
-							socket.username = newnick;
-							clientList[clientIndex].username = newnick;
 							
+							//console.log("clientList: ", clientList);
+							//console.log("clientIndex: ", clientIndex);
+							
+							var oldNick = socket.username;
+							
+							//IF clientID == 0 OR !clientNameExisted
+							if(clientID === 0 || !clientNameExist)
+							{
+								console.log("inside changenick for clientID === 0 || !clientNameExist.");
+								socket.username = newnick;
+								clientList[clientIndex].username = newnick;
+								
+							}else {
+								//if username DID exist:
+								console.log("changenick when username did exist");
+								socket.username = newnick + clientList[clientIndex].clientID;
+								console.log("socket.username changed to following when nick exist: ", socket.username);
+								
+								clientList[clientIndex].username = newnick + clientList[clientIndex].clientID;
+								console.log("clientList[clientIndex].username changed to following when nick exist: ", clientList[clientIndex].username)
+							}
+							console.log("socket.username after if statement in changenick: ", socket.username);
+							
+							//var clientIndex = clientList.indexOf(socket.username);
+							//clientList[clientIndex] = newnick;
+							//console.log("clientList[clientIndex]: " + clientList[clientIndex]);
+							
+							
+							socket.emit('username successfully changed', socket.username);
+							
+							socket.to(socket.room).emit('username change', {oldNick: oldNick, newNick: socket.username});
+							
+							
+							//socket.username = newnick;
+							//console.log("socket.username = " + socket.username);
 						}else {
-							//if username DID exist:
-							console.log("changenick when username did exist");
-							socket.username = newnick + clientList[clientIndex].clientID;
-							console.log("socket.username changed to following when nick exist: ", socket.username);
-							
-							clientList[clientIndex].username = newnick + clientList[clientIndex].clientID;
-							console.log("clientList[clientIndex].username changed to following when nick exist: ", clientList[clientIndex].username)
+							socket.emit('unacceptable characters');
 						}
-						console.log("socket.username after if statement in changenick: ", socket.username);
-						
-						//var clientIndex = clientList.indexOf(socket.username);
-						//clientList[clientIndex] = newnick;
-						//console.log("clientList[clientIndex]: " + clientList[clientIndex]);
-						
-						
-						socket.emit('username successfully changed', socket.username);
-						
-						socket.to(socket.room).emit('username change', {oldNick: oldNick, newNick: socket.username});
-						
-						
-						//socket.username = newnick;
-						//console.log("socket.username = " + socket.username);
-					}else {
-						socket.emit('unacceptable characters');
 					}
 				}
+			}else {
+				//if it was a command, but not with sufficient data send back and inform user
+					socket.emit('not enough data');
 			}
 		}else {
-			//if it was a command, but not with sufficient data send back and inform user
-				socket.emit('not enough data');
-			}
+			socket.emit('ajabaja', 'typing');
+		}
 	});
 	
 	socket.on('chat message', function(data) {
 		console.log("message: " + data.msg);
 		
-				
-		//declare socket.textColor instead of having it inside clientList hm?
-		//maybe even socket.lastMsgSent ? which is best?
-		console.log("clientList: ", clientList);
-		console.log("socket.username: ", socket.username); //<-- is correct, but not the changenick declaration for some reason hm...
+		var clientIndex = getClientIndex(socket.cid); //-1;
+		//for(var i = 0; i < clientList.length; i++)
+		//{
+		//	if(clientList[i].username == socket.username)
+		//	{
+		//		clientIndex = i;
+		//	}
+		//}
 		
-		var clientIndex = -1;
-		for(var i = 0; i < clientList.length; i++)
+		//to type successfully user must be part of a room
+		if(socket.userReg == true && clientList[clientIndex].roomActive == true)
 		{
-			if(clientList[i].username == socket.username)
+			
+			//declare socket.textColor instead of having it inside clientList hm?
+			//maybe even socket.lastMsgSent ? which is best?
+			console.log("clientList: ", clientList);
+			console.log("socket.username: ", socket.username); //<-- is correct, but not the changenick declaration for some reason hm...
+			
+			
+			console.log("user data is as follows: ", clientList[clientIndex]);
+			
+			clientList[clientIndex].lastMessage = data.msg;
+			console.log("in chat storing lastMessage as: ", clientList[clientIndex].lastMessage);
+			
+			var textColor = clientList[clientIndex].userColor;
+			var timeDiff = Date.now() - clientList[clientIndex].lastMessageSent;
+			console.log("timeDiff between 2 sent messages is: " + timeDiff);
+			if(timeDiff >= 500)
 			{
-				clientIndex = i;
+				clientList[clientIndex].lastMessageSent = data.timestamp;
+				console.log("msgTimestamp: " + clientList[clientIndex].lastMessageSent);
+				
+				socket.emit('new message', {
+					username: socket.username,
+					textColor: "#000000",
+					message: data.msg
+				});
+				
+				//socket.broadcast.emit('new message', {
+				socket.to(socket.room).emit('new message', {
+					username: socket.username, //"user" + clientCounter,
+					textColor: "#5BAEC9",
+					message: data.msg
+				});
+			}else
+			{
+				//if messages was sent too close onto each other --- inform the user
+				socket.emit('too fast typing');
+				//typerTimeout = 5000; I could punish my visitors by giving them typerTimeout -- check in the if(timeDiff >= 500) block, OR if typerTimeout != 5000, then another if/else block saying if typerTimeout 5000 check if timeDiff >= 5000 - then allow next message to pass on by
 			}
+		}else {
+			socket.emit('ajabaja', "typing");
 		}
-		console.log("user data is as follows: ", clientList[clientIndex]);
-		
-		clientList[clientIndex].lastMessage = data.msg;
-		console.log("in chat storing lastMessage as: ", clientList[clientIndex].lastMessage);
-		
-		var textColor = clientList[clientIndex].userColor;
-		var timeDiff = Date.now() - clientList[clientIndex].lastMessageSent;
-		console.log("timeDiff between 2 sent messages is: " + timeDiff);
-		if(timeDiff >= 500)
-		{
-			clientList[clientIndex].lastMessageSent = data.timestamp;
-			console.log("msgTimestamp: " + clientList[clientIndex].lastMessageSent);
-			
-			socket.emit('new message', {
-				username: socket.username,
-				textColor: "#000000",
-				message: data.msg
-			});
-			
-			//socket.broadcast.emit('new message', {
-			socket.to(socket.room).emit('new message', {
-				username: socket.username, //"user" + clientCounter,
-				textColor: "#5BAEC9",
-				message: data.msg
-			});
-		}else
-		{
-			//if messages was sent too close onto each other --- inform the user
-			socket.emit('too fast typing');
-			//typerTimeout = 5000; I could punish my visitors by giving them typerTimeout -- check in the if(timeDiff >= 500) block, OR if typerTimeout != 5000, then another if/else block saying if typerTimeout 5000 check if timeDiff >= 5000 - then allow next message to pass on by
-		}
-		
 	});
 	
 	//when the client emits 'isTyping', we broadcast that to other clients

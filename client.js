@@ -438,7 +438,7 @@ $(document).ready(function(){
 		if(idString == "userreg")
 		{
 			elem = nickRegStatusMsg;
-		}else if(idString == "createroom" || idString == "joinroom") 
+		}else if(idString == "createroom" || idString == "joinroom" || idString == "typing") 
 		{
 			elem = statusMsgContainer;
 		}else if(idString == "roomlogin")
