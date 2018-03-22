@@ -1250,6 +1250,8 @@ io.on('connection', function(socket) {
 		//every socket will reach this point
 		console.log("inside of ending game procedure serverside");
 		
+		io.in(socket.room).emit('clear game timers');
+		
 		var clientIndex = getClientIndex(socket.cid);
 		
 		
