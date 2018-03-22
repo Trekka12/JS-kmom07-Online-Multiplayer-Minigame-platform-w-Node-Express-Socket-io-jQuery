@@ -78,70 +78,76 @@ io.on('connection', function(socket) {
 		//- should lead to passing on confirmation to client, having it "turn page" interface wise 
 	
 		//Check if username already exist within our clientList, if it does, add clientID to the name ?
-		var clientNameExist = false;
-		for(var i = 0; i < clientList.length; i++)
+		
+		if(socket.userReg == false)
 		{
-			if(clientList[i].username == username)
+			var clientNameExist = false;
+			for(var i = 0; i < clientList.length; i++)
 			{
-				clientNameExist = true;
-				//clientIndex = i; //<- whats that for? I really don't understand it tbh..
+				if(clientList[i].username == username)
+				{
+					clientNameExist = true;
+					//clientIndex = i; //<- whats that for? I really don't understand it tbh..
+				}
 			}
-		}
-		
-		socket.join(DEFAULT_ROOM); //join general "connected room" to ease the broadcasting more - on join a "real" room - leave this common "connected" room. To only receive the relevant messages
-		
-		socket.cid = clientID; // save clientID to the socket
-		//socket.emit('register clientID clientside', socket.cid);
-		
-		console.log("socket.cid = " + socket.cid);
-		
-		//IF clientID == 0 OR !clientNameExisted
-		if(clientID === 0 || !clientNameExist)
-		{
-			socket.username = username;
-			console.log("inside of clientID === 0 || !clientNameExist when registering user.");
+			
+			socket.join(DEFAULT_ROOM); //join general "connected room" to ease the broadcasting more - on join a "real" room - leave this common "connected" room. To only receive the relevant messages
+			
+			socket.cid = clientID; // save clientID to the socket
+			//socket.emit('register clientID clientside', socket.cid);
+			
+			console.log("socket.cid = " + socket.cid);
+			
+			//IF clientID == 0 OR !clientNameExisted
+			if(clientID === 0 || !clientNameExist)
+			{
+				socket.username = username;
+				console.log("inside of clientID === 0 || !clientNameExist when registering user.");
+			}else {
+				//if username DID exist -- (this saves us from having them retry other usernames):
+				socket.username = username + clientID;
+				
+			}
+			
+			//oneRegisteredUser = true;
+			
+			clientList.push({	username: socket.username, 
+								userChatColor: "", //(oneRegisteredUser == false ? "#0000ff" : "#ff0000"),
+								createdRoom: {name: "", pw: "", createdTime: 0}, 
+								clientID: clientID,
+								roomActive: false,
+								activeRoom: "",
+								intervalSet: {set: false, intervalID: null},
+								lastMessageSent: 0,
+								lastMessage: "",
+								game: {movesMade: 0, boardPiece: "", startingPlayer: false, currentMoveMaker: false},
+								gameStats: {wonGames: 0, totalGames: 0, avgGameTime: 0},
+								gameTimes: []});
+								
+			var clientIndex = getClientIndex(socket.cid);
+			console.log("clientList[" + clientIndex + "]: ", clientList[clientIndex]);
+			
+			io.in(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
+			
+			clientID += 1; //increment for every user ever created - but never remove on disconnect
+				
+			console.log("clientList: ", clientList);
+			
+			socket.emit('user registered', socket.username); //send back to the registering client that user was successfully regged together with username?
+			
+			console.log("user: " + socket.username + " is registered.");
+			
+			socket.userReg = true;
+			
+			//if user reg is completed, check to see if roomList.length have any rooms
+			//if there is - trigger individual update or w/e I called it
+			if(roomList.length > 0)
+			{
+				//then there are rooms created already -- load them and keep them updated!
+				socket.emit('load roomlist', roomList);
+			}
 		}else {
-			//if username DID exist -- (this saves us from having them retry other usernames):
-			socket.username = username + clientID;
-			
-		}
-		
-		//oneRegisteredUser = true;
-		
-		clientList.push({	username: socket.username, 
-							userChatColor: "", //(oneRegisteredUser == false ? "#0000ff" : "#ff0000"),
-							createdRoom: {name: "", pw: "", createdTime: 0}, 
-							clientID: clientID,
-							roomActive: false,
-							activeRoom: "",
-							intervalSet: {set: false, intervalID: null},
-							lastMessageSent: 0,
-							lastMessage: "",
-							game: {movesMade: 0, boardPiece: "", startingPlayer: false, currentMoveMaker: false},
-							gameStats: {wonGames: 0, totalGames: 0, avgGameTime: 0},
-							gameTimes: []});
-							
-		var clientIndex = getClientIndex(socket.cid);
-		console.log("clientList[" + clientIndex + "]: ", clientList[clientIndex]);
-		
-		io.in(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
-		
-		clientID += 1; //increment for every user ever created - but never remove on disconnect
-			
-		console.log("clientList: ", clientList);
-		
-		socket.emit('user registered', socket.username); //send back to the registering client that user was successfully regged together with username?
-		
-		console.log("user: " + socket.username + " is registered.");
-		
-		socket.userReg = true;
-		
-		//if user reg is completed, check to see if roomList.length have any rooms
-		//if there is - trigger individual update or w/e I called it
-		if(roomList.length > 0)
-		{
-			//then there are rooms created already -- load them and keep them updated!
-			socket.emit('load roomlist', roomList);
+			socket.emit('ajabaja', "userreg");
 		}
 	});
 	
@@ -1278,20 +1284,138 @@ io.on('connection', function(socket) {
 		var clientIndex = getClientIndex(socket.cid);
 		
 		//get room index
-		var roomIndex = getRoomIndex(socket.room, activeFullRoomsList);
+		//if the room has 1 user it will be in roomList, if 2 users it will be in activeFullRoomsList, hm... scroll through both, see what roomindex that becomes -1 - the one that is other than -1 is where the room can be found another assumption that safely can be made is there is only the creator in a room if it is in roomList
 		
-		//if creator:
-		if(clientList[clientIndex].createdRoom.name == activeFullRoomsList[roomIndex].name)
+		var roomindex1 = -1, roomindex2 = -1;
+		
+		if(roomList.length > 0)
 		{
-			io.in(activeFullRoomsList[roomIndex].name).emit('kick client from a room', roomList);
+			for(var i = 0; i < roomList.length; i++)
+			{
+				if(clientList[clientIndex].createdRoom.name == roomList[i].name)
+				{
+					roomindex1 = i;
+				}
+			}
+		}
+		
+		if(activeFullRoomsList.length > 0)
+		{
+			for(var i = 0; i < activeFullRoomsList.length; i++)
+			{
+				if(clientList[clientIndex].createdRoom.name == activeFullRoomsList[i].name)
+				{
+					roomindex2 = i;
+				}
+			}
+		}
+		
+		//only the creator we need to check for - bcuz he will exist in both rooms no matter if 1 person in it, or 2.
+		
+		var roomIndex = -1;
+		if(roomindex1 != -1 && roomindex2 == -1)
+		{
+			roomIndex = getRoomIndex(socket.room, roomList);
 			
+		}else if(roomindex2 != -1 && roomindex1 == -1) 
+		{
+			roomIndex = getRoomIndex(socket.room, activeFullRoomsList);
+		}
+		
+		if(roomindex1 == -1) //means room does not lie within roomList but in activeFullRoomsList, aka 2 people in room, aka below assumptions safe to make..
+		{
+			//if creator:
+			if(clientList[clientIndex].createdRoom.name == activeFullRoomsList[roomIndex].name)
+			{
+				io.in(activeFullRoomsList[roomIndex].name).emit('kick client from a room', roomList);
+				
+				if(roomList.length == 0)
+				{
+					console.log("send out a beacon to clear all intervals on room leave");
+					io.in(activeFullRoomsList[roomIndex].name).emit('clear intervals');
+				}
+				
+				socket.leave(activeFullRoomsList[roomIndex].name);
+				socket.join(DEFAULT_ROOM); //this way next line emit only reaches client who is left in the room
+				
+				clientList[clientIndex].createdRoom.name = "";
+				clientList[clientIndex].createdRoom.pw = "";
+				clientList[clientIndex].createdRoom.createdTime = 0;
+				clientList[clientIndex].activeRoom = "";
+				clientList[clientIndex].roomActive = false;
+				
+				socket.room = DEFAULT_ROOM;
+				socket.roomActive = false;
+				
+				io.in(activeFullRoomsList[roomIndex].name).emit('roomleaving data scrubbing');
+				
+				activeFullRoomsList.splice(roomIndex, 1);
+				
+				if(roomList.length == 0)
+				{
+					firstRoomCreated = false;
+				}
+				
+				io.in(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
+				
+			}else {
+				//client leaving room ..
+				clientList[clientIndex].activeRoom = "";
+				clientList[clientIndex].roomActive = false;
+				
+				socket.to(socket.room).emit('reset creator on client leave');
+				//socket.to(socket.room).emit('clear game timers');
+				socket.to(socket.room).emit('clear creator game-related data');
+				
+				socket.room = DEFAULT_ROOM;
+				socket.roomActive = false;
+				
+				activeFullRoomsList[roomIndex].activeUserNmbr -= 1;
+				
+				console.log("activeFullRoomsList AFTER -1 on activeUserNmbr: ", activeFullRoomsList[roomIndex]);
+				
+				socket.leave(activeFullRoomsList[roomIndex].name);
+				socket.join(DEFAULT_ROOM);
+				
+				//socket.to(activeFullRoomsList[roomIndex].name).emit('a user left the room', clientList[clientIndex].username); //on this send back to clear readychecks?
+				
+				//clear readycheck responses so that this eventdriven feature works the next time a single clinet leaves and then wants to rejoin
+				//only do this if previously readycheck response was a yes though..
+				console.log("activeFullRoomsList contains: ", activeFullRoomsList[roomIndex].readycheck);
+				//if(activeFullRoomsList[roomIndex].readycheck[0].response == true)
+				//{
+					activeFullRoomsList[roomIndex].readycheck.splice(0, 2);
+				//}
+				console.log("activeFullRoomsList contains AFTER clearing readycheck: ", activeFullRoomsList[roomIndex].readycheck);
+				
+				
+				//if a client answers No --- activeFullRoomsList index should be copied back over to roomList
+				roomList.push(activeFullRoomsList[roomIndex]);
+				activeFullRoomsList.splice(roomIndex, 1);
+				socket.emit('kick client from a room', roomList);
+				
+				//reset the creator in the room to "simply be waiting"
+				//commit creator "reset room" -- aka if they were playing, all game vars should be reset, default room mode should be shown, 
+				clientList[clientIndex].game.movesMade = 0;
+				//clientList[clientIndex].game.startingPlayer = false;
+				clientList[clientIndex].lastMessageSent = 0;
+				clientList[clientIndex].lastMessage = "";
+				
+				socket.emit(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
+				
+			}
+		}else if(roomindex2 == -1)
+		{
+			//if creator wants to leave room before a client joined - do that here..
+			
+				
 			if(roomList.length == 0)
 			{
 				console.log("send out a beacon to clear all intervals on room leave");
-				io.in(activeFullRoomsList[roomIndex].name).emit('clear intervals');
+				socket.emit(roomList[roomIndex].name).emit('clear intervals');
 			}
 			
-			socket.leave(activeFullRoomsList[roomIndex].name);
+			socket.leave(roomList[roomIndex].name);
 			socket.join(DEFAULT_ROOM); //this way next line emit only reaches client who is left in the room
 			
 			clientList[clientIndex].createdRoom.name = "";
@@ -1300,63 +1424,29 @@ io.on('connection', function(socket) {
 			clientList[clientIndex].activeRoom = "";
 			clientList[clientIndex].roomActive = false;
 			
+			
+			
+			socket.emit(roomList[roomIndex].name).emit('roomleaving data scrubbing');
+			
+			roomList.splice(roomIndex, 1);
+			
+			socket.emit(socket.room).emit('kick client from a room', roomList);
+			
 			socket.room = DEFAULT_ROOM;
 			socket.roomActive = false;
-			
-			io.in(activeFullRoomsList[roomIndex].name).emit('roomleaving data scrubbing');
-			
-			activeFullRoomsList.splice(roomIndex, 1);
 			
 			if(roomList.length == 0)
 			{
 				firstRoomCreated = false;
 			}
 			
-		}else {
-			//client leaving room ..
-			clientList[clientIndex].activeRoom = "";
-			clientList[clientIndex].roomActive = false;
+			socket.emit(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
 			
-			socket.to(socket.room).emit('reset creator on client leave');
-			socket.to(socket.room).emit('clear game timers');
-			socket.to(socket.room).emit('clear creator game-related data');
+			//send immediate update of roomlist for the people in "connected" so they dont have any risk of joining a room that doesnt exist..
+			io.in(DEFAULT_ROOM).emit('load roomlist', roomList);
 			
-			socket.room = DEFAULT_ROOM;
-			socket.roomActive = false;
-			
-			activeFullRoomsList[roomIndex].activeUserNmbr -= 1;
-			
-			console.log("activeFullRoomsList AFTER -1 on activeUserNmbr: ", activeFullRoomsList[roomIndex]);
-			
-			socket.leave(activeFullRoomsList[roomIndex].name);
-			socket.join(DEFAULT_ROOM);
-			
-			//socket.to(activeFullRoomsList[roomIndex].name).emit('a user left the room', clientList[clientIndex].username); //on this send back to clear readychecks?
-			
-			//clear readycheck responses so that this eventdriven feature works the next time a single clinet leaves and then wants to rejoin
-			//only do this if previously readycheck response was a yes though..
-			console.log("activeFullRoomsList contains: ", activeFullRoomsList[roomIndex].readycheck);
-			//if(activeFullRoomsList[roomIndex].readycheck[0].response == true)
-			//{
-				activeFullRoomsList[roomIndex].readycheck.splice(0, 2);
-			//}
-			console.log("activeFullRoomsList contains AFTER clearing readycheck: ", activeFullRoomsList[roomIndex].readycheck);
-			
-			
-			//if a client answers No --- activeFullRoomsList index should be copied back over to roomList
-			roomList.push(activeFullRoomsList[roomIndex]);
-			activeFullRoomsList.splice(roomIndex, 1);
-			socket.emit('kick client from a room', roomList);
-			
-			//reset the creator in the room to "simply be waiting"
-			//commit creator "reset room" -- aka if they were playing, all game vars should be reset, default room mode should be shown, 
-			clientList[clientIndex].game.movesMade = 0;
-			//clientList[clientIndex].game.startingPlayer = false;
-			clientList[clientIndex].lastMessageSent = 0;
-			clientList[clientIndex].lastMessage = "";
 			
 		}
-		
 		
 		//I have currently developed with naivité that users actually follow my set up interface... I should really "improve it" to not assume this..
 		

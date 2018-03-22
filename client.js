@@ -431,6 +431,16 @@ $(document).ready(function(){
 		
 	});
 	
+	socket.on('ajabaja', function(idString) {
+		var elem = null;
+		if(idString == "userreg")
+		{
+			elem = nickRegStatusMsg;
+		}
+		
+		elem.text("Seems you have attempted to use the application interface in ways it was not intended, please use the application as intended instead.").show().delay(4000).fadeOut(500);
+	});
+	
 	socket.on('update siteStatsArea', function(clients) {
 
 		totalConnectedUsers.text(clients.length);
