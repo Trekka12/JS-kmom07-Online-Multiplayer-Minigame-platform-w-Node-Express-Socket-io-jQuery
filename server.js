@@ -300,6 +300,12 @@ io.on('connection', function(socket) {
 	socket.on('join room', function(selectedRoom) {
 		console.log("inside of join room serverside");
 		
+		
+		//make sure that the room actually sent along on the join room submit was a room that actually exist in our list --- 
+		//loop through our roomlist, check if the selected room exists, check if user is registered (also a must), check if any rooms have been created - aka if selected room exists
+		
+		
+		
 		//when this is triggered, assume room is full, since this is client joining the room, and room only have capacity of 2
 		
 		
@@ -316,76 +322,80 @@ io.on('connection', function(socket) {
 		//	}
 		//}
 		
-		if(roomList[roomIndex].pw !== "none") //if there is a PW to gain access to room
+		if(socket.userReg == true && roomIndex != -1)
 		{
-			socket.emit('show login form', roomIndex);
-			
-		}else {
-			//if no pw - join room instantly
-			//if successful send successful login and do all the necessary serverside actions to login user to room
-			if(roomList[roomIndex].activeUserNmbr < 2)
+			if(roomList[roomIndex].pw !== "none") //if there is a PW to gain access to room
 			{
-				socket.leave(DEFAULT_ROOM);
-			
-				socket.join(roomList[roomIndex].name);
+				socket.emit('show login form', roomIndex);
 				
-				//stop interval if it exists when a client joins a room..
-				var clientIndex = getClientIndex(socket.cid);
-				//if(clientList[clientIndex].intervalSet.set) //stop interval if joining room
-				//{
-					console.log("stopping interval on joining room");
-					socket.emit('stop lobby update interval');
-				//}
-				
-				roomList[roomIndex].activeUserNmbr += 1; //should bring it up to 2 in this event
-				
-				
-				//this should bring activeUserNmbr to the value of 2, which in turn should trigger readycheck. And on second user joining room - every client in that room should get the readycheck AND notify in chat that a user joined the room AND 
-				
-				socket.room = roomList[roomIndex].name;
-				console.log("client: " + clientIndex + " left connected room and joined: " + roomList[roomIndex].name);
-				socket.roomActive = true;
-				clientList[clientIndex].roomActive = true;
-				clientList[clientIndex].activeRoom = socket.room;
-				
-				//test this if this works..
-				activeFullRoomsList.push(roomList[roomIndex]); // push over all the room data over to the activeFullRoomsList to "save" the data while removing it from lobbylist..
-				var newRoomIndex = -1;
-				for(var i = 0; i < activeFullRoomsList.length; i++)
-				{
-					if(activeFullRoomsList[i].name == socket.room)
-					{
-						newRoomIndex = i;
-					}
-				}
-				io.in(socket.room).emit('update roomToLoginTo index', newRoomIndex); //when both joins we need to update this since room changed listcontainer and thereby also got new index
-				
-				console.log("activeFullRoomsList after push-copy now contains: ", activeFullRoomsList);
-				roomList.splice(roomIndex, 1); //remove from roomList
-				
-				console.log("roomList after spliced away the joined room consist of: ", roomList);
-				
-				//socket.to('connected').emit('instant interface update', roomList);
-				socket.to(DEFAULT_ROOM).emit('load roomlist', roomList);
-				//update interface for all looking at it instantly when someone joined the room so no1 else can join the room cuz its full.
-				
-				socket.emit('client joins room', {username: clientList[clientIndex].username, room: socket.room}); //creator joins room but for "second" client to join the room..
-				
-				socket.to(socket.room).emit('client joined room', clientList[clientIndex].username);
-				//this emit method sends to all in room EXCEPT sender himself.
-				
-				//which means every time a client/user joins a room that is not the creator - readycheck should commence and broadcast that a user joined the room to all in that room should be done, every time. ALSO room should be "temporarily" removed from lobbylist so no1 else can attempt to join... remove it from roomList BUT keep its roomDetails within activeRoomList (or fullRoomList)
-				
-				//broadcast to all in the room that a readycheck should be shown in canvas (or outside of canvas)
-				
-				socket.to(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
 			}else {
-				//if not less than 2... activeUserNmbr --- then user will not be able to join.
-				//simple precaution.
-				//nothing should happen then? if room is full and for some reason still exist in roomlist?
+				//if no pw - join room instantly
+				//if successful send successful login and do all the necessary serverside actions to login user to room
+				if(roomList[roomIndex].activeUserNmbr < 2)
+				{
+					socket.leave(DEFAULT_ROOM);
+				
+					socket.join(roomList[roomIndex].name);
+					
+					//stop interval if it exists when a client joins a room..
+					var clientIndex = getClientIndex(socket.cid);
+					//if(clientList[clientIndex].intervalSet.set) //stop interval if joining room
+					//{
+						console.log("stopping interval on joining room");
+						socket.emit('stop lobby update interval');
+					//}
+					
+					roomList[roomIndex].activeUserNmbr += 1; //should bring it up to 2 in this event
+					
+					
+					//this should bring activeUserNmbr to the value of 2, which in turn should trigger readycheck. And on second user joining room - every client in that room should get the readycheck AND notify in chat that a user joined the room AND 
+					
+					socket.room = roomList[roomIndex].name;
+					console.log("client: " + clientIndex + " left connected room and joined: " + roomList[roomIndex].name);
+					socket.roomActive = true;
+					clientList[clientIndex].roomActive = true;
+					clientList[clientIndex].activeRoom = socket.room;
+					
+					//test this if this works..
+					activeFullRoomsList.push(roomList[roomIndex]); // push over all the room data over to the activeFullRoomsList to "save" the data while removing it from lobbylist..
+					var newRoomIndex = -1;
+					for(var i = 0; i < activeFullRoomsList.length; i++)
+					{
+						if(activeFullRoomsList[i].name == socket.room)
+						{
+							newRoomIndex = i;
+						}
+					}
+					io.in(socket.room).emit('update roomToLoginTo index', newRoomIndex); //when both joins we need to update this since room changed listcontainer and thereby also got new index
+					
+					console.log("activeFullRoomsList after push-copy now contains: ", activeFullRoomsList);
+					roomList.splice(roomIndex, 1); //remove from roomList
+					
+					console.log("roomList after spliced away the joined room consist of: ", roomList);
+					
+					//socket.to('connected').emit('instant interface update', roomList);
+					socket.to(DEFAULT_ROOM).emit('load roomlist', roomList);
+					//update interface for all looking at it instantly when someone joined the room so no1 else can join the room cuz its full.
+					
+					socket.emit('client joins room', {username: clientList[clientIndex].username, room: socket.room}); //creator joins room but for "second" client to join the room..
+					
+					socket.to(socket.room).emit('client joined room', clientList[clientIndex].username);
+					//this emit method sends to all in room EXCEPT sender himself.
+					
+					//which means every time a client/user joins a room that is not the creator - readycheck should commence and broadcast that a user joined the room to all in that room should be done, every time. ALSO room should be "temporarily" removed from lobbylist so no1 else can attempt to join... remove it from roomList BUT keep its roomDetails within activeRoomList (or fullRoomList)
+					
+					//broadcast to all in the room that a readycheck should be shown in canvas (or outside of canvas)
+					
+					socket.to(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
+				}else {
+					//if not less than 2... activeUserNmbr --- then user will not be able to join.
+					//simple precaution.
+					//nothing should happen then? if room is full and for some reason still exist in roomlist?
+				}
 			}
+		}else {
+			socket.emit('ajabaja', "joinroom");
 		}
-		
 		//if it is, PW must match before anything else, if they dont match - emit to client attempting to connect to a room event saying "pw fail" - need a status message area box in the interface to keep users informed of what is happening - in the final product
 		//if pw match - send "successful room join" event to client socket and respond by hiding create room, join room sections, and showing chat interface - also logically join appropriate room serverside for the socket user.
 		//for the chat functionality after this point, always check what room user is connected to before sending messages
