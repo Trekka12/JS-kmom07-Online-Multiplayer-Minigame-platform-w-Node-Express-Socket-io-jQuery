@@ -164,90 +164,99 @@ io.on('connection', function(socket) {
 	socket.on('create room', function(data) {
 		console.log("inside of create room serverside");
 		
-		var lobbyname = data.name;
-		
-		//scroll through roomList checking lobbynames for match, if one is found, redefine lobbyname var with sockets client id appended for uniqueness
-		
-		if(roomList.length > 0) //no use in doing this if roomList is empty
-		{
-			for(var i = 0; i < roomList.length; i++)
-			{
-				if(roomList[i].name == lobbyname) //check for duplicate lobbynames among rooms
-				{
-					lobbyname += socket.cid; //if this dont work do clientList[socket.cid].clientID basically
-				}
-			}
-		}
-		
-		var pw = data.pw;
-		var pwSet = false;
-		//check and filter it - set to none if empty or similar
-		if(pw.length > 0)
-		{
-			pwSet = true;
-		}
-		
 		var clientIndex = getClientIndex(socket.cid);
 		
-		//if interval is set to true when creating a room (newly connected chap - then clear the interval - no interval function running whilst in the room)
-		//if(clientList[clientIndex].intervalSet.set)
-		//{
-			socket.emit('stop lobby update interval'); //, clientList[clientIndex].intervalSet.intervalID);
-		//}
-		
-		clientList[clientIndex].createdRoom.name = lobbyname;
-		clientList[clientIndex].createdRoom.pw = (pwSet ? pw : "none");
-		clientList[clientIndex].createdRoom.createdTime = Date.now();
-		clientList[clientIndex].activeRoom = lobbyname;
-		
-		console.log("clientList[" + clientIndex + "] after room creation: ", clientList[clientIndex]);
-		
-		//rooms cannot have the same lobbyname --- fix this by adding clientID to lobbyname here as well.
-		
-		roomList.push({name: lobbyname, 
-						pw: (pwSet ? pw : "none"),
-						firstUserJoined: true, 
-						activeUserNmbr: 1,
-						createdTime: clientList[clientIndex].createdRoom.createdTime,
-						readycheck: [],
-						startingPlayerCID: -1,
-						boardGrid: [0,0,0,0,0,0,0,0,0],
-						movesMade: 0}); //,
-						//playerMovesLeft = {p1: 5, p2: 4}}); //try this first
-						
-						//do I need creator in this?
-						//{user: "", response: false}, {user: "", response: false}
-		console.log("roomList: ", roomList);
-		//socket.emit('created and joined room', roomTracker);
-		socket.emit('created and joined room', roomList.length-1); //-1 needed for index and since using "push" method - put last in array
-		//roomTracker += 1; //one room created per client //rename to roomTracker or someth ?
-		//if a creator disconnects... room is deleted and roomTracker will be fckd
-		//perhaps I can use roomList.length to get a more accurate number for roomindex?
-		
-		//after room has been created - send the user into the room itself!
-		socket.leave(DEFAULT_ROOM);
-		
-		socket.join(lobbyname);
-		
-		socket.room = lobbyname;
-		console.log("client: " + clientIndex + " left connected room and joined: " + lobbyname);
-		socket.roomActive = true;
-		clientList[clientIndex].roomActive = true;
-		socket.emit('creator joins room', {username: clientList[clientIndex].username, room: socket.room}); //allows creator of a room to "bypass" pw-requirement whilst other users looking to join will be required to input pw.
-		
-		//if successful create - send update roomlist via broadcast (perhaps also to self?)
-		//somehow need to apply a setTimeout every 1s trigger timer to this event - so list can be kept updated 
-		
-		console.log("firstRoomCreated: ", firstRoomCreated);
-		if(firstRoomCreated == false)
+		if(socket.userReg == true && clientList[clientIndex].createdRoom.name == "")
 		{
-			//socket.broadcast.emit('initiate first roomlist update'); //if multiple sockets connected and first room is created - send out 'initiate roomlist interval updater'
+			//if user is REGISTERED, AND Does NOT already have a created room, then he can create a room.
 			
-			socket.to(DEFAULT_ROOM).emit('load roomlist', roomList);
-			firstRoomCreated = true;
+			var lobbyname = data.name;
+			
+			//scroll through roomList checking lobbynames for match, if one is found, redefine lobbyname var with sockets client id appended for uniqueness
+			
+			if(roomList.length > 0) //no use in doing this if roomList is empty
+			{
+				for(var i = 0; i < roomList.length; i++)
+				{
+					if(roomList[i].name == lobbyname) //check for duplicate lobbynames among rooms
+					{
+						lobbyname += socket.cid; //if this dont work do clientList[socket.cid].clientID basically
+					}
+				}
+			}
+			
+			var pw = data.pw;
+			var pwSet = false;
+			//check and filter it - set to none if empty or similar
+			if(pw.length > 0)
+			{
+				pwSet = true;
+			}
+			
+			
+			
+			//if interval is set to true when creating a room (newly connected chap - then clear the interval - no interval function running whilst in the room)
+			//if(clientList[clientIndex].intervalSet.set)
+			//{
+				socket.emit('stop lobby update interval'); //, clientList[clientIndex].intervalSet.intervalID);
+			//}
+			
+			clientList[clientIndex].createdRoom.name = lobbyname;
+			clientList[clientIndex].createdRoom.pw = (pwSet ? pw : "none");
+			clientList[clientIndex].createdRoom.createdTime = Date.now();
+			clientList[clientIndex].activeRoom = lobbyname;
+			
+			console.log("clientList[" + clientIndex + "] after room creation: ", clientList[clientIndex]);
+			
+			//rooms cannot have the same lobbyname --- fix this by adding clientID to lobbyname here as well.
+			
+			roomList.push({name: lobbyname, 
+							pw: (pwSet ? pw : "none"),
+							firstUserJoined: true, 
+							activeUserNmbr: 1,
+							createdTime: clientList[clientIndex].createdRoom.createdTime,
+							readycheck: [],
+							startingPlayerCID: -1,
+							boardGrid: [0,0,0,0,0,0,0,0,0],
+							movesMade: 0}); //,
+							//playerMovesLeft = {p1: 5, p2: 4}}); //try this first
+							
+							//do I need creator in this?
+							//{user: "", response: false}, {user: "", response: false}
+			console.log("roomList: ", roomList);
+			//socket.emit('created and joined room', roomTracker);
+			socket.emit('created and joined room', roomList.length-1); //-1 needed for index and since using "push" method - put last in array
+			//roomTracker += 1; //one room created per client //rename to roomTracker or someth ?
+			//if a creator disconnects... room is deleted and roomTracker will be fckd
+			//perhaps I can use roomList.length to get a more accurate number for roomindex?
+			
+			//after room has been created - send the user into the room itself!
+			socket.leave(DEFAULT_ROOM);
+			
+			socket.join(lobbyname);
+			
+			socket.room = lobbyname;
+			console.log("client: " + clientIndex + " left connected room and joined: " + lobbyname);
+			socket.roomActive = true;
+			clientList[clientIndex].roomActive = true;
+			socket.emit('creator joins room', {username: clientList[clientIndex].username, room: socket.room}); //allows creator of a room to "bypass" pw-requirement whilst other users looking to join will be required to input pw.
+			
+			//if successful create - send update roomlist via broadcast (perhaps also to self?)
+			//somehow need to apply a setTimeout every 1s trigger timer to this event - so list can be kept updated 
+			
+			console.log("firstRoomCreated: ", firstRoomCreated);
+			if(firstRoomCreated == false)
+			{
+				//socket.broadcast.emit('initiate first roomlist update'); //if multiple sockets connected and first room is created - send out 'initiate roomlist interval updater'
+				
+				socket.to(DEFAULT_ROOM).emit('load roomlist', roomList);
+				firstRoomCreated = true;
+			}
+			
+			socket.to(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
+		}else {
+			socket.emit('ajabaja', "createroom");
 		}
-		
-		socket.to(DEFAULT_ROOM).emit('update siteStatsArea', clientList);
 	});
 	
 	

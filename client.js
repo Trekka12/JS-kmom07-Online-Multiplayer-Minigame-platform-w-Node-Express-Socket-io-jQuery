@@ -436,6 +436,9 @@ $(document).ready(function(){
 		if(idString == "userreg")
 		{
 			elem = nickRegStatusMsg;
+		}else if(idString == "createroom") 
+		{
+			elem = statusMsgContainer;
 		}
 		
 		elem.text("Seems you have attempted to use the application interface in ways it was not intended, please use the application as intended instead.").show().delay(4000).fadeOut(500);
