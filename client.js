@@ -406,6 +406,11 @@ $(document).ready(function(){
 		return false;
 	});
 	
+	socket.on('deactivate leave room btn', function() {
+		console.log("inside of deactivating leave room button clicker");
+		$('#leaveRoom').off('click');
+	});
+	
 	
 	
 	/*
@@ -438,7 +443,7 @@ $(document).ready(function(){
 		if(idString == "userreg")
 		{
 			elem = nickRegStatusMsg;
-		}else if(idString == "createroom" || idString == "joinroom" || idString == "typing") 
+		}else if(idString == "createroom" || idString == "joinroom" || idString == "typing" || idString == "leaveroom") 
 		{
 			elem = statusMsgContainer;
 		}else if(idString == "roomlogin")
