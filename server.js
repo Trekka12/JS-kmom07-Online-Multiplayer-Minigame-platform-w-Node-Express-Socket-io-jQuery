@@ -487,199 +487,358 @@ io.on('connection', function(socket) {
 		
 		//socket emit event here : ('readycheck response callback', 
 		
-		//step 1: roomList identify what index our room has
-		//step 2: use that index to reach readycheck array inside of that room
-		var roomIndex = getRoomIndex(socket.room, activeFullRoomsList); //-1;
-		//for(var i = 0; i < activeFullRoomsList.length; i++)
-		//{
-		//	if(activeFullRoomsList[i].name == socket.room)
-		//	{
-		//		roomIndex = i;
-		//	}
-		//}
+		
+		//make socket is connected to a room serverside, make sure user is registered serverside, make sure 2 people are in the room and that this socket is active in the room
 		
 		var clientIndex = getClientIndex(socket.cid);
 		
-		//imagine pushing the response directly into the readycheck array
-		activeFullRoomsList[roomIndex].readycheck.push({user: clientList[clientIndex].username, response: data});
+		var roomIndex = getRoomIndex(socket.room, activeFullRoomsList);
 		
-		
-		console.log("--------------------------------------------------------------");
-		
-		
-		if(activeFullRoomsList[roomIndex].readycheck.length == 1)
+		if(socket.userReg == true && socket.room == data && activeFullRoomsList[roomIndex].activeUserNmbr == 2)
 		{
-			//if its the first response received serverside
-			console.log("pushed readycheck responses = 1");
-			console.log("activeFullRoomsList[" + roomIndex + "] data : ", activeFullRoomsList[roomIndex]);
-			console.log("activeFullRoomsList[" + roomIndex + "].readycheck data: ", activeFullRoomsList[roomIndex].readycheck);
-			//find out if response was sent from creator or client?
-			if(clientList[clientIndex].createdRoom.name == socket.room)
+		
+			//step 1: roomList identify what index our room has
+			//step 2: use that index to reach readycheck array inside of that room
+			 //-1;
+			//for(var i = 0; i < activeFullRoomsList.length; i++)
+			//{
+			//	if(activeFullRoomsList[i].name == socket.room)
+			//	{
+			//		roomIndex = i;
+			//	}
+			//}
+			
+			
+			
+			//imagine pushing the response directly into the readycheck array
+			activeFullRoomsList[roomIndex].readycheck.push({user: clientList[clientIndex].username, response: data});
+			
+			
+			console.log("--------------------------------------------------------------");
+			
+			
+			if(activeFullRoomsList[roomIndex].readycheck.length == 1)
 			{
-				console.log("first readycheck response received from creator of the room");
-				//then we can assume creator response
-				//so we now know, its the very first response received serverside
-				//its the creator that sent the response
-				//we have what type of response
-				//if a yes: stop all readycheck chinanigans and hide readycheck and load waiting for opponent interface
-				if(data == true)
+				//if its the first response received serverside
+				console.log("pushed readycheck responses = 1");
+				console.log("activeFullRoomsList[" + roomIndex + "] data : ", activeFullRoomsList[roomIndex]);
+				console.log("activeFullRoomsList[" + roomIndex + "].readycheck data: ", activeFullRoomsList[roomIndex].readycheck);
+				//find out if response was sent from creator or client?
+				if(clientList[clientIndex].createdRoom.name == socket.room)
 				{
-					console.log("first readycheck response from creator was Yes");
-					socket.emit('stop all readycheck chinanigans');
-					
-					//load boardPieces
-				
-				}else {
-					console.log("first readycheck response from creator was No");
-					//if a no: ALL readycheck activity should seize for ALL clients in the room, readycheck should be clientside hidden, client should be kicked out of the room and scrubbed of room data, and so should the creator -- Buuut, room should also be deleted completely from our roomList or activeFullRoomsList					
-					io.in(activeFullRoomsList[roomIndex].name).emit('stop all readycheck chinanigans');
-					
-					io.in(activeFullRoomsList[roomIndex].name).emit('kick client from a room', roomList);
-					
-					if(roomList.length == 0)
+					console.log("first readycheck response received from creator of the room");
+					//then we can assume creator response
+					//so we now know, its the very first response received serverside
+					//its the creator that sent the response
+					//we have what type of response
+					//if a yes: stop all readycheck chinanigans and hide readycheck and load waiting for opponent interface
+					if(data == true)
 					{
-						console.log("send out a beacon to clear all intervals on room leave");
-						io.in(activeFullRoomsList[roomIndex].name).emit('clear intervals');
+						console.log("first readycheck response from creator was Yes");
+						socket.emit('stop all readycheck chinanigans');
+						
+						//load boardPieces
+					
+					}else {
+						console.log("first readycheck response from creator was No");
+						//if a no: ALL readycheck activity should seize for ALL clients in the room, readycheck should be clientside hidden, client should be kicked out of the room and scrubbed of room data, and so should the creator -- Buuut, room should also be deleted completely from our roomList or activeFullRoomsList					
+						io.in(activeFullRoomsList[roomIndex].name).emit('stop all readycheck chinanigans');
+						
+						io.in(activeFullRoomsList[roomIndex].name).emit('kick client from a room', roomList);
+						
+						if(roomList.length == 0)
+						{
+							console.log("send out a beacon to clear all intervals on room leave");
+							io.in(activeFullRoomsList[roomIndex].name).emit('clear intervals');
+						}
+						
+						//scrub room data - need to be done for both client and creator
+						//I could do it from one socket IF I knew ALL sockets clientID in a room
+						
+						//this socket is the creator, so we lookin for the client
+						//var theClientsIndex = -1;
+						//for(var i = 0; i < clientList.length; i++)
+						//{
+						//	if(clientList[i].activeRoom == socket.room && clientList[i].clientID != socket.cid)
+						//	{
+								//if in same room as creator, and clientID is not the same as creator, then its the client
+						//		theClientsIndex = i;
+						//	}
+						//}
+						
+						//what data to scrub off of the room creator
+						//I cant do socket.leave from the creators end - gotta do that on the clients end...
+						//if I send out io.in the room - that would reach both client and creator
+						socket.leave(activeFullRoomsList[roomIndex].name);
+						socket.join(DEFAULT_ROOM); //this way next line emit only reaches client who is left in the room
+						console.log("creator left room: " + activeFullRoomsList[roomIndex].name + " and joined connected");
+						
+						
+						clientList[clientIndex].createdRoom.name = "";
+						clientList[clientIndex].createdRoom.pw = "";
+						clientList[clientIndex].createdRoom.createdTime = 0;
+						clientList[clientIndex].activeRoom = "";
+						clientList[clientIndex].roomActive = false;
+						
+						socket.room = DEFAULT_ROOM;
+						socket.roomActive = false;
+						
+						//broadcast to all in connected new siteStatsArea
+						
+						
+						io.in(activeFullRoomsList[roomIndex].name).emit('roomleaving data scrubbing'); //do I have to send along the room that gets removed here?
+						//actually could scrub creator here, and just scrub client via that emit hm.
+						console.log("sending roomleaving data scrubbing to the remaining party in the room (the client)");
+						
+						//what data to scrub off of the room client
+						
+						//removing the actual room and all of its related data
+						activeFullRoomsList.splice(roomIndex, 1);
+						
+						if(roomList.length == 0)
+						{
+							firstRoomCreated = false;
+						}
+						
+						
 					}
 					
-					//scrub room data - need to be done for both client and creator
-					//I could do it from one socket IF I knew ALL sockets clientID in a room
-					
-					//this socket is the creator, so we lookin for the client
-					//var theClientsIndex = -1;
-					//for(var i = 0; i < clientList.length; i++)
-					//{
-					//	if(clientList[i].activeRoom == socket.room && clientList[i].clientID != socket.cid)
-					//	{
-							//if in same room as creator, and clientID is not the same as creator, then its the client
-					//		theClientsIndex = i;
-					//	}
-					//}
-					
-					//what data to scrub off of the room creator
-					//I cant do socket.leave from the creators end - gotta do that on the clients end...
-					//if I send out io.in the room - that would reach both client and creator
-					socket.leave(activeFullRoomsList[roomIndex].name);
-					socket.join(DEFAULT_ROOM); //this way next line emit only reaches client who is left in the room
-					console.log("creator left room: " + activeFullRoomsList[roomIndex].name + " and joined connected");
-					
-					
-					clientList[clientIndex].createdRoom.name = "";
-					clientList[clientIndex].createdRoom.pw = "";
-					clientList[clientIndex].createdRoom.createdTime = 0;
-					clientList[clientIndex].activeRoom = "";
-					clientList[clientIndex].roomActive = false;
-					
-					socket.room = DEFAULT_ROOM;
-					socket.roomActive = false;
-					
-					//broadcast to all in connected new siteStatsArea
-					
-					
-					io.in(activeFullRoomsList[roomIndex].name).emit('roomleaving data scrubbing'); //do I have to send along the room that gets removed here?
-					//actually could scrub creator here, and just scrub client via that emit hm.
-					console.log("sending roomleaving data scrubbing to the remaining party in the room (the client)");
-					
-					//what data to scrub off of the room client
-					
-					//removing the actual room and all of its related data
-					activeFullRoomsList.splice(roomIndex, 1);
-					
-					if(roomList.length == 0)
+				}else
+				{
+					console.log("first readycheck response received from client");
+					//else if client..
+					//if client sent first response received serverside as a yes:
+					//stop all readycheck timers and chinanigans, hide readycheck and load canvas interface in wait for other - the creator
+					if(data == true)
 					{
-						firstRoomCreated = false;
+						console.log("1st readycheck response received from client was a Yes");
+						socket.emit('stop all readycheck chinanigans');
+						
+						//load boardPieces
+						
+						
+					}else {
+						console.log("first readycheck response received from client was a No");
+						//if a no was sent:
+						//stop all readycheck chinanigans and hide readycheck, then kick the client out of the room and scrub all room data (dont forget to decrement activeUserNmbr for the room As well as inform the creator
+						
+						
+						
+						//var clientIndex = getClientIndex(socket.cid);
+			
+						clientList[clientIndex].activeRoom = "";
+						clientList[clientIndex].roomActive = false;
+						
+						socket.room = DEFAULT_ROOM;
+						socket.roomActive = false;
+						
+						activeFullRoomsList[roomIndex].activeUserNmbr -= 1;
+						
+						socket.leave(activeFullRoomsList[roomIndex].name);
+						socket.join(DEFAULT_ROOM);
+						
+						socket.emit('stop all readycheck chinanigans');
+						socket.to(activeFullRoomsList[roomIndex].name).emit('a user left the room', clientList[clientIndex].username);
+						
+						//if a client answers No --- activeFullRoomsList index should be copied back over to roomList
+						
+						//clear readycheck responses so that this eventdriven feature works the next time a single clinet leaves and then wants to rejoin
+						//for(var i = 0; i < activeFullRoomsList[roomIndex].readycheck.length; i++)
+						//{
+						//	activeFullRoomsList.readycheck.splice(i, 1);
+						//}
+						activeFullRoomsList[roomIndex].readycheck.splice(0,2);
+						console.log("activeFullRoomsList[roomIndex].readycheck after clearing", activeFullRoomsList[roomIndex].readycheck);
+						
+						//must stop readycheck for creator if client leaves during readycheck?
+						//how the heck do I stop readycheck hm...?
+						socket.to(activeFullRoomsList[roomIndex].name).emit("stop all readycheck chinanigans"); //sent to creator of the room to interrupt readycheck if client left during readycheck -- also add message telling creator that client left the room so send along the username of the leaver
+						
+						roomList.push(activeFullRoomsList[roomIndex]);
+						activeFullRoomsList.splice(roomIndex, 1);
+						
+						
+						socket.emit('kick client from a room', roomList);
+									
 					}
 					
 					
 				}
-				
-			}else
+			}else if(activeFullRoomsList[roomIndex].readycheck.length == 2)
 			{
-				console.log("first readycheck response received from client");
-				//else if client..
-				//if client sent first response received serverside as a yes:
-				//stop all readycheck timers and chinanigans, hide readycheck and load canvas interface in wait for other - the creator
-				if(data == true)
+				console.log("second readycheck response received");
+				console.log("activeFullRoomsList[" + roomIndex + "] data : ", activeFullRoomsList[roomIndex]);
+				console.log("activeFullRoomsList[" + roomIndex + "].readycheck data: ", activeFullRoomsList[roomIndex].readycheck);
+				//if second response server receives from readycheck
+				
+				//if we assume first response was a no from the creator, the client shouldn't even reach this part I think
+				//on the other hand, if it was a no from client -> creator reaches this part, if yes from creator -> client reaches this part, if yes from client -> creator reaches this part
+				
+				//find out if response was sent from creator or client?
+				if(clientList[clientIndex].createdRoom.name == socket.room)
 				{
-					console.log("1st readycheck response received from client was a Yes");
-					socket.emit('stop all readycheck chinanigans');
-					
-					//load boardPieces
-					
-					
-				}else {
-					console.log("first readycheck response received from client was a No");
-					//if a no was sent:
-					//stop all readycheck chinanigans and hide readycheck, then kick the client out of the room and scrub all room data (dont forget to decrement activeUserNmbr for the room As well as inform the creator
-					
-					
-					
-					//var clientIndex = getClientIndex(socket.cid);
-		
-					clientList[clientIndex].activeRoom = "";
-					clientList[clientIndex].roomActive = false;
-					
-					socket.room = DEFAULT_ROOM;
-					socket.roomActive = false;
-					
-					activeFullRoomsList[roomIndex].activeUserNmbr -= 1;
-					
-					socket.leave(activeFullRoomsList[roomIndex].name);
-					socket.join(DEFAULT_ROOM);
-					
-					socket.emit('stop all readycheck chinanigans');
-					socket.to(activeFullRoomsList[roomIndex].name).emit('a user left the room', clientList[clientIndex].username);
-					
-					//if a client answers No --- activeFullRoomsList index should be copied back over to roomList
-					
-					//clear readycheck responses so that this eventdriven feature works the next time a single clinet leaves and then wants to rejoin
-					//for(var i = 0; i < activeFullRoomsList[roomIndex].readycheck.length; i++)
-					//{
-					//	activeFullRoomsList.readycheck.splice(i, 1);
-					//}
-					activeFullRoomsList[roomIndex].readycheck.splice(0,2);
-					console.log("activeFullRoomsList[roomIndex].readycheck after clearing", activeFullRoomsList[roomIndex].readycheck);
-					
-					//must stop readycheck for creator if client leaves during readycheck?
-					//how the heck do I stop readycheck hm...?
-					socket.to(activeFullRoomsList[roomIndex].name).emit("stop all readycheck chinanigans"); //sent to creator of the room to interrupt readycheck if client left during readycheck -- also add message telling creator that client left the room so send along the username of the leaver
-					
-					roomList.push(activeFullRoomsList[roomIndex]);
-					activeFullRoomsList.splice(roomIndex, 1);
-					
-					
-					socket.emit('kick client from a room', roomList);
+					console.log("second readycheck response was from creator");
+					//then we can assume creator response
+					//so we now know, its the very first response received serverside
+					//its the creator that sent the response
+					//we have what type of response
+					//if a yes: stop all readycheck chinanigans and hide readycheck and load waiting for opponent interface
+					if(data == true)
+					{
+						console.log("second readycheck response from creator was Yes");
+						socket.emit('stop all readycheck chinanigans');
+						//if creator was the second response and they sent a yes, then either client sent no or yes previously - find out which - if a no creator should just stay in the room, if a yes - check this to broadcast "start game"
+						if(activeFullRoomsList[roomIndex].readycheck[0].response)
+						{
+							//if client responded true:
+							//stop all readycheck bullshit, aand, broadcast start game to both clients
+							//or determine who should start here already?
+							//RNG between 0 & 1 -> index for player response that holds player names
+							//if for example response 0 got to start, then I can broadcast to all in room EXCEPT this socket, if response 1 got to start - broadcast to this socket to get to start simple -- keep track of starting player as well in roomList?
+							var startingPlayer = funcs.randomize(0,1);
+							console.log("startingPlayer is response: ", startingPlayer);
+							
+							var startingPlayerUsername = activeFullRoomsList[roomIndex].readycheck[startingPlayer].user;
+							console.log("starting player username is: " + startingPlayerUsername);
+							
+							var startingPlayerCID = -1;
+							
+							for(var i = 0; i < clientList.length; i++)
+							{
+								if(clientList[i].username == startingPlayerUsername)
+								{
+									startingPlayerCID = i;
+								}
+							}
+							console.log("starting player CID = " + startingPlayerCID);
+							
+							activeFullRoomsList[roomIndex].startingPlayerCID = startingPlayerCID;
+							//who goes first when game starts is now stored in room object
+							
+							if(startingPlayer == 0)
+							{
+								console.log("starting player is first readycheck responder");
+								//if first response gets to start, broadcast to all except this socket in the room (a.k.a: the client)
+								//socket.to(socket.room).emit('setYourBoardPiecesValue', 4);
+								//socket.emit('setOpponentBoardPieceValue', 5);
+								socket.to(socket.room).emit('set board piece client value', 5);
+								socket.emit('set board piece client value', 4);
 								
-				}
-				
-				
-			}
-		}else if(activeFullRoomsList[roomIndex].readycheck.length == 2)
-		{
-			console.log("second readycheck response received");
-			console.log("activeFullRoomsList[" + roomIndex + "] data : ", activeFullRoomsList[roomIndex]);
-			console.log("activeFullRoomsList[" + roomIndex + "].readycheck data: ", activeFullRoomsList[roomIndex].readycheck);
-			//if second response server receives from readycheck
-			
-			//if we assume first response was a no from the creator, the client shouldn't even reach this part I think
-			//on the other hand, if it was a no from client -> creator reaches this part, if yes from creator -> client reaches this part, if yes from client -> creator reaches this part
-			
-			//find out if response was sent from creator or client?
-			if(clientList[clientIndex].createdRoom.name == socket.room)
-			{
-				console.log("second readycheck response was from creator");
-				//then we can assume creator response
-				//so we now know, its the very first response received serverside
-				//its the creator that sent the response
-				//we have what type of response
-				//if a yes: stop all readycheck chinanigans and hide readycheck and load waiting for opponent interface
-				if(data == true)
+								io.in(socket.room).emit('prep for start of game');
+								//io.in(socket.room).emit('boardPieces paintout');
+								socket.to(socket.room).emit('boardPieces paintout');
+								socket.emit('boardPieces paintout');
+								
+								socket.to(socket.room).emit('your turn in game');
+								socket.emit('opponents turn in game');
+								
+								//starting the game I have to keep track of how all the pieces on the board for the game are moving alltogether for both sockets, as well as for every socket? - 2 sets of boardPiece arrays to track board movements?
+								socket.to(socket.room).emit('set starting player');
+								
+							}else if(startingPlayer == 1)
+							{
+								console.log("starting player is second readycheck responder");
+								//socket.emit('start the game'); //involves painting up board pieces available for both sockets, 
+								//io.in(room).emit start the game -- to prep it with everything for both sockets?
+								//then send "personal" emit for the one currently whos turn it is
+								//I have to attach listener when its the players turn? and not when opponents turn?
+								//socket.to(socket.room).emit('setOpponentBoardPieceValue', 4);
+								//socket.emit('setYourBoardPiecesValue', 5);
+								socket.emit('set board piece client value', 5);
+								socket.to(socket.room).emit('set board piece client value', 4);
+								
+								io.in(socket.room).emit('prep for start of game');
+								//io.in(socket.room).emit('boardPieces paintout');
+								socket.to(socket.room).emit('boardPieces paintout');
+								socket.emit('boardPieces paintout');
+								
+								
+								socket.emit('your turn in game');
+								socket.to(socket.room).emit('opponents turn in game');
+								
+								clientList[clientIndex].game.startingPlayer = true;
+								
+								//for every turn in the game attach canvas mouseclick listener (correct it so it works in this implementation), then once a move is done --- submit move to server - store it serverside for room and maybe even for socket, on clientside paint the move/update canvas with the move, and pass the turn to other player and also paint for that - waiting on opponent -- dont forget to attach timer fuckers for each move turn oh gawd I facking hate timers in JS...
+								
+							}
+						}
+						
+						
+					
+					}else {
+						console.log("second readycheck response from creator was a No");
+						
+						//here we have to take into consideration WHAT was done WHEN client answered YES and then build upon that I think
+						//we just stopped all readychecking
+						
+						//if a no: ALL readycheck activity should seize for ALL clients in the room, readycheck should be clientside hidden, client should be kicked out of the room and scrubbed of room data, and so should the creator -- Buuut, room should also be deleted completely from our roomList or activeFullRoomsList
+						io.in(activeFullRoomsList[roomIndex].name).emit('stop all readycheck chinanigans');
+						
+						io.in(activeFullRoomsList[roomIndex].name).emit('kick client from a room', roomList);
+						
+						if(roomList.length == 0)
+						{
+							console.log("send out a beacon to clear all intervals on room leave");
+							io.in(activeFullRoomsList[roomIndex].name).emit('clear intervals');
+						}
+						
+						//console.log("roomList.length: ", roomList.length);
+						
+						//console.log("clientList data: ", clientList); //to check intervals
+						
+						//scrub room data - need to be done for both client and creator
+						//I could do it from one socket IF I knew ALL sockets clientID in a room
+						//or that I know this is creator, socket.to gives client in room ta-daa
+						
+						//what data to scrub off of the room creator
+						//I cant do socket.leave from the creators end - gotta do that on the clients end...
+						//if I send out io.in the room - that would reach both client and creator
+						socket.leave(activeFullRoomsList[roomIndex].name);
+						socket.join(DEFAULT_ROOM); //this way next line emit only reaches client who is left in the room
+						
+						
+						clientList[clientIndex].createdRoom.name = "";
+						clientList[clientIndex].createdRoom.pw = "";
+						clientList[clientIndex].createdRoom.createdTime = 0;
+						clientList[clientIndex].activeRoom = "";
+						clientList[clientIndex].roomActive = false;
+						
+						socket.room = DEFAULT_ROOM;
+						socket.roomActive = false;
+						
+						
+						io.in(activeFullRoomsList[roomIndex].name).emit('roomleaving data scrubbing'); //do I have to send along the room that gets removed here?
+						//actually could scrub creator here, and just scrub client via that emit hm.
+						
+						//what data to scrub off of the room client
+						
+						//removing the actual room and all of its related data
+						activeFullRoomsList.splice(roomIndex, 1);
+						
+						if(roomList.length == 0)
+						{
+							firstRoomCreated = false;
+						}
+						
+						console.log("clientList here contains: ", clientList);
+						
+					}
+					
+				}else
 				{
-					console.log("second readycheck response from creator was Yes");
-					socket.emit('stop all readycheck chinanigans');
-					//if creator was the second response and they sent a yes, then either client sent no or yes previously - find out which - if a no creator should just stay in the room, if a yes - check this to broadcast "start game"
-					if(activeFullRoomsList[roomIndex].readycheck[0].response)
+					console.log("second readycheck response was from client");
+					//else if client.. and second response oh boi... my head will facking explode... srsly.. 
+					//if client sent first response received serverside as a yes:
+					//stop all readycheck timers and chinanigans, hide readycheck and load canvas interface in wait for other - the creator
+					if(data == true)
 					{
+						//safe to assume that first response was true, otherwise this response would not reach this far...
+						console.log("second readycheck response from client was Yes");
+						socket.emit('stop all readycheck chinanigans');
+						
+						//everything creator did to start the game... goes here
+						//if(activeFullRoomsList[roomIndex].readycheck[1].response)
+						//{
 						//if client responded true:
 						//stop all readycheck bullshit, aand, broadcast start game to both clients
 						//or determine who should start here already?
@@ -689,7 +848,7 @@ io.on('connection', function(socket) {
 						console.log("startingPlayer is response: ", startingPlayer);
 						
 						var startingPlayerUsername = activeFullRoomsList[roomIndex].readycheck[startingPlayer].user;
-						console.log("starting player username is: " + startingPlayerUsername);
+						console.log("starting player username: " + startingPlayerUsername);
 						
 						var startingPlayerCID = -1;
 						
@@ -700,7 +859,6 @@ io.on('connection', function(socket) {
 								startingPlayerCID = i;
 							}
 						}
-						console.log("starting player CID = " + startingPlayerCID);
 						
 						activeFullRoomsList[roomIndex].startingPlayerCID = startingPlayerCID;
 						//who goes first when game starts is now stored in room object
@@ -709,20 +867,19 @@ io.on('connection', function(socket) {
 						{
 							console.log("starting player is first readycheck responder");
 							//if first response gets to start, broadcast to all except this socket in the room (a.k.a: the client)
-							//socket.to(socket.room).emit('setYourBoardPiecesValue', 4);
-							//socket.emit('setOpponentBoardPieceValue', 5);
-							socket.to(socket.room).emit('set board piece client value', 5);
+							//socket.emit('setYourBoardPiecesValue', 4);
+							//socket.to(socket.room).emit('setOpponentBoardPieceValue', 5);
 							socket.emit('set board piece client value', 4);
+							socket.to(socket.room).emit('set board piece client value', 5);
 							
 							io.in(socket.room).emit('prep for start of game');
-							//io.in(socket.room).emit('boardPieces paintout');
-							socket.to(socket.room).emit('boardPieces paintout');
-							socket.emit('boardPieces paintout');
-							
+							io.in(socket.room).emit('boardPieces paintout');
 							socket.to(socket.room).emit('your turn in game');
-							socket.emit('opponents turn in game');
+							socket.emit('opponents turn in game'); //this socket is not 0 hence socket.emit
 							
 							//starting the game I have to keep track of how all the pieces on the board for the game are moving alltogether for both sockets, as well as for every socket? - 2 sets of boardPiece arrays to track board movements?
+							
+							//set other sockets startingplayer to true
 							socket.to(socket.room).emit('set starting player');
 							
 						}else if(startingPlayer == 1)
@@ -732,209 +889,65 @@ io.on('connection', function(socket) {
 							//io.in(room).emit start the game -- to prep it with everything for both sockets?
 							//then send "personal" emit for the one currently whos turn it is
 							//I have to attach listener when its the players turn? and not when opponents turn?
+							
 							//socket.to(socket.room).emit('setOpponentBoardPieceValue', 4);
 							//socket.emit('setYourBoardPiecesValue', 5);
 							socket.emit('set board piece client value', 5);
 							socket.to(socket.room).emit('set board piece client value', 4);
 							
 							io.in(socket.room).emit('prep for start of game');
-							//io.in(socket.room).emit('boardPieces paintout');
-							socket.to(socket.room).emit('boardPieces paintout');
-							socket.emit('boardPieces paintout');
-							
-							
+							io.in(socket.room).emit('boardPieces paintout');
 							socket.emit('your turn in game');
 							socket.to(socket.room).emit('opponents turn in game');
 							
 							clientList[clientIndex].game.startingPlayer = true;
-							
 							//for every turn in the game attach canvas mouseclick listener (correct it so it works in this implementation), then once a move is done --- submit move to server - store it serverside for room and maybe even for socket, on clientside paint the move/update canvas with the move, and pass the turn to other player and also paint for that - waiting on opponent -- dont forget to attach timer fuckers for each move turn oh gawd I facking hate timers in JS...
 							
-						}
-					}
-					
-					
-				
-				}else {
-					console.log("second readycheck response from creator was a No");
-					
-					//here we have to take into consideration WHAT was done WHEN client answered YES and then build upon that I think
-					//we just stopped all readychecking
-					
-					//if a no: ALL readycheck activity should seize for ALL clients in the room, readycheck should be clientside hidden, client should be kicked out of the room and scrubbed of room data, and so should the creator -- Buuut, room should also be deleted completely from our roomList or activeFullRoomsList
-					io.in(activeFullRoomsList[roomIndex].name).emit('stop all readycheck chinanigans');
-					
-					io.in(activeFullRoomsList[roomIndex].name).emit('kick client from a room', roomList);
-					
-					if(roomList.length == 0)
-					{
-						console.log("send out a beacon to clear all intervals on room leave");
-						io.in(activeFullRoomsList[roomIndex].name).emit('clear intervals');
-					}
-					
-					//console.log("roomList.length: ", roomList.length);
-					
-					//console.log("clientList data: ", clientList); //to check intervals
-					
-					//scrub room data - need to be done for both client and creator
-					//I could do it from one socket IF I knew ALL sockets clientID in a room
-					//or that I know this is creator, socket.to gives client in room ta-daa
-					
-					//what data to scrub off of the room creator
-					//I cant do socket.leave from the creators end - gotta do that on the clients end...
-					//if I send out io.in the room - that would reach both client and creator
-					socket.leave(activeFullRoomsList[roomIndex].name);
-					socket.join(DEFAULT_ROOM); //this way next line emit only reaches client who is left in the room
-					
-					
-					clientList[clientIndex].createdRoom.name = "";
-					clientList[clientIndex].createdRoom.pw = "";
-					clientList[clientIndex].createdRoom.createdTime = 0;
-					clientList[clientIndex].activeRoom = "";
-					clientList[clientIndex].roomActive = false;
-					
-					socket.room = DEFAULT_ROOM;
-					socket.roomActive = false;
-					
-					
-					io.in(activeFullRoomsList[roomIndex].name).emit('roomleaving data scrubbing'); //do I have to send along the room that gets removed here?
-					//actually could scrub creator here, and just scrub client via that emit hm.
-					
-					//what data to scrub off of the room client
-					
-					//removing the actual room and all of its related data
-					activeFullRoomsList.splice(roomIndex, 1);
-					
-					if(roomList.length == 0)
-					{
-						firstRoomCreated = false;
-					}
-					
-					console.log("clientList here contains: ", clientList);
-					
-				}
-				
-			}else
-			{
-				console.log("second readycheck response was from client");
-				//else if client.. and second response oh boi... my head will facking explode... srsly.. 
-				//if client sent first response received serverside as a yes:
-				//stop all readycheck timers and chinanigans, hide readycheck and load canvas interface in wait for other - the creator
-				if(data == true)
-				{
-					//safe to assume that first response was true, otherwise this response would not reach this far...
-					console.log("second readycheck response from client was Yes");
-					socket.emit('stop all readycheck chinanigans');
-					
-					//everything creator did to start the game... goes here
-					//if(activeFullRoomsList[roomIndex].readycheck[1].response)
-					//{
-					//if client responded true:
-					//stop all readycheck bullshit, aand, broadcast start game to both clients
-					//or determine who should start here already?
-					//RNG between 0 & 1 -> index for player response that holds player names
-					//if for example response 0 got to start, then I can broadcast to all in room EXCEPT this socket, if response 1 got to start - broadcast to this socket to get to start simple -- keep track of starting player as well in roomList?
-					var startingPlayer = funcs.randomize(0,1);
-					console.log("startingPlayer is response: ", startingPlayer);
-					
-					var startingPlayerUsername = activeFullRoomsList[roomIndex].readycheck[startingPlayer].user;
-					console.log("starting player username: " + startingPlayerUsername);
-					
-					var startingPlayerCID = -1;
-					
-					for(var i = 0; i < clientList.length; i++)
-					{
-						if(clientList[i].username == startingPlayerUsername)
+						}					
+					}else {
+						console.log("second readycheck response received from client was a No");
+						//if a no was sent:
+						//stop all readycheck chinanigans and hide readycheck, then kick the client out of the room and scrub all room data (dont forget to decrement activeUserNmbr for the room As well as inform the creator
+						socket.emit('stop all readycheck chinanigans');
+						
+						
+						//var clientIndex = getClientIndex(socket.cid);
+			
+						clientList[clientIndex].activeRoom = "";
+						clientList[clientIndex].roomActive = false;
+						
+						socket.room = DEFAULT_ROOM;
+						socket.roomActive = false;
+						
+						activeFullRoomsList[roomIndex].activeUserNmbr -= 1;
+						
+						console.log("activeFullRoomsList AFTER -1 on activeUserNmbr: ", activeFullRoomsList[roomIndex]);
+						
+						socket.leave(activeFullRoomsList[roomIndex].name);
+						socket.join(DEFAULT_ROOM);
+						
+						socket.to(activeFullRoomsList[roomIndex].name).emit('a user left the room', clientList[clientIndex].username); //on this send back to clear readychecks?
+						
+						//clear readycheck responses so that this eventdriven feature works the next time a single clinet leaves and then wants to rejoin
+						//only do this if previously readycheck response was a yes though..
+						console.log("activeFullRoomsList contains: ", activeFullRoomsList[roomIndex].readycheck);
+						if(activeFullRoomsList[roomIndex].readycheck[0].response == true)
 						{
-							startingPlayerCID = i;
+							activeFullRoomsList[roomIndex].readycheck.splice(0, 2);
 						}
+						console.log("activeFullRoomsList contains AFTER clearing readycheck: ", activeFullRoomsList[roomIndex].readycheck);
+						
+						
+						//if a client answers No --- activeFullRoomsList index should be copied back over to roomList
+						roomList.push(activeFullRoomsList[roomIndex]);
+						activeFullRoomsList.splice(roomIndex, 1);
+						socket.emit('kick client from a room', roomList);
+									
 					}
-					
-					activeFullRoomsList[roomIndex].startingPlayerCID = startingPlayerCID;
-					//who goes first when game starts is now stored in room object
-					
-					if(startingPlayer == 0)
-					{
-						console.log("starting player is first readycheck responder");
-						//if first response gets to start, broadcast to all except this socket in the room (a.k.a: the client)
-						//socket.emit('setYourBoardPiecesValue', 4);
-						//socket.to(socket.room).emit('setOpponentBoardPieceValue', 5);
-						socket.emit('set board piece client value', 4);
-						socket.to(socket.room).emit('set board piece client value', 5);
-						
-						io.in(socket.room).emit('prep for start of game');
-						io.in(socket.room).emit('boardPieces paintout');
-						socket.to(socket.room).emit('your turn in game');
-						socket.emit('opponents turn in game'); //this socket is not 0 hence socket.emit
-						
-						//starting the game I have to keep track of how all the pieces on the board for the game are moving alltogether for both sockets, as well as for every socket? - 2 sets of boardPiece arrays to track board movements?
-						
-						//set other sockets startingplayer to true
-						socket.to(socket.room).emit('set starting player');
-						
-					}else if(startingPlayer == 1)
-					{
-						console.log("starting player is second readycheck responder");
-						//socket.emit('start the game'); //involves painting up board pieces available for both sockets, 
-						//io.in(room).emit start the game -- to prep it with everything for both sockets?
-						//then send "personal" emit for the one currently whos turn it is
-						//I have to attach listener when its the players turn? and not when opponents turn?
-						
-						//socket.to(socket.room).emit('setOpponentBoardPieceValue', 4);
-						//socket.emit('setYourBoardPiecesValue', 5);
-						socket.emit('set board piece client value', 5);
-						socket.to(socket.room).emit('set board piece client value', 4);
-						
-						io.in(socket.room).emit('prep for start of game');
-						io.in(socket.room).emit('boardPieces paintout');
-						socket.emit('your turn in game');
-						socket.to(socket.room).emit('opponents turn in game');
-						
-						clientList[clientIndex].game.startingPlayer = true;
-						//for every turn in the game attach canvas mouseclick listener (correct it so it works in this implementation), then once a move is done --- submit move to server - store it serverside for room and maybe even for socket, on clientside paint the move/update canvas with the move, and pass the turn to other player and also paint for that - waiting on opponent -- dont forget to attach timer fuckers for each move turn oh gawd I facking hate timers in JS...
-						
-					}					
-				}else {
-					console.log("second readycheck response received from client was a No");
-					//if a no was sent:
-					//stop all readycheck chinanigans and hide readycheck, then kick the client out of the room and scrub all room data (dont forget to decrement activeUserNmbr for the room As well as inform the creator
-					socket.emit('stop all readycheck chinanigans');
-					
-					
-					//var clientIndex = getClientIndex(socket.cid);
-		
-					clientList[clientIndex].activeRoom = "";
-					clientList[clientIndex].roomActive = false;
-					
-					socket.room = DEFAULT_ROOM;
-					socket.roomActive = false;
-					
-					activeFullRoomsList[roomIndex].activeUserNmbr -= 1;
-					
-					console.log("activeFullRoomsList AFTER -1 on activeUserNmbr: ", activeFullRoomsList[roomIndex]);
-					
-					socket.leave(activeFullRoomsList[roomIndex].name);
-					socket.join(DEFAULT_ROOM);
-					
-					socket.to(activeFullRoomsList[roomIndex].name).emit('a user left the room', clientList[clientIndex].username); //on this send back to clear readychecks?
-					
-					//clear readycheck responses so that this eventdriven feature works the next time a single clinet leaves and then wants to rejoin
-					//only do this if previously readycheck response was a yes though..
-					console.log("activeFullRoomsList contains: ", activeFullRoomsList[roomIndex].readycheck);
-					if(activeFullRoomsList[roomIndex].readycheck[0].response == true)
-					{
-						activeFullRoomsList[roomIndex].readycheck.splice(0, 2);
-					}
-					console.log("activeFullRoomsList contains AFTER clearing readycheck: ", activeFullRoomsList[roomIndex].readycheck);
-					
-					
-					//if a client answers No --- activeFullRoomsList index should be copied back over to roomList
-					roomList.push(activeFullRoomsList[roomIndex]);
-					activeFullRoomsList.splice(roomIndex, 1);
-					socket.emit('kick client from a room', roomList);
-								
 				}
 			}
+		}else {
+			socket.emit('ajabaja', "readycheck");
 		}
 	});
 	
@@ -1775,6 +1788,24 @@ io.on('connection', function(socket) {
 	
 	socket.on('disconnect', function() {
 		console.log("user disconnected");
+		
+		//there is a number of times the user could get disconnected, each time the user may sit on various data and information, which need to be cleared for the rest of the applications sake
+		
+		//user could disconnect before even registered username
+		
+		//user could disconnect after registered username
+		
+		//user could disconnect after having created a room and is in it
+		
+		//user could disconnect during a readycheck
+		
+		//user could disconnect whilst playing a game
+		
+		//user could disconnect after having joined a room created by someone else
+		
+		//so what need to be done for all of these number of "states" as well as what needs to specifically be done in specific states?
+		
+		
 		
 		//if intervalID set, send it back to interrupt the loop? //store intervalSet boolean for clients? on disconnect check if set to true or not to "disable" the timer from running more?
 		

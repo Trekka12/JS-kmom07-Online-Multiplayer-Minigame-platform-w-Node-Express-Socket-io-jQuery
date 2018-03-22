@@ -68,6 +68,7 @@ $(document).ready(function(){
 	var yesBtn = $('#yesBtn');
 	var noBtn = $('#noBtn');
 	var rCheckProgressBar = $('#rCheckProgressBar');
+	var readyCheckStatusMsg = $('#readycheckStatusMsg');
 	var canvas = $('#canvas');
 	var canvasElement = document.getElementById("canvas"); //differs from the jQuery selector in what is returned when fetched and what can be done with the returned element - non-jquery returned object can give getContext("2d") e.g.
 	var ctx = canvasElement.getContext("2d");
@@ -79,6 +80,7 @@ $(document).ready(function(){
 	var myPieces = $('#myPieces');
 	var opponentPieces = $('#opponentPieces');
 	var gameClockElem = $('#gameClockElem');
+	
 	
 	//timer ids
 	var secondClockActionIValID = null; //readycheck interval ID
@@ -442,6 +444,9 @@ $(document).ready(function(){
 		}else if(idString == "roomlogin")
 		{
 			elem = loginStatus;
+		}else if(idString == "readycheck")
+		{
+			elem = readyCheckStatusMsg;
 		}
 		
 		elem.text("Seems you have attempted to use the application interface in ways it was not intended, please use the application as intended instead.").show().delay(4000).fadeOut(500);
