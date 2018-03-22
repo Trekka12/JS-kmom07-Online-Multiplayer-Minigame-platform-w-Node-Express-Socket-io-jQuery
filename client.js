@@ -275,6 +275,10 @@ $(document).ready(function(){
 		return false;
 	});
 	
+	socket.on('too many in room', function() {
+		loginStatus.text('Room appears to be full, either restart client or try a different room, we apologize for the inconvenience.').show().delay(2000).fadeOut(500);
+	});
+	
 	$('#yesBtn').on('click', function() {
 		//hide readycheck --do that on other receiving of event emitted from server
 		console.log("registering yesBtn click");
@@ -580,6 +584,33 @@ $(document).ready(function(){
 		
 		drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 		
+	});
+	
+	socket.on('reset creator on client leave', function() {
+		console.log("creator joins room");
+		
+		//createRoomForm.hide();
+		//joinRoomForm.hide();
+		//titleText.hide();
+		//canvas.show();
+		boardPieces.hide();
+		messages.empty();
+		chat.show();
+		m.focus();
+		
+		//append to the chat that username joined the room --- once canvas implemented etc. this is where we draw the text "awaiting opponent" I believe.
+		appendDatedMsg(messages, "Client left and room has now been reset.");
+		
+		//also paint the graphics necessary for when creator have joined his created room:
+		drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
+		//to make it easy, 300x300 tic-tac-toe board size
+		
+		paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo);
+		
+		
+		drawPlackText(ctx, textStrings.wfo, plackMarginLeft, plackInfo, gameColors);
+		
+		drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 	});
 	
 	socket.on('client joins room', function(data) {
@@ -1105,6 +1136,10 @@ $(document).ready(function(){
 			clearTimeout(gameTurnTimer);
 			gameTurnTimer = null;
 		}
+	});
+	
+	socket.on('clear creator game-related data', function() {
+		socket.emit('clear creator game data');
 	});
 	
 	socket.on('update wins', function() {

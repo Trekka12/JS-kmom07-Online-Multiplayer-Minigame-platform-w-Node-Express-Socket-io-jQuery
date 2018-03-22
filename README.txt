@@ -77,7 +77,6 @@ And here we are now...
 + If a user (not the one that created the room) leaves by leave button, "reset" game room for the creator that is still left inside the room - reset all room variables and remove all room-related vars from client that left the room
 + Confirm that 2 users is Maxlimit to be joined in a room, even if 2 users simultaneously press "join" at the same time for example
 + Validate code using JSLint/ESLint
-+ consider and look into loading all JS files for index.html via Require.js
 + Fix so that Node.js crash and then restart, doesnt fuck everything up - but instead "resets" users that was connected **before** the Node.js crashed...
 
 
