@@ -439,6 +439,9 @@ $(document).ready(function(){
 		}else if(idString == "createroom" || idString == "joinroom") 
 		{
 			elem = statusMsgContainer;
+		}else if(idString == "roomlogin")
+		{
+			elem = loginStatus;
 		}
 		
 		elem.text("Seems you have attempted to use the application interface in ways it was not intended, please use the application as intended instead.").show().delay(4000).fadeOut(500);

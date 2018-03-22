@@ -412,49 +412,56 @@ io.on('connection', function(socket) {
 	socket.on('room login attempt', function(data) {
 		console.log("inside of room login attempt serverside");
 		
-		//var roomIndex = getRoomIndex(data.roomindex, roomList);
+		//var roomIndex = getRoomIndex(data.roomindex, roomList); //extra safety check
 		
-		if(roomList[data.roomindex].activeUserNmbr < 2)
+		//console.log("@ LOGIN: data.roomindex = " + data.roomindex + ", roomIndex: " + roomIndex);
+		
+		if(socket.userReg == true && data.roomindex != -1)
 		{
-			console.log("data contains (on login attempt): ", data);
-			console.log("roomList[" + data.roomindex + "] contains: ", roomList[data.roomindex]);
-			//data.pw && data.roomindex
-			//check if the room with roomindex's pw matches data.pw
-			if(roomList[data.roomindex].pw == data.pw)
+			if(roomList[data.roomindex].activeUserNmbr < 2)
 			{
-				console.log("pws matched, joining room");
-				//if successful send successful login and do all the necessary serverside actions to login user to room
-				socket.leave(DEFAULT_ROOM);
-			
-				socket.join(roomList[data.roomindex].name);
+				console.log("data contains (on login attempt): ", data);
+				console.log("roomList[" + data.roomindex + "] contains: ", roomList[data.roomindex]);
+				//data.pw && data.roomindex
+				//check if the room with roomindex's pw matches data.pw
+				if(roomList[data.roomindex].pw == data.pw)
+				{
+					console.log("pws matched, joining room");
+					//if successful send successful login and do all the necessary serverside actions to login user to room
+					socket.leave(DEFAULT_ROOM);
 				
-				//stop interval if it exists when a client joins a room..
-				var clientIndex = getClientIndex(socket.cid);
-				//if(clientList[clientIndex].intervalSet.set)
-				//{
-				socket.emit('stop lobby update interval'); //, clientList[clientIndex].intervalSet.intervalID);
-				//}
-				
-				socket.room = roomList[data.roomindex].name;
-				console.log("client: " + clientIndex + " left connected room and joined: " + roomList[data.roomindex].name);
-				socket.roomActive = true;
-				clientList[clientIndex].roomActive = true;
-				
-				//test this if this works..
-				activeFullRoomsList.push(roomList[data.roomindex]); // push over all the room data over to the activeFullRoomsList to "save" the data while removing it from lobbylist..
-				roomList.splice(data.roomindex, 1); //remove from roomList
-				
-				socket.emit('client joins room', {username: clientList[clientIndex].username, room: socket.room}); //creator joins room but for "second" client to join the room..
-				
+					socket.join(roomList[data.roomindex].name);
+					
+					//stop interval if it exists when a client joins a room..
+					var clientIndex = getClientIndex(socket.cid);
+					//if(clientList[clientIndex].intervalSet.set)
+					//{
+					socket.emit('stop lobby update interval'); //, clientList[clientIndex].intervalSet.intervalID);
+					//}
+					
+					socket.room = roomList[data.roomindex].name;
+					console.log("client: " + clientIndex + " left connected room and joined: " + roomList[data.roomindex].name);
+					socket.roomActive = true;
+					clientList[clientIndex].roomActive = true;
+					
+					//test this if this works..
+					activeFullRoomsList.push(roomList[data.roomindex]); // push over all the room data over to the activeFullRoomsList to "save" the data while removing it from lobbylist..
+					roomList.splice(data.roomindex, 1); //remove from roomList
+					
+					socket.emit('client joins room', {username: clientList[clientIndex].username, room: socket.room}); //creator joins room but for "second" client to join the room..
+					
+				}else {
+					//if failed pw -- notify user and provide them with a button to "go out of" login screen in case they actually dont know the pw
+					socket.emit('room login failed');
+					console.log("pw failed");
+				}
 			}else {
-				//if failed pw -- notify user and provide them with a button to "go out of" login screen in case they actually dont know the pw
-				socket.emit('room login failed');
-				console.log("pw failed");
+				console.log("unintended usage detected, or bug, javascript manipulation clientside possibility.");
+				//if more than 2 already in room due to js manipulation
+				socket.emit('too many in room');
 			}
 		}else {
-			console.log("unintended usage detected, or bug, javascript manipulation clientside possibility.");
-			//if more than 2 already in room due to js manipulation
-			socket.emit('too many in room');
+			socket.emit('ajabaja', "roomlogin");
 		}
 	});
 	
