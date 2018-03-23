@@ -507,7 +507,7 @@ $(document).ready(function(){
 		console.log("amount of rooms: ", rooms.length);
 		if(rooms.length > 0)
 		{
-			console.log("heja heja");
+			//console.log("heja heja");
 			var createdStr = "";
 			for(var i = 0; i < rooms.length; i++)
 			{
@@ -612,13 +612,35 @@ $(document).ready(function(){
 		
 	});
 	
+	socket.on('disable readycheck', function() {
+		//if creator DCs during readycheck, disable readycheck
+		readyCheck.hide();
+		
+		if(t2 && secondClockActionIValID)
+		{
+			clearInterval(secondClockActionIValID);
+			secondClockActionIValID = null;
+			clearTimeout(t2);
+			t2 = null;
+		}
+	});
+	
 	socket.on('reset creator on client leave', function() {
-		console.log("creator joins room");
+		console.log("reset creator on client leave");
 		
 		//createRoomForm.hide();
 		//joinRoomForm.hide();
 		//titleText.hide();
 		//canvas.show();
+		readyCheck.hide();
+		
+		if(t2 && secondClockActionIValID)
+		{
+			clearInterval(secondClockActionIValID);
+			secondClockActionIValID = null;
+			clearTimeout(t2);
+			t2 = null;
+		}
 		boardPieces.hide();
 		messages.empty();
 		chat.show();
