@@ -20,6 +20,14 @@ const winCombos = {	1: [1,2,3],
 					8: [3,5,7]};
 //var boardGrid = []; //shit, multiple games means I am going to need 1 boardGrid per GAME room created... --- add it to roomlist 
 var funcs = require('./js/projectFunctions'); //thank you earendel from ##javascript @ IRC
+var sanitizeHtml = require('sanitize-html');
+
+// Allow only a super restricted set of tags and attributes
+//https://github.com/punkave/sanitize-html
+/*var clean = sanitizeHtml(input, {
+  allowedTags: [],
+  allowedAttributes: []
+});*/
 
 
 //my roomList need to track people entering the rooms as well - as replacement for "oneRegisteredUser" -- to determine color of the player in the room in chat once in room
@@ -78,6 +86,16 @@ io.on('connection', function(socket) {
 		//- should lead to passing on confirmation to client, having it "turn page" interface wise 
 	
 		//Check if username already exist within our clientList, if it does, add clientID to the name ?
+		
+		//sanitize our input first of all:
+		//console.log("before santizing username: ", username);
+		//username = sanitizeHtml(username, {
+		//  allowedTags: [],
+		//  allowedAttributes: []
+		//});
+		//console.log("after sanitizing username: ", username);
+		
+		username = sanitizeData(username);
 		
 		if(socket.userReg == false)
 		{
@@ -173,6 +191,15 @@ io.on('connection', function(socket) {
 				
 				var lobbyname = data.name;
 				
+				//sanitize the input data:
+				//console.log("lobbyname before sanitization: ", lobbyname);
+				//lobbyname = sanitizeHtml(lobbyname, {
+				//  allowedTags: [],
+				//  allowedAttributes: []
+				//});
+				//console.log("lobbyname after sanitization: ", lobbyname);
+				lobbyname = sanitizeData(lobbyname);
+				
 				//scroll through roomList checking lobbynames for match, if one is found, redefine lobbyname var with sockets client id appended for uniqueness
 				
 				if(roomList.length > 0) //no use in doing this if roomList is empty
@@ -187,6 +214,9 @@ io.on('connection', function(socket) {
 				}
 				
 				var pw = data.pw;
+				console.log("pw before stringify: ", pw);
+				pw = JSON.stringify(pw); //stringify pw to escape "dangers"(?)
+				console.log("pw after stringify: ", pw);
 				var pwSet = false;
 				//check and filter it - set to none if empty or similar
 				if(pw.length > 0)
@@ -271,6 +301,8 @@ io.on('connection', function(socket) {
 	socket.on('update roomList', function(selectedValue) {
 		var clientIndex = getClientIndex(socket.cid);
 		
+		selectedValue = sanitizeData(selectedValue);
+		
 		//clientList[clientIndex].intervalSet.set = true;
 		console.log("socket.rooms: ", socket.rooms);
 		console.log("inside update roomList serverside");
@@ -306,8 +338,16 @@ io.on('connection', function(socket) {
 		//make sure that the room actually sent along on the join room submit was a room that actually exist in our list --- 
 		//loop through our roomlist, check if the selected room exists, check if user is registered (also a must), check if any rooms have been created - aka if selected room exists
 		
+		//console.log("selectedRoom before sanitization: ", selectedRoom);
+		//selectedRoom = sanitizeHtml(selectedRoom, {
+		//  allowedTags: [],
+		//  allowedAttributes: []
+		//});
+		//console.log("selectedRoom after sanitization: ", selectedRoom);
+		selectedRoom = sanitizeData(selectedRoom);
 		
-		
+		//could possibly check userinput here as well by regex a-zA-Z0-9+whitespace
+
 		//when this is triggered, assume room is full, since this is client joining the room, and room only have capacity of 2
 		
 		
@@ -407,6 +447,18 @@ io.on('connection', function(socket) {
 	socket.on('room login attempt', function(data) {
 		console.log("inside of room login attempt serverside");
 		
+		//console.log("roomindex transfer before sanitization: ", data.roomindex);
+		//data.roomindex = sanitizeHtml(data.roomindex, {
+		//  allowedTags: [],
+		//  allowedAttributes: []
+		//});
+		//console.log("roomindex transfer after sanitization: ", data.roomindex);
+		data.roomindex = sanitizeData(data.roomindex);
+		
+		console.log("pw transfer before stringify: ", data.pw);
+		data.pw = JSON.stringify(data.pw);
+		console.log("pw transfer after stringify: ", data.pw);
+		
 		//var roomIndex = getRoomIndex(data.roomindex, roomList); //extra safety check
 		
 		//console.log("@ LOGIN: data.roomindex = " + data.roomindex + ", roomIndex: " + roomIndex);
@@ -468,7 +520,32 @@ io.on('connection', function(socket) {
 	
 	
 	socket.on('trigger readycheck broadcast for room', function(roomname) {
-		io.in(roomname).emit('readycheck'); //shows readycheck form like roomlogin form clientside
+		
+		console.log("inside of trigger readycheck broadcast for room serverside");
+		
+		roomname = sanitizeData(roomname);
+		
+		//should probably make sure so the actual roomname exist in the roomlist here
+		var exists = false;
+		for(var i = 0; i < activeFullRoomsList.length; i++)
+		{
+			if(activeFullRoomsList[i].name == roomname)
+			{
+				exists = true;
+				break;
+				
+				//break; //necessasry to have break here?
+			}
+		}
+		
+		if(exists)
+		{
+			io.in(roomname).emit('readycheck'); //shows readycheck form like roomlogin form clientside
+		}else {
+			console.log("roomname did not exist in activeFullRoomsList.");
+		}
+		
+		
 		//store readycheck starttime somehow for gameroom? seem not necessary
 	});
 	
@@ -481,6 +558,15 @@ io.on('connection', function(socket) {
 		//also in this block of code we do the serverside logic for if a no-response - kick player from room, if creator sent no-response, remove room and kick everyone
 		
 		//socket emit event here : ('readycheck response callback', 
+		
+		//sanitize data just in case:
+		//console.log("response data before sanitization: ", data);
+		//data = sanitizeHtml(data, {
+		//  allowedTags: [],
+		//  allowedAttributes: []
+		//});
+		//console.log("response data after sanitization: ", data);
+		data = sanitizeData(data);
 		
 		
 		//make socket is connected to a room serverside, make sure user is registered serverside, make sure 2 people are in the room and that this socket is active in the room
@@ -969,6 +1055,15 @@ io.on('connection', function(socket) {
 		//clientList.activeRoom should provide us with that..
 		console.log("inside of register tictactoe move");
 		
+		//console.log("cellHit before sanitization: ", cellHit);
+		//cellHit = sanitizeHtml(cellHit, {
+		//  allowedTags: [],
+		//  allowedAttributes: []
+		//});
+		//console.log("cellHit after sanitization: ", cellHit);
+		
+		cellHit = sanitizeData(cellHit);
+		
 		var clientIndex = getClientIndex(socket.cid);
 		
 		socket.emit('clear game timers');
@@ -1222,6 +1317,14 @@ io.on('connection', function(socket) {
 		//add all times to clientList.games.time array and divide by the length
 		var clientIndex = getClientIndex(socket.cid);
 		
+		//console.log("gameTime before sanitization: ", gameTime);
+		//gameTime = sanitizeHtml(gameTime, {
+		//  allowedTags: [],
+		//  allowedAttributes: []
+		//});
+		//console.log("gameTime after sanitization: ", gameTime);
+		gameTime = sanitizeData(gameTime);
+		
 		clientList[clientIndex].gameTimes.push(gameTime);
 		
 		var avgGameTimeSum = 0;
@@ -1282,9 +1385,6 @@ io.on('connection', function(socket) {
 		
 		socket.emit('roomleaving data scrubbing');
 		
-		
-		
-		
 	});
 	
 	/*
@@ -1297,6 +1397,14 @@ io.on('connection', function(socket) {
 		console.log("inside of leave room serverside");
 		
 		var clientIndex = getClientIndex(socket.cid);
+		
+		//console.log("roomindex before sanitization: ", roomindex);
+		//roomindex = sanitizeHtml(roomindex, {
+		//  allowedTags: [],
+		//  allowedAttributes: []
+		//});
+		//console.log("roomindex after sanitization: ", roomindex);
+		roomindex = sanitizeData(roomindex);
 		
 		//to leave a room the user must be in a room - could it cause issue clientList[clientIndex] here if clientIndex was -1 -- Im thinking it might, damn gotta double check that...
 		if(clientIndex != -1)
@@ -1521,6 +1629,14 @@ io.on('connection', function(socket) {
 		
 		var clientIndex = getClientIndex(socket.cid);
 		
+		//console.log("command before sanitization: ", command);
+		//command = sanitizeHtml(command, {
+		//  allowedTags: [],
+		//  allowedAttributes: []
+		//});
+		//console.log("command after sanitization: ", command);
+		command = sanitizeData(command);
+		
 		if(clientIndex != -1)
 		{
 		
@@ -1614,6 +1730,25 @@ io.on('connection', function(socket) {
 	
 	socket.on('chat message', function(data) {
 		console.log("message: " + data.msg);
+		
+		//console.log("data.msg before sanitization: ", data.msg);
+		//data.msg = sanitizeHtml(data.msg, {
+		//  allowedTags: [],
+		//  allowedAttributes: []
+		//});
+		//console.log("data.msg after sanitization: ", data.msg);
+		
+		data.msg = sanitizeData(data.msg);
+		
+		
+		//console.log("data.timestamp before sanitization: ", data.timestamp);
+		//data.timestamp = sanitizeHtml(data.timestamp, {
+		//  allowedTags: [],
+		//  allowedAttributes: []
+		//});
+		//console.log("data.timestamp after sanitization: ", data.timestamp);
+		data.timestamp = sanitizeData(data.timestamp);
+		
 		
 		var clientIndex = getClientIndex(socket.cid);
 		
@@ -1968,4 +2103,14 @@ function getRoomIndex(selectedRoom, array) {
 		}
 	}
 	return roomIndex;
+}
+
+function sanitizeData(toSanitize) {
+	console.log(toSanitize + " before sanitization: ", toSanitize);
+		toSanitize = sanitizeHtml(toSanitize, {
+		  allowedTags: [],
+		  allowedAttributes: []
+		});
+		console.log(toSanitize + " after sanitization: ", toSanitize);
+	return toSanitize;
 }
