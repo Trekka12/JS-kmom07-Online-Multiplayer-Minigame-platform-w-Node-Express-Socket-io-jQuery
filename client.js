@@ -91,6 +91,9 @@ $(document).ready(function(){
 	var gameTurnTimer = null; //gameturn timeout ID
 	var gameClock = null; //game clock interval ID
 	
+	var leaveRoomInt = null;
+	var leaveRoomCountdown = null;
+	
 	var reconnectTimer = null;
 	
 	//var lastTypingTime = 0;
@@ -900,7 +903,7 @@ $(document).ready(function(){
 		
 	});
 	
-	socket.on('your turn in game', function() {
+	socket.on('your turn in game', function(boardGrid = [0,0,0,0,0,0,0,0,0]) {
 		console.log("inside of your turn in game");
 
 		gameClockElem.css('visibility', 'visible');
@@ -949,7 +952,7 @@ $(document).ready(function(){
 			mx = e.clientX - canvas.offsetLeft;
 			my = e.clientY - canvas.offsetTop;*/
 				
-			var cellHit = hitZoneDetection(position.x, position.y, boardSide, cellPos, tttBoardMarginLeft, tttBoardMarginTop, cellSide);
+			var cellHit = hitZoneDetection(position.x, position.y, boardSide, cellPos, tttBoardMarginLeft, tttBoardMarginTop, cellSide, boardGrid);
 			
 			console.log("cellHit = " + cellHit);
 			
@@ -960,7 +963,7 @@ $(document).ready(function(){
 			{
 				console.log("registering tictactoe move");
 				socket.emit('register tictactoe move', cellHit);
-				canvas.off(eventName); //detach event listener if hit was made (see if this works)
+				canvas.off(eventName); //detach event listener if hit was made (see if this works) //here im assuming its a hit instantly, without knowing whether it was or not... so need to check this clientside - whether it was hit or not somehow...
 			}
 			
 			gameClockElem.css('visibility', 'hidden');
@@ -1186,6 +1189,20 @@ $(document).ready(function(){
 		}
 	});
 	
+	socket.on('clear leave room timers', function() {
+		if(leaveRoomInt)
+		{
+			clearInterval(leaveRoomInt);
+			leaveRoomInt = null;
+		}
+		
+		if(leaveRoomCountdown)
+		{
+			clearTimeout(leaveRoomCountdown);
+			leaveRoomCountdown = null;
+		}
+	});
+	
 	socket.on('clear creator game-related data', function() {
 		socket.emit('clear creator game data');
 	});
@@ -1217,16 +1234,16 @@ $(document).ready(function(){
 		console.log("inside of ending game procedure clientside");
 		var countdownTime = 10; 
 		gameClockElem.text("You will be returned to create/join lobby room in: " + countdownTime).css('visibility', 'visible');
-		gameClock = setInterval(function() {
+		leaveRoomInt = setInterval(function() {
 			//every second our "gameClock should be updated
 			console.log("inside of gameClock ticking every second");
 			gameClockElem.text("You will be returned to create/join lobby room in: " + countdownTime);
 			countdownTime -= 1;
 		}, SECOND);
 		
-		gameTurnTimer = setTimeout(function() {
+		leaveRoomCountdown = setTimeout(function() {
 			
-			gameClockElem.hide()
+			gameClockElem.css('visibility', 'hidden');
 			socket.emit('now we leave game');
 			
 		}, 10*SECOND);

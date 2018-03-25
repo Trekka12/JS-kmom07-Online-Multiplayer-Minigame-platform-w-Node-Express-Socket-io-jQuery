@@ -469,24 +469,31 @@ function getPosition(e, canvasPosition) {
 	return position;
 }
 
-function hitZoneDetection(mx, my, boardSide, cellPos, tttBoardMarginLeft, tttBoardMarginTop, cellSide) {
+function hitZoneDetection(mx, my, boardSide, cellPos, tttBoardMarginLeft, tttBoardMarginTop, cellSide, boardGrid) {
 	//this function will be used to iterate through our hitzones, check our mouse x and mouse y to see what zone it lands in,
 	//then return that zone nmbr so that XO can be painted
-	
+	var cellHit = -1;
 	//only trigger a cellZone check if within the board params, check this first
 	if(mx >= tttBoardMarginLeft && mx <= (tttBoardMarginLeft + boardSide) && my >= tttBoardMarginTop && (my <= tttBoardMarginTop + boardSide))
 	{
 		for(var i = 1; i <= 9; i++)
 		{
-			if(mx >= cellPos[i].x && mx <= (cellPos[i].x + cellSide) && my >= cellPos[i].y && my <= (cellPos[i].y + cellSide))
+			if(mx >= cellPos[i].x && mx <= (cellPos[i].x + cellSide) && my >= cellPos[i].y && my <= (cellPos[i].y + cellSide) && boardGrid[i-1] == 0)
 			{
 				//if all of these are true, its a hit, somehow find out what cellNmbr these coordinates belonged to and return it
-				return i;
+				//return i;
+				cellHit = i;
+				break;
+			}else {
+				cellHit = -1;
 			}
 		}
 	}else {
-		return -1;
+		//return -1;
+		cellHit = -1;
 	}
+	
+	return cellHit;
 }
 
 
