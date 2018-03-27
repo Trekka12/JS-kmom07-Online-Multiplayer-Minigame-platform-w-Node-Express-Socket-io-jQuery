@@ -21,7 +21,7 @@ And here we are now...
 + ability to socket.io realtime chat within "game rooms"
 + ability to see inside of "game rooms" when someone is typing
 + timestamped chat messages (toLocaleString used)
-+ User chat messages are colored red/blue depending on startingPlayer
++ User chat messages are colored blue for opponent, black for the user
 + Readycheck feature when 2 people join a room
 + room is temporarily "removed" from roomlist when 2 users have joined it (only 2 users allowed in one room)
 + Roomlist shows created rooms with their designated roomname, as well as "created time ago" feature updated every 15th second
