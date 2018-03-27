@@ -1,7 +1,7 @@
-#TicTacToe (& minigames) online Multiplayer gaming portal project for JS @ BTH, by: Trekka12
-##A Node.js, Express.js and Socket.io web application to utilize realtime multiplaying capabilities of the modern web with simpler mini-games
+# TicTacToe (& minigames) online Multiplayer gaming portal project for JS @ BTH, by: Trekka12
+## A Node.js, Express.js and Socket.io web application to utilize realtime multiplaying capabilities of the modern web with simpler mini-games
 
-##Project process
+## Project process
 I struggled a lot at first to get started with this project, which lead me to "postpone" it a few years because I couldn't understand how I would possibly start, I envisioned exactly how I wanted everything to be, and work and look but I lacked the necessary knowledge and energy truth be told, and idea of approach to get started and making it work.
 After a few years though, I decided to get started again, this time I also struggled quite a bit at first, but then I decided to separate the project into "smaller pieces" or "units" as some might call them(?), where I divided the code I needed for the entirety of the project into a few groups that I needed to figure out and master before I could put everything together. This probably also helped minimize development time, as well as debugging efforts throughout the entire project - since it allowed me to focus on specific smaller areas, instead of having to step-through the massive interface just to reach the problemarea. I also put up a personal deadline for this project of a months time to help me keep motivated and productive and driven towards that goal.
 The areas I decided to divide my project into was the following:
@@ -14,7 +14,7 @@ And after having completed all of the above mini-sections and felt confident in 
 And here we are now...
 
 
-##Current Features
+## Current Features
 + Username registration (including swedish chars)
 + Ability to create "game rooms" (room names allow swedish characters)
 + Ability to join created "game rooms"
@@ -74,7 +74,7 @@ And here we are now...
 + 22mar18: Added JS clientside manipulation countermeasures for form actions to ensure as much as possible that users actually follow the set out path.
 + added HTML sanitization on serverside everywhere I could find that form data was received and used for taking action.
 
-##Features currently being worked on
+## Features currently being worked on
 + Have node.js run "forever" even with terminal shut down, also have it auto instant restart upon potential crash and have it add error message to a logfile if there is a crash
 + If a user (not the one that created the room) leaves by leave button, "reset" game room for the creator that is still left inside the room - reset all room variables and remove all room-related vars from client that left the room
 + Confirm that 2 users is Maxlimit to be joined in a room, even if 2 users simultaneously press "join" at the same time for example
@@ -90,7 +90,7 @@ And here we are now...
 
 ------------
 
-##Future possible enhancements/improvements/additional features
+## Future possible enhancements/improvements/additional features
 + realtime "amount of characters" validation for username registration & roomname selection
 + adding namespace to separate "info updates" in chat from chat messages - know how to do it, and could easily do it, but lack of time has left me not doing it yet
 + rename our #chat to #gameRoom to be more accurate in depiction (right word used?)
