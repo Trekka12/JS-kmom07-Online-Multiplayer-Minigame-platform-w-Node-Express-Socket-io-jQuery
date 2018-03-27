@@ -4,7 +4,7 @@
 ## Project process
 I struggled a lot at first to get started with this project, which lead me to "postpone" it a few years because I couldn't understand how I would possibly start, I envisioned exactly how I wanted everything to be, and work and look but I lacked the necessary knowledge and energy truth be told, and idea of approach to get started and making it work.
 After a few years though, I decided to get started again, this time I also struggled quite a bit at first, but then I decided to separate the project into "smaller pieces" or "units" as some might call them(?), where I divided the code I needed for the entirety of the project into a few groups that I needed to figure out and master before I could put everything together. This probably also helped minimize development time, as well as debugging efforts throughout the entire project - since it allowed me to focus on specific smaller areas, instead of having to step-through the massive interface just to reach the problemarea. I also put up a personal deadline for this project of a months time to help me keep motivated and productive and driven towards that goal.
-The areas I decided to divide my project into was the following:
+The areas I decided to divide my project into were the following:
 - Canvas, graphics and Tic Tac Toe specific graphics as well as basic game logics
 - Node.js, Socket.io and Express.js realtime chat application with some additional quality-of-life features
 - Node.js, Socket.io and Express.js Multi-room feature - tested on chat rooms
@@ -30,12 +30,11 @@ And here we are now...
 + Username is length restricted and use RegEx to validate for and only allow a-zA-Z0-9 + swedish characters but NO whitespace characters
 + roomname is also length restricted and also use RegEx to validate for same as username BUT Allows whitespace in the name
 + Interface show "status messages" for user for example when username is not complying with limitations set - same for roomname
-+ input is escaped using .val()
 + Application uses Modernizr for feature detection and YepNope for Polyfill compensation
 + Application is prepared for Touch event as alternative to Mouseclick - not tested yet though but code base for it is there and applied to project
 + projectFunctions.js uses module exports to export useful functions to be used within server.js and separate "functions" to be used from the actual client.js and server.js files to keep them as "clean" as possible
-+ Chat have "special features" - one is to type command /changeNick to change username, the other is to press "ARROW_UP" to recreate last typed message (including command)
-+ Chat is also equipped with Anti-Spam feature that won't allow messages within 500ms of each other
++ Chat have "special features" - one is to type command **/changeNick** to change username, the other is to press _"ARROW_UP"_ to recreate last typed message _(including command)_
++ Chat is also equipped with Anti-Spam feature that won't allow messages within **500ms** of each other
 + Rooms have a Leave room button for convenience
 + Roomlist keeps track of selected options even beyond the updating of "created time ago" feature
 + Readycheck has a HTML5 progressbar it progressively fills up every second where 100% = amount of seconds readycheck lasts
@@ -46,7 +45,7 @@ And here we are now...
 + TimerID tracking variables are declared globally for easier clearing of them throughout the interface
 + semantic constants are declared to help ease the understanding of the code
 + useful functions used by client.js or server.js are placed within projectFunctions
-+ automatic focus is set to both username textfield when loaded, as well as the room lobbyname textfield once that has been loaded
++ automatic focus is set to both username textfield when loaded, as well as the room lobbyname textfield once that has been loaded (Quality of life)
 + if a user left the room - the other user connected to the same room is informed in the chat
 + when readycheck is successfully completed and game stats - startingplayer is randomized and the available boardpieces are visually added to the interface
 + when game have started a realtime countdown clock is shown for the user whos turn it is
@@ -55,10 +54,9 @@ And here we are now...
 + on win - the winning cells are specially visually marked - if 2 rows when win - both cell lines are marked
 + canvas is only clickable when it is users turn
 + if turn timer runs out - user forfeits his turn and it passes to the other player
-+ if boardPieces run out and yet no winner a draw is declared
 + a draw is also declared if all pieces have been used on the board but still no win
 + to avoid "jumpy" interface for users in a room, once turn timer clock has been loaded once, it will maintain its interface size occupation and only be visibility: hidden, instead of display: none via .hide()
-+ on gameover game room is completely erased but players that played the game get updated winstatistics
++ on gameover game room is completely erased but players that played the game get updated gamestatistics
 + server.js doesnt only load index.html but also statically loads all files in the project directory (many files of which are used by the index.html)
 + Application uses LESS for styles and jQuery for more 'efficient' use of JavaScript (personal opinion + shows whats been learned throughout the course in general)
 + a complete reference list has been compiled for everything used to answer questions, or simple references used to refresh memory, as well as simulators and special code sharing sites/tools used throughout the entirety of the development process
@@ -66,7 +64,7 @@ And here we are now...
 + repeated use of similiar logic/functionality has been compressed into reusable functions to ease the code as well as to make it more efficient
 + socket.io Multiple room functionality is used (obviously)
 + users alternate between 2 types of rooms - game rooms and default room (connected) - helps with the maintenance and update of interface information for individual connected- and registered sockets
-+ chat has a built-in feature to auto-scroll down to the latest typed message in the chatbox
++ chat has a built-in feature to auto-scroll down to the latest typed message in the chatbox (Quality of life)
 + Clientside disconnect detection which will "update page" on connection break - causing the application to "restart" in interface to match the data-reset that occured if/when node was restarted.
 + Both username registration and lobbyname registration got Anti-nameclash-feature that avoids duplicates of the same name.
 + Game room chat feature have user textColor embedding, if client is typing, hes doing so in black textcolor, whilst if other connected socket is typing, his text is displayed with blue textcolor.
