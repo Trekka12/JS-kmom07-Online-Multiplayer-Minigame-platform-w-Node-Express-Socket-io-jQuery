@@ -11,8 +11,7 @@ function getTimeDiffString(createdtime) {
 	console.log("timeDiff: ", timeDiff);
 	var secs = Math.floor(timeDiff/1000);
 	console.log("secs = ", secs);
-	var mins = 0; //= Math.floor(secs/60);
-	//console.log("mins = ", mins);
+	var mins = 0; 
 	var hour = 0;
 	
 	if(secs >= 60 && secs < 3600)
@@ -221,7 +220,6 @@ function drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, bo
 	
 	ctx.fillStyle = gameColors.boardColor;
 	ctx.fillRect(tttBoardMarginLeft+1, tttBoardMarginTop+1, boardSide-2, boardSide-2);
-	//console.log("testing");
 	
 	//draw the 4 lines to create our 9 boxes
 	ctx.beginPath();
@@ -245,13 +243,8 @@ function drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, bo
 function drawMultipleCells(cellNmbrs, boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide, marked = true) {
 	console.log("inside of drawMultipleCells function");
 	
-	//paintXO(ctx, xo, cellNmbr, XOLineThickness, gameColors, cellPos, cellSide, marked = false)
-	
 	for(var i = 0; i < cellNmbrs.length; i++)
 	{
-		//check pieceType for every single cell
-		//var piece = 
-		//boardGrid
 		//check the value of the cell in boardGrid to find out pieceType
 		var player = boardGrid[cellNmbrs[i]-1];
 		var piece = "";
@@ -277,7 +270,7 @@ function drawPiecesExceptWinPieces(winCells, boardGrid, ctx, XOLineThickness, ga
 	var counter = 0;
 	var match = false;
 
-	for(var i = 0; i < boardGrid.length; i++) //<-- use boardGrid.length instead of 9. Much more descriptive
+	for(var i = 0; i < boardGrid.length; i++)
 	{
 		//for every single cell, we need to check against out winning cells
 		//so imagine this, we loop through our win cells, compare to our actual cell
@@ -302,7 +295,7 @@ function drawPiecesExceptWinPieces(winCells, boardGrid, ctx, XOLineThickness, ga
 		}
 		if(!match)
 		{
-			cellNmbrs[counter] = i+1; //boardGrid[i]; //this way cellNmbrs contain what cells to repaint (not wincells) - ofc I only want to repaint the cells that actually hold a mark to paint... how to distinguish this...?
+			cellNmbrs[counter] = i+1; //this way cellNmbrs contain what cells to repaint (not wincells) - ofc I only want to repaint the cells that actually hold a mark to paint... how to distinguish this...?
 			
 			counter += 1;
 		}
@@ -310,17 +303,12 @@ function drawPiecesExceptWinPieces(winCells, boardGrid, ctx, XOLineThickness, ga
 	
 	console.log("Last printout before draw multiple cells, cellNmbrs contain: ", cellNmbrs);
 	
-	//drawMultipleCells(cellNmbrs, ctx, XOLineThickness, gameColors, cellPos, cellSide, marked = true)
-	
 	drawMultipleCells(cellNmbrs, boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide, false);
 	
 }
 
 function drawTicTacToeGamescene() {
-	//draw background color:
 	drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
-	//to make it easy, 300x300 tic-tac-toe board size
-	//var TILE_BOARD_SIDE = 300;
 	
 	paintGameInfoPlack();
 	
@@ -335,22 +323,10 @@ function drawTicTacToeGamescene() {
 	canvas.on(eventName, function(e) {
 		e.preventDefault();
 		
-		//using pageX and pageY to get mouse pos relative to browser window
-		/*var mouse = {
-			x: e.pageX - canvasPosition.x,
-			y: e.pageY - canvasPosition,y
-		};*/
 		var position = getPosition(e);
 		//this gives us local coordiantes which consider (0,0) origin at to-left of canvas element
 		
 		console.log("canvas click/touch detected at pos: ", position);
-		
-		
-		
-		
-		/*var mx = 0, my = 0;
-		mx = e.clientX - canvas.offsetLeft;
-		my = e.clientY - canvas.offsetTop;*/
 			
 		var cellHit = hitZoneDetection(position.x, position.y);
 		
@@ -373,8 +349,6 @@ function drawTicTacToeGamescene() {
 				console.log("winstats:", winstats[i]);
 			}
 			
-			
-			//if(winstats.winner != 0)
 			if(winstats[0].player != 0) //if a winner exist
 			{
 				//atm this ONLY paints the win, meaning other selected pieces wont get painted also... need to fix this.. Only winpieces is to be painted marked, rest is to be painted normal.
@@ -421,23 +395,15 @@ function drawTicTacToeGamescene() {
 					
 					console.log("single row wincell nmbrs: ", uniqueWinCells);
 				}
-				
-				//drawPiecesExceptWinPieces(winstats.winCombo);
-				
 				//we want to redraw the win pieces as marked cells here.. start by drawing what is not part of the win I think I figured:
-				
 				
 				drawPiecesExceptWinPieces(uniqueWinCells);
 				
 				drawMultipleCells(uniqueWinCells);
-				
-				//drawWin(winstats.winner, winstats.winCombo);
-				
-				//console.log("And the Winner is player: " + winstats.winner);
 			}
 		}
 		
-		return false; //why this here? hm.. prevent event bubbling?
+		return false;
 	});
 	
 }
@@ -481,7 +447,6 @@ function hitZoneDetection(mx, my, boardSide, cellPos, tttBoardMarginLeft, tttBoa
 			if(mx >= cellPos[i].x && mx <= (cellPos[i].x + cellSide) && my >= cellPos[i].y && my <= (cellPos[i].y + cellSide) && boardGrid[i-1] == 0)
 			{
 				//if all of these are true, its a hit, somehow find out what cellNmbr these coordinates belonged to and return it
-				//return i;
 				cellHit = i;
 				break;
 			}else {
@@ -489,7 +454,6 @@ function hitZoneDetection(mx, my, boardSide, cellPos, tttBoardMarginLeft, tttBoa
 			}
 		}
 	}else {
-		//return -1;
 		cellHit = -1;
 	}
 	
@@ -515,138 +479,92 @@ function checkWin(boardGrid) {
 	var winComboCounter = 0;
 	var winner = 0;
 	var winCombo = 0;
+	//for every wincombo, check what winCombo exist, once found, add to winCombo array, there can only be one type of winner - but i must distinguish from player1 and player2... somehow...
+	//console.log("iterating through wincombos");
 	
-	//var wincombinations = [false, false, false, false, false, false, false, false];
+	if((boardGrid[0] == 1 && boardGrid[1] == 1 && boardGrid[2] == 1) || (boardGrid[0] == -1 && boardGrid[1] == -1 && boardGrid[2] == -1))
+	{
+		//a win for one of the players - check if -1 or 1 to determine what player won
+		winner = boardGrid[0];
+		winCombo = 1;
+		
+		winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
+		winComboCounter++;
+	}
 	
-	//for(var i = 0; i < winComboAmount; i++)
-	//{
-		//for every wincombo, check what winCombo exist, once found, add to winCombo array, there can only be one type of winner - but i must distinguish from player1 and player2... somehow...
-		//console.log("iterating through wincombos");
+	if((boardGrid[3] == 1 && boardGrid[4] == 1 && boardGrid[5] == 1) || (boardGrid[3] == -1 && boardGrid[4] == -1 && boardGrid[5] == -1))
+	{
+		//a win for one of the players - check -1 or 1 to determine who won
+		winner = boardGrid[3];
+		winCombo = 2;
 		
-		if((boardGrid[0] == 1 && boardGrid[1] == 1 && boardGrid[2] == 1) || (boardGrid[0] == -1 && boardGrid[1] == -1 && boardGrid[2] == -1))
-		{
-			//console.log("win 1");
-			//a win for one of the players - check if -1 or 1 to determine what player won
-			winner = boardGrid[0];
-			winCombo = 1;
-			
-			//wincombinations[0] = true;
-			
-			winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
-			winComboCounter++;
-			
-			//winComboCounter++;
-			
-			
-			
-				//winComboArray[0] => {player: -1, wincombo: 1}
-				//what remains now is checking winComboArray after this spectacle and see how many "entries" exist.
-				//get cellNmbrs for each wincombo, delete duplicates, paintMarked wincells
-			
-			
-		}
+		winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
+		winComboCounter++;
 		
-		if((boardGrid[3] == 1 && boardGrid[4] == 1 && boardGrid[5] == 1) || (boardGrid[3] == -1 && boardGrid[4] == -1 && boardGrid[5] == -1))
-		{
-			//a win for one of the players - check -1 or 1 to determine who won
-			winner = boardGrid[3];
-			winCombo = 2;
-			
-			//wincombinations[1] = true;
-			
-			//winComboCounter++;
-			
-			winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
-			winComboCounter++;
-			
-		}
-		
-		if((boardGrid[6] == 1 && boardGrid[7] == 1 && boardGrid[8] == 1) || (boardGrid[6] == -1 && boardGrid[7] == -1 && boardGrid[8] == -1))
-		{
-			//a win for one of the players - check -1 or 1 to determine who won
-			winner = boardGrid[6];
-			winCombo = 3;
-			
-			//wincombinations[2] = true;
-			
-			//winComboCounter++;
-			
-			winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
-			winComboCounter++;
-			
-		//VERTICAL WINS
-		}
-		
-		if((boardGrid[0] == 1 && boardGrid[3] == 1 && boardGrid[6] == 1) || (boardGrid[0] == -1 && boardGrid[3] == -1 && boardGrid[6] == -1))
-		{
-			winner = boardGrid[0];
-			winCombo = 4;
-			
-			//wincombinations[3] = true;
-			
-			//winComboCounter++;
-			
-			winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
-			winComboCounter++;
-			
-		}
-		
-		if((boardGrid[1] == 1 && boardGrid[4] == 1 && boardGrid[7] == 1) || (boardGrid[1] == -1 && boardGrid[4] == -1 && boardGrid[7] == -1))
-		{
-			winner = boardGrid[1];
-			winCombo = 5;
-			
-			//wincombinations[4] = true;
-			
-			//winComboCounter++;
-			
-			winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
-			winComboCounter++;
-			
-		}
-		
-		if((boardGrid[2] == 1 && boardGrid[5] == 1 && boardGrid[8] == 1) || (boardGrid[2] == -1 && boardGrid[5] == -1 && boardGrid[8] == -1))
-		{
-			winner = boardGrid[2];
-			winCombo = 6;
-			
-			//wincombinations[5] = true;
-			
-			//winComboCounter++;
-			
-			winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
-			winComboCounter++;
-			
-		//DIAGONAL WINS
-		}
-		
-		if((boardGrid[0] == 1 && boardGrid[4] == 1 && boardGrid[8] == 1) || (boardGrid[0] == -1 && boardGrid[4] == -1 && boardGrid[8] == -1))
-		{
-			winner = boardGrid[0];
-			winCombo = 7;
-			
-			//wincombinations[6] = true;
-			
-			//winComboCounter++;
-			
-			winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
-			winComboCounter++;
-			
-		}
-		
-		if((boardGrid[2] == 1 && boardGrid[4] == 1 && boardGrid[6] == 1) || (boardGrid[2] == -1 && boardGrid[4] == -1 && boardGrid[6] == -1))
-		{
-			winner = boardGrid[2];
-			winCombo = 8;
-			
-			//wincombinations[7] = true;
-			
-			//winComboCounter++;
-			
-			winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
-			winComboCounter++;
-		}
+	}
 	
+	if((boardGrid[6] == 1 && boardGrid[7] == 1 && boardGrid[8] == 1) || (boardGrid[6] == -1 && boardGrid[7] == -1 && boardGrid[8] == -1))
+	{
+		//a win for one of the players - check -1 or 1 to determine who won
+		winner = boardGrid[6];
+		winCombo = 3;
+		
+		winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
+		winComboCounter++;
+		
+	//VERTICAL WINS
+	}
+	
+	if((boardGrid[0] == 1 && boardGrid[3] == 1 && boardGrid[6] == 1) || (boardGrid[0] == -1 && boardGrid[3] == -1 && boardGrid[6] == -1))
+	{
+		winner = boardGrid[0];
+		winCombo = 4;
+		
+		winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
+		winComboCounter++;
+		
+	}
+	
+	if((boardGrid[1] == 1 && boardGrid[4] == 1 && boardGrid[7] == 1) || (boardGrid[1] == -1 && boardGrid[4] == -1 && boardGrid[7] == -1))
+	{
+		winner = boardGrid[1];
+		winCombo = 5;
+		
+		winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
+		winComboCounter++;
+		
+	}
+	
+	if((boardGrid[2] == 1 && boardGrid[5] == 1 && boardGrid[8] == 1) || (boardGrid[2] == -1 && boardGrid[5] == -1 && boardGrid[8] == -1))
+	{
+		winner = boardGrid[2];
+		winCombo = 6;
+		
+		winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
+		winComboCounter++;
+		
+	//DIAGONAL WINS
+	}
+	
+	if((boardGrid[0] == 1 && boardGrid[4] == 1 && boardGrid[8] == 1) || (boardGrid[0] == -1 && boardGrid[4] == -1 && boardGrid[8] == -1))
+	{
+		winner = boardGrid[0];
+		winCombo = 7;
+		
+		winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
+		winComboCounter++;
+		
+	}
+	
+	if((boardGrid[2] == 1 && boardGrid[4] == 1 && boardGrid[6] == 1) || (boardGrid[2] == -1 && boardGrid[4] == -1 && boardGrid[6] == -1))
+	{
+		winner = boardGrid[2];
+		winCombo = 8;
+		
+		winComboArray[winComboCounter] = {player: winner, wincombo: winCombo};
+		winComboCounter++;
+	}
+
 	//efter for-satsen, scrolla igenom vår wincombinations array för att se vilka som var true, därefter få ut playern.... ugh...
 	
 	
@@ -662,7 +580,7 @@ function checkWin(boardGrid) {
 }
 
 
-function randomize(min, max) { //random(min, max) {
+function randomize(min, max) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
@@ -677,6 +595,8 @@ function removeDuplicatesFromArray(array) {
 		}
 		return unique_array;
 }
+
+
 
 exports.randomize = randomize; //no need to have input vars here, assumed to follow.
 exports.checkWin = checkWin;

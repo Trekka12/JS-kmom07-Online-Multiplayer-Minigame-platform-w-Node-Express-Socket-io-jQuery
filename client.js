@@ -1,6 +1,4 @@
-//$(function() { //short-hand alternative for $('document').ready etc.etc.
 $(document).ready(function(){
-	//my code goes here to be executed once ready has been confirmed
 	"use strict";
 	var socket = io();
 	
@@ -10,14 +8,14 @@ $(document).ready(function(){
 	=================================================================
 	*/
 	
-	//global const var declaration
-	const LONG_FADE_TIME = 2000; //ms = 2s
+	//global const var declaration (also for semantics)
+	const LONG_FADE_TIME = 2000; //2s
 	const SHORT_FADE_TIME = 500; //ms
 	const TYPING_TIMER_LENGTH = 400; //ms
-	const TIMER_TRIGGER_TIME = 15000; //ms = 15s
-	const GAME_TURN_TIME = 15000;
-	const READYCHECK_TIME = 30000;
-	const SECOND = 1000;
+	const TIMER_TRIGGER_TIME = 15000; //15s
+	const GAME_TURN_TIME = 15000; //15s
+	const READYCHECK_TIME = 30000; //30s
+	const SECOND = 1000; //1s
 	
 	
 	const MIN_USERNAME_CHARS = 2;
@@ -30,13 +28,12 @@ $(document).ready(function(){
 	//\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6
 	
 	//const azAZ09regex = /^[a-zA-Z0-9]+$/; //without whitesapce and swedish chars
-	//const azAZ09inclWS = /^([a-zA-Z0-9\s]+)$/; //with whitespace
-	const azAZ09regex = /^[a-zA-Z0-9\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6]+$/; //unicodes represent swedish chars lowercase and uppercase according to: http://www.geocities.ws/click2speak/unicode/chars_sv.html (thanks devsnek @ ##javascript IRC)
-	const azAZ09inclWS = /^([a-zA-Z0-9\s\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6]+)$/; //
+	//const azAZ09inclWS = /^([a-zA-Z0-9\s]+)$/; //with whitespace, but no sweCh
+	const azAZ09regex = /^[a-zA-Z0-9\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6]+$/; 
+	const azAZ09inclWS = /^([a-zA-Z0-9\s\u00C4\u00C5\u00D6\u00E4\u00E5\u00F6]+)$/;//unicodes represent swedish chars lowercase and uppercase according to: http://www.geocities.ws/click2speak/unicode/chars_sv.html (thanks devsnek @ ##javascript , IRC)
 	
 	//global client var declaration
 	var roomToLoginTo = -1; //used to keep track of what room client is currently in
-	//var reg = false; //keeps track of whether user registered username or not
 	var typing = false; //keeping track of whether user is typing or not
 	
 	//front-end DOM elements used throughout client.js
@@ -91,15 +88,14 @@ $(document).ready(function(){
 	var gameTurnTimer = null; //gameturn timeout ID
 	var gameClock = null; //game clock interval ID
 	
-	var leaveRoomInt = null;
-	var leaveRoomCountdown = null;
+	var leaveRoomInt = null; //leave room "ending game procedure" interval id
+	var leaveRoomCountdown = null; //leave room "ending game procedure" timeout id
 	
-	var reconnectTimer = null;
+	var reconnectTimer = null; //pretty self explanatory I figure
 	
-	//var lastTypingTime = 0;
 	var typingTimeout = null;
 	
-	//global game vars
+	//global clientside game vars
 	const gameColors = {	bgColor: "#1f781f",
 							boardColor: "#b05e23",
 							textAndBorderColor: "#000000",
@@ -133,7 +129,7 @@ $(document).ready(function(){
 					8: {x: tttBoardMarginLeft + cellSide, 	y: tttBoardMarginTop + 2*cellSide},
 					9: {x: tttBoardMarginLeft + 2*cellSide, y: tttBoardMarginTop + 2*cellSide}};
 	
-	const winComboAmount = 8; //3 horizontal, 3 vertical, 2 diagonal = 8
+	//const winComboAmount = 8; //3 horizontal, 3 vertical, 2 diagonal = 8
 						
 	const textStrings = {	wfo: "Waiting for opponent...",
 							rurdy: "Room full, are you ready?",
@@ -149,7 +145,7 @@ $(document).ready(function(){
 	const XOLineThickness = 3;
 	
 	//help us determine who is starting player
-	var yourBoardPiecesStartingValue = 4;
+	var yourBoardPiecesStartingValue = 4; //starts out as 4 both of them, one changes depending on who is "starting player" since he by default will have 1 extra board piece to use
 	var opponentBoardPiecesStartingValue = 4;
 	
 	//keep track of boardPieces to be painted after each move made
@@ -197,7 +193,6 @@ $(document).ready(function(){
 	
 	$('#usernameRegForm').submit(function() {
 		console.log("inside of #usernameRegForm.submit");
-		//filter the input before sending it along
 		
 		//it can't be empty, AND it must be more than 2 characters or less than 25
 		if(usernameField.val().length >= MIN_USERNAME_CHARS && usernameField.val().length <= MAX_USERNAME_CHARS)
@@ -207,15 +202,13 @@ $(document).ready(function(){
 			{
 				socket.emit('user registration', usernameField.val()); 
 				
-				//.val() escapes HTML avoiding vulnerabilities according to some sources so no need for additional input sanitization?
-				
 				usernameField.val(''); //just in case
 				
 			}else {
 				nickRegStatusMsg.text("Your nickname contained whitespaces or foreign characters. Please change it to not have whitespaces (or anything except a-z, A-Z and 0-9).").fadeIn(100).fadeOut(LONG_FADE_TIME);
 			}
 		}else {
-			//if less than 1 character, or more than 25
+			//if less than- or 1 character, or more than 25
 			nickRegStatusMsg.text("Username must be > 1 character long, and less than 25 characters.").show().fadeOut(LONG_FADE_TIME);
 		}
 		
@@ -237,25 +230,21 @@ $(document).ready(function(){
 				//only allow input to be a-z A-Z and 0-9 characters between length 2 and 20
 				socket.emit('create room', {name: lobbyName, pw: pwField.val()});
 				
-				
-				//now if any intervals was set upon room creation --- interrupt them... BUT wtf... there shouldnt be any timers here wtf?!?!?!?!
 			}else {
 				statusMsgContainer.text("Your Lobbyname contained characters other than a-z, A-Z and 0-9 - try sticking with the allowed ones.").show().fadeOut(4000);
 			}
-			
 		}else {
 			statusMsgContainer.text("Your Lobbyname need to be between 2 and 20 characters long.").show().fadeOut(4000);
 		}
 		lobbyNameField.val('');
 		pwField.val('');
 		
-		
 		return false;
 	});
 	
 	
 	$('#joinRoomForm').submit(function() {		
-		//when a socket / client / user selects room and presses "join room", they should by all accounts join the perverbial room by hiding create room, and join room sections, and show chat room - and also connecet to the specific room they selected. should be easy enough I figure :)
+		//when a socket / client / user selects room and presses "join room", they should by all accounts join the perverbial room by hiding create room, and join room sections, and show chat room - and also connect to the specific room they selected. should be easy enough :)
 		
 		//fade in the login section if there is a pw for the room in question attempting to be joined
 		
@@ -284,17 +273,12 @@ $(document).ready(function(){
 		loginStatus.text('Room appears to be full, either restart client or try a different room, we apologize for the inconvenience.').show().delay(2000).fadeOut(500);
 	});
 	
+	
 	$('#yesBtn').on('click', function() {
 		//hide readycheck --do that on other receiving of event emitted from server
 		console.log("registering yesBtn click");
 		
-		
-		//if I want to keep this "clearInterval action" -- if I need to keep it -- then simply pass it along with the emit events!
 		socket.emit('readycheck response', true);
-		
-		
-		
-		//update clientside interface after having received "readycheck completed" or something from server
 		
 		return false;
 	});
@@ -339,7 +323,7 @@ $(document).ready(function(){
 			socket.emit('chat message', {msg: m.val(), timestamp: (Date.now())});
 		}
 		
-		return false; // breaks function execution
+		return false; // breaks function execution e.g. no page update
 	});
 	
 	
@@ -359,18 +343,12 @@ $(document).ready(function(){
 	
 	$('#m').on('input', function() {
 		console.log("someone is typing now");
-		//if(typing === false)
-		//{
-			//on textfield input - type out whos/that someone is typing
-			socket.emit('isTyping'); //sending typing from client to server
-			console.log("typing");
-			//typing = true;
-		//}
-		//lastTypingTime = (new Date()).getTime();
-		//console.log("lastTypingTime = " + lastTypingTime/1000);
+
+		//on textfield input - type out whos/that someone is typing
+		socket.emit('isTyping'); //sending typing from client to server
+		console.log("typing");
 			
 	});
-	
 	
 	//https://schier.co/blog/2014/12/08/wait-for-user-to-stop-typing-using-javascript.html
 	$('#m').on('keyup', function() {
@@ -378,42 +356,19 @@ $(document).ready(function(){
 		clearTimeout(typingTimeout);
 	
 		typingTimeout = setTimeout(function() {
-			//var typingTimer = (new Date()).getTime();
-			//console.log("typingTimer = " + typingTimer/1000);
+			socket.emit('stopTyping');
+			console.log("stopped typing by timeout");
 			
-			//var timeDiff = typingTimer - lastTypingTime;
-			//console.log("setTimeout timeDiff: ", timeDiff);
-			
-			//if(timeDiff >= TYPING_TIMER_LENGTH && typing === true)
-			//{
-			
-			//if(typing === true)
-			//{
-				socket.emit('stopTyping');
-				//typing = false;
-				console.log("stopped typing by timeout");
-				//clearTimeout(typingTimeout);
-				//typingTimeout = null;
-			//}
-			//}
 		}, TYPING_TIMER_LENGTH);
-		
 	});
 	
 	
 	$('#leaveRoom').on('click', function() {
 		socket.emit('leave room', roomToLoginTo);
 		console.log("roomToLoginTo is of value: ", roomToLoginTo);
-		//roomToLoginTo = -1;
-		//when leaving room, chat will be hidden again, user shall leave the room serverside, and rejoin connected room, 
+		//when leaving room, chat will be hidden again, user shall leave the room serverside, and rejoin "connected" room, 
 		return false;
-	});
-	
-	socket.on('deactivate leave room btn', function() {
-		console.log("inside of deactivating leave room button clicker");
-		$('#leaveRoom').off('click');
-	});
-	
+	});	
 	
 	
 	/*
@@ -484,22 +439,24 @@ $(document).ready(function(){
 	*/
 	
 	socket.on('show login form', function(roomIndex) {
-		//show login section + form - style in css
-		
+	
 		console.log("inside of show login form event clientside");
-		roomLogin.fadeIn(500);
+		roomLogin.fadeIn(SHORT_FADE_TIME);
 		
 		roomToLoginTo = roomIndex;
 		console.log("roomIndex that is attempting to be logged into: ", roomToLoginTo);
 	});
 	
+	
 	socket.on('created and joined room', function(roomindex) {
 		roomToLoginTo = roomindex;
 	});
 	
+	
 	socket.on('update roomToLoginTo index', function(newRoomIndex) {
 		roomToLoginTo = newRoomIndex;
 	});
+	
 	
 	socket.on('load roomlist', function(rooms) {
 		console.log("inside load roomlist");
@@ -510,14 +467,12 @@ $(document).ready(function(){
 		console.log("amount of rooms: ", rooms.length);
 		if(rooms.length > 0)
 		{
-			//console.log("heja heja");
 			var createdStr = "";
 			for(var i = 0; i < rooms.length; i++)
 			{
 				//for every room:
 				createdStr = getTimeDiffString(rooms[i].createdTime);
 				
-				//&#xe033 <- this lock icon unicode didnt quite work
 				roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
 			}
 			//once all rooms loaded --- then initiate update sequence
@@ -529,6 +484,7 @@ $(document).ready(function(){
 			}
 		}
 	});
+	
 	
 	socket.on('clear intervals', function() {
 		
@@ -555,9 +511,10 @@ $(document).ready(function(){
 			console.log("inside of timeout function should be called every 15s");
 			socket.emit('update roomList', selectedValue);
 			
-		}, TIMER_TRIGGER_TIME); //every 15 or so secs
+		}, TIMER_TRIGGER_TIME); //every 15 secs
 		
 	});
+	
 	
 	socket.on('update gameStatsArea', function(gameStats) {
 		
@@ -574,6 +531,7 @@ $(document).ready(function(){
 		
 	});
 	
+	
 	socket.on('update selected option', function(selectedValue) {
 		console.log("inside of update selected option clientside.");
 		$('option[value="' + selectedValue + '"]').attr('selected', 'selected');
@@ -581,12 +539,12 @@ $(document).ready(function(){
 	
 	
 	socket.on('room login failed', function() {
-		loginStatus.text('Wrong password, try again - or return to lobbylist.').fadeIn(1000).fadeOut(2000);
+		loginStatus.text('Wrong password, try again - or return to lobbylist.').fadeIn(SECOND).fadeOut(LONG_FADE_TIME);
 		
 		console.log("inside of room login failed");
 	});
 	
-	//could work for both creator AND client - does the same thing..?
+	
 	socket.on('creator joins room', function(data) {
 		console.log("creator joins room");
 		
@@ -599,21 +557,19 @@ $(document).ready(function(){
 		chat.show();
 		m.focus();
 		
-		//append to the chat that username joined the room --- once canvas implemented etc. this is where we draw the text "awaiting opponent" I believe.
 		appendDatedMsg(messages, "Welcome <b>" + data.username + "</b>, you have joined your created room: <i>" + data.room + "</i>");
 		
 		//also paint the graphics necessary for when creator have joined his created room:
 		drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
-		//to make it easy, 300x300 tic-tac-toe board size
 		
 		paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo);
-		
 		
 		drawPlackText(ctx, textStrings.wfo, plackMarginLeft, plackInfo, gameColors);
 		
 		drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 		
 	});
+	
 	
 	socket.on('disable readycheck', function() {
 		//if creator DCs during readycheck, disable readycheck
@@ -628,13 +584,10 @@ $(document).ready(function(){
 		}
 	});
 	
+	
 	socket.on('reset creator on client leave', function() {
 		console.log("reset creator on client leave");
 		
-		//createRoomForm.hide();
-		//joinRoomForm.hide();
-		//titleText.hide();
-		//canvas.show();
 		readyCheck.hide();
 		
 		if(t2 && secondClockActionIValID)
@@ -648,21 +601,18 @@ $(document).ready(function(){
 		messages.empty();
 		chat.show();
 		m.focus();
-		
-		//append to the chat that username joined the room --- once canvas implemented etc. this is where we draw the text "awaiting opponent" I believe.
+
 		appendDatedMsg(messages, "Client left and room has now been reset.");
 		
-		//also paint the graphics necessary for when creator have joined his created room:
 		drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
-		//to make it easy, 300x300 tic-tac-toe board size
 		
 		paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo);
-		
 		
 		drawPlackText(ctx, textStrings.wfo, plackMarginLeft, plackInfo, gameColors);
 		
 		drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 	});
+	
 	
 	socket.on('client joins room', function(data) {
 		console.log("client joins room");
@@ -677,19 +627,11 @@ $(document).ready(function(){
 		chat.show();
 		m.focus();
 		
-		 //in case this user was in the room previously we don't want to have them keep the chat history.
-		
-		//paint interface on canvas
-		
-		//append to the chat that username joined the room --- once canvas implemented etc. this is where we draw the text "awaiting opponent" I believe.
 		appendDatedMsg(messages, "Welcome <b>" + data.username + "</b>, you have joined your created room: <i>" + data.room + "</i>");
-		
-		//also paint the graphics necessary for when creator have joined his created room:
+
 		drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
-		//to make it easy, 300x300 tic-tac-toe board size
 		
 		paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo);
-		
 		
 		drawPlackText(ctx, textStrings.wfo, plackMarginLeft, plackInfo, gameColors);
 		
@@ -698,10 +640,12 @@ $(document).ready(function(){
 		socket.emit('trigger readycheck broadcast for room', data.room);
 	});
 	
+	
 	socket.on('client joined room', function(username) {
 		//when a client joins the room --- creator should be notified by appending message to messages:
 		appendDatedMsg(messages, "User: <b>" + username + "</b> have joined the room.");
 	});
+	
 	
 	socket.on('load existing rooms on connect', function(rooms) {
 		console.log("inside of load existing rooms on connect and init update");
@@ -713,15 +657,21 @@ $(document).ready(function(){
 			//for every room
 			createdStr = getTimeDiffString(rooms[i].createdTime);
 			
-			//&#xe033 <- this lock icon unicode didnt quite work
 			roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
 		}
 	});
+	
 	
 	socket.on('stop lobby update interval', function() {
 		clearInterval(intervalID);
 		console.log("cleared interval of intervalID: ", intervalID);
 		intervalID = null;
+	});
+	
+	
+	socket.on('deactivate leave room btn', function() {
+		console.log("inside of deactivating leave room button clicker");
+		$('#leaveRoom').off('click');
 	});
 	
 	
@@ -755,22 +705,21 @@ $(document).ready(function(){
 			
 		}, SECOND); //every second it should update the "ticker" and progressbar
 		
-		//somehow set t2 to null if creator or client leaves?
-		
 		t2 = setTimeout(function() {
 			clearInterval(secondClockActionIValID);
 			secondClockActionIValID = null;
 			console.log("clearing progressbar tick interval");
 			socket.emit('readycheck response', false); //if it runs out -- Give out No replies.
-			//socket.emit No Response
-			//after 1 second assume response is "No"
-		}, READYCHECK_TIME + 2000); //+2000 because takes 2s to get started give or take
+			
+		}, READYCHECK_TIME + 2000); //+2000 because takes 2s to get started give or take (rough estimation)
 		
 	});
+	
 	
 	socket.on('a user left the room', function(username) {
 		appendDatedMsg(messages, "User: <b>" + username + "</b> have declined the readycheck and was thereby kicked out of this room.");
 	});
+	
 	
 	socket.on('stop all readycheck chinanigans', function() {
 		if(secondClockActionIValID && t2)
@@ -781,8 +730,8 @@ $(document).ready(function(){
 			t2 = null;
 		}
 		readyCheck.hide();
-		
 	});
+	
 	
 	socket.on('kick client from a room', function(rooms) {
 		console.log("inside of kick client from a room");
@@ -792,9 +741,9 @@ $(document).ready(function(){
 		roomlist.empty();
 		console.log("amount of rooms: ", rooms.length);
 		
-		statusMsgContainer.text("Either you or opponent declined readycheck or chose to leave the room or the game was won - if creator of room decline readycheck, then room got deleted and all in it kicked - same goes for finishing a game, if client that joined room declined readycheck, then simply that client kicked from room.").show().delay(10000).fadeOut(500);
+		statusMsgContainer.text("Either you or opponent declined readycheck or chose to leave the room or the game was finished. If creator of room for some reason left, then room got deleted and all in it kicked - same goes for finishing a game, if client that joined room left, then that client alone is kicked from room.").show().delay(12*SECOND).fadeOut(SHORT_FADE_TIME);
 		
-		//load roomlist instantaneously, and then initiate update .. hmm.
+		//load roomlist instantaneously, and then initiate update
 		if(rooms.length > 0) //only if there are rooms in roomList, if none, room update should occur naturally from creating the room anyways.
 		{
 			console.log("inside of if rooms.length > 0");
@@ -805,7 +754,6 @@ $(document).ready(function(){
 				//for every room:
 				createdStr = getTimeDiffString(rooms[i].createdTime);
 				
-				//&#xe033 <- this lock icon unicode didnt quite work
 				roomlist.append($('<option>').attr('value', rooms[i].name).append((rooms[i].pw !== "none" ? "<img src='img/lock.png' width='12' height='12' /> " : "") + "<b>" + rooms[i].name + "</b> <i>(created " + createdStr + " ago)</i>"));
 			}
 			
@@ -813,6 +761,7 @@ $(document).ready(function(){
 		}
 		
 	});
+	
 	
 	socket.on('roomleaving data scrubbing', function() {
 		socket.emit('roomleave data scrub');
@@ -829,7 +778,7 @@ $(document).ready(function(){
 		socket.emit('register starting player');
 	});	
 	
-	//setMyValue = 5, then opponentValue 4 easy
+	
 	socket.on('set board piece client value', function(value) {
 		yourBoardPiecesStartingValue = value;
 		yourBoardPiecesLeft = yourBoardPiecesStartingValue;
@@ -845,35 +794,10 @@ $(document).ready(function(){
 		opponentBoardPiecesLeft = opponentBoardPiecesStartingValue;
 	});
 	
-	/*socket.on('setYourBoardPiecesValue', function(value) {
-		console.log("inside of setYourBoardPiecesValue");
-		yourBoardPiecesStartingValue = value; //starting player always have 1 more piece than other player
-		yourBoardPiecesLeft = yourBoardPiecesStartingValue;
-		opponentBoardPiecesStartingValue = ((value == 5 ? value-1 : value+1) || (value == 4 ? value+1 : value-1));
-		opponentBoardPiecesLeft = opponentBoardPiecesStartingValue;
-		console.log("yourBoardPiecesStartingValue: ", yourBoardPiecesStartingValue);
-		console.log("opponentBoardPiecesStartingValue: ", opponentBoardPiecesStartingValue);
-	});
-	
-	socket.on('setOpponentBoardPieceValue', function(value) {
-		console.log("inside of setOpponentBoardPieceValue");
-		opponentBoardPiecesStartingValue = value;
-		opponentBoardPiecesLeft = opponentBoardPiecesStartingValue;
-		yourBoardPiecesStartingValue = ((value == 5 ? value-1 : value+1) || (value == 4 ? value+1 : value-1));
-		yourBoardPiecesLeft = yourBoardPiecesStartingValue;
-		console.log("yourBoardPiecesStartingValue: ", yourBoardPiecesStartingValue);
-		console.log("opponentBoardPiecesStartingValue: ", opponentBoardPiecesStartingValue);
-	});*/
 	
 	socket.on('prep for start of game', function() {
 		console.log("prep for start of game");
 		boardPieces.show();
-		//paint boardPieces
-		//proper canvas message etc.
-		//statusMsgContainer.text("prepping for start of game").show();
-		
-		//paint boardPieces // populate with ALL pieces - or simply show pre-programmed... either wa works...
-		
 		
 		//do nothing in event handler except cancel the event (drag and select)
 		canvasElement.ondragstart = function(e) {
@@ -903,6 +827,7 @@ $(document).ready(function(){
 		
 	});
 	
+	
 	socket.on('your turn in game', function(boardGrid = [0,0,0,0,0,0,0,0,0]) {
 		console.log("inside of your turn in game");
 
@@ -915,7 +840,6 @@ $(document).ready(function(){
 		
 		drawPlackText(ctx, textStrings.mymove, plackMarginLeft, plackInfo, gameColors);
 		
-		
 		var eventName = Modernizr.touch ? 'touchstart' : 'click';
 		console.log("eventName: ", eventName);
 		
@@ -924,17 +848,6 @@ $(document).ready(function(){
 			
 			console.log("inside of canvas click");
 			
-			//I'm thinking something like this:
-			//a click on canvas occurs - that click needs to be sent to our server to be stored and dealt with logicwise, then turn should switch
-			//so basically all we wanna do here, is register the click, send it to the server, store it and deal with it there per client
-			//the drawing of shit etc is clientside sure, but the dealing with the game logics, is serverside for sure.
-			
-			
-			//using pageX and pageY to get mouse pos relative to browser window
-			/*var mouse = {
-				x: e.pageX - canvasPosition.x,
-				y: e.pageY - canvasPosition,y
-			};*/
 			var canvasPosition = {
 				x: canvas.offset().left,
 				y: canvas.offset().top
@@ -944,29 +857,22 @@ $(document).ready(function(){
 			console.log("canvasPosition.y (canvas.offset().top): ", canvasPosition.y);
 			
 			var position = getPosition(e, canvasPosition);
-			//this gives us local coordiantes which consider (0,0) origin at to-left of canvas element
+			//this gives us local coordiantes which consider (0,0) origin at top-left of canvas element
 			
 			console.log("canvas click/touch detected at pos: ", position);
-			
-			/*var mx = 0, my = 0;
-			mx = e.clientX - canvas.offsetLeft;
-			my = e.clientY - canvas.offsetTop;*/
 				
 			var cellHit = hitZoneDetection(position.x, position.y, boardSide, cellPos, tttBoardMarginLeft, tttBoardMarginTop, cellSide, boardGrid);
 			
 			console.log("cellHit = " + cellHit);
 			
-			//after we found out what cell got hit, we should let the server know..
-			//see action taken below -- looping through boardGrid, which is exactly what should be done serverside to store within roomlists boardGrid
-			
 			if(cellHit != -1)
 			{
 				console.log("registering tictactoe move");
 				socket.emit('register tictactoe move', cellHit);
-				canvas.off(eventName); //detach event listener if hit was made (see if this works) //here im assuming its a hit instantly, without knowing whether it was or not... so need to check this clientside - whether it was hit or not somehow...
+				canvas.off(eventName); //detach event listener if hit was made
 			}
 			
-			gameClockElem.css('visibility', 'hidden');
+			//gameClockElem.css('visibility', 'hidden');
 			
 			return false;
 		});
@@ -981,26 +887,21 @@ $(document).ready(function(){
 		}, SECOND);
 		
 		gameTurnTimer = setTimeout(function() {
-			//what should happen after 15s?
-			//clear gameClock interval
-			//clearInterval(gameClock);
-			//gameClock = null;
-			//socket.emit switch turn -- hmm...
 			gameClockElem.css('visibility', 'hidden');
-			socket.emit('register tictactoe move', -1); //either on 15s but then I want to send move data to serv.. fml...
+			socket.emit('register tictactoe move', -1); //-1 = No hit
 			canvas.off(eventName); //detach event listener if timer runs out
-			
 			
 		}, GAME_TURN_TIME);
 		
 	});
 	
+	
 	socket.on('increment moves', function() {
 		socket.emit('incrementing moves');
 	});
 	
+	
 	socket.on('opponents turn in game', function() {
-		//statusMsgContainer.text("opponents turn in game.").show();
 		console.log("opponents turn in game");
 		
 		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
@@ -1008,6 +909,7 @@ $(document).ready(function(){
 		drawPlackText(ctx, textStrings.othersmove, plackMarginLeft, plackInfo, gameColors);
 		
 		//and rest is just to wait until "your turn" I suppose
+		gameClockElem.css('visibility', 'hidden');
 		
 	});
 	
@@ -1077,17 +979,20 @@ $(document).ready(function(){
 		opponentPieces.append(textString);
 	});
 	
+	
 	socket.on('decrement boardPieces', function() {
 		console.log("inside of decrement boardPieces clientside");
 		yourBoardPiecesLeft -= 1;
 		opponentBoardPiecesLeft += 1;
 	});
 	
+	
 	socket.on('increment boardPieces', function() {
 		console.log("inside of increment boardPieces clientside");
 		yourBoardPiecesLeft += 1;
 		opponentBoardPiecesLeft -= 1;
 	});
+	
 	
 	socket.on('boardPieces update', function(player) {
 		console.log("this clients yourBoardPiecesStartingValue holds: " + yourBoardPiecesStartingValue + ", and opponentBoardPiecesStartingValue holds: " + opponentBoardPiecesStartingValue);
@@ -1111,7 +1016,7 @@ $(document).ready(function(){
 			{
 				for(var i = 0; i < yourBoardPiecesLeft; i++)
 				{
-					if(i < yourBoardPiecesLeft-1) //< or !=
+					if(i < yourBoardPiecesLeft-1) 
 					{
 						textString += 'O, ';
 					}else {
@@ -1122,7 +1027,7 @@ $(document).ready(function(){
 			{
 				for(var i = 0; i < yourBoardPiecesLeft; i++)
 				{
-					if(i < yourBoardPiecesLeft-1) //< or !=
+					if(i < yourBoardPiecesLeft-1) 
 					{
 						textString += 'X, ';
 					}else {
@@ -1203,32 +1108,37 @@ $(document).ready(function(){
 		}
 	});
 	
+	
 	socket.on('clear creator game-related data', function() {
 		socket.emit('clear creator game data');
 	});
+	
 	
 	socket.on('update wins', function() {
 		console.log("inside of update wins clientside");
 		socket.emit('updating wins');
 	});
 	
+	
 	socket.on('update total games', function() {
 		console.log("inside of update total games clientside");
 		socket.emit('updating total games');
 	});
+	
 	
 	socket.on('update avg game time', function(gameTime) {
 		console.log("inside of update avg game time clientside");
 		socket.emit('updating avg game time', gameTime);
 	});
 	
+	
 	socket.on('leaving room', function() {
 		console.log("inside of leaving room");
 		chat.hide()
 		createRoomForm.show();
 		joinRoomForm.show();
-		
 	});
+	
 	
 	socket.on('ending game procedure', function() {
 		console.log("inside of ending game procedure clientside");
@@ -1242,7 +1152,6 @@ $(document).ready(function(){
 		}, SECOND);
 		
 		leaveRoomCountdown = setTimeout(function() {
-			
 			gameClockElem.css('visibility', 'hidden');
 			socket.emit('now we leave game');
 			
@@ -1278,6 +1187,7 @@ $(document).ready(function(){
 		}
 	});
 	
+	
 	socket.on('draw lose', function(data) {
 		console.log("inside of draw lose");
 		
@@ -1285,13 +1195,12 @@ $(document).ready(function(){
 		
 		drawPlackText(ctx, textStrings.ulose, plackMarginLeft, plackInfo, gameColors);
 		
-		//remember on lose screen the winner pieces should also be marked painted!!! and board restored to winstate
-		
 		drawPiecesExceptWinPieces(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
 		
 		drawMultipleCells(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
 		
 	});
+	
 	
 	socket.on('draw win', function(data) {
 		console.log("inside of draw win");
@@ -1306,6 +1215,7 @@ $(document).ready(function(){
 		drawMultipleCells(data.winCells, data.boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide);
 		
 	});
+	
 	
 	socket.on('draw draw', function(movesArray) {
 		console.log("inside of draw draw");
@@ -1332,7 +1242,6 @@ $(document).ready(function(){
 		}
 	});
 	
-	
 	/*
 	=================================================================
 			Chat Socket.io event emit handlers
@@ -1351,43 +1260,46 @@ $(document).ready(function(){
 		
 		//have black text for the message sent by self always (will appear colored for other person in chatroom)
 	});
-		
-	socket.on('user joined', function(data) {
-		//what to happen on receiving broadcast that a user joined with the data username and clientCounter from server --- only username seem needed?
-		
+	
+	
+	socket.on('user joined', function(data) {		
 		appendDatedMsg(messages, "<b>" + data.username + " joined.</b>");
 	});
 		
+	
 	socket.on('isTyping', function(user) {
-		//what to happen in the client when isTyping is triggered to server and sent back from server to all clients via broadcast
 		statusMsgContainer.text(user.username + " is typing...").show();
 	});
-		
-	socket.on('stopTyping', function() { //user
-		//same here - what to happen on receiving broadcast that a user stopped typing
+	
+	
+	socket.on('stopTyping', function() { 
 		console.log("clientside stopTyping");
-		statusMsgContainer.hide(); //fadeOut();
+		statusMsgContainer.hide();
 	});
+	
 	
 	socket.on('stopTypingEnter', function() {
 		statusMsgContainer.hide();
 	});
 	
-	socket.on('userLeft', function(data) {
 	
+	socket.on('userLeft', function(data) {
 		appendDatedMsg(messages, "<b>" + data.username + " has left.</b>");
 	});
 	
+	
 	socket.on('not enough data', function() {
-		statusMsgContainer.text("To change nickname you need to enter a nickname between 2 and 25 characters.").show().fadeOut(8000);
+		statusMsgContainer.text("To change nickname you need to enter a nickname between " + MIN_USERNAME_CHARS + " and " + MAX_USERNAME_CHARS + " characters.").show().fadeOut(8000);
 	});
 	
+	
 	socket.on('username successfully changed', function(username) {
-		m.val(''); //clear field -- doing it here because I want to keep the message in case user tried to type but did so too fast - so they dont have to rewrite entire message... (add arrow-up command to recreate last typed message for convenience? should be easy enough - if keydown arrow-up, socket.emit recreate last message, store last message on serverside for clientList data object, on serverside socket.on recreate message socket.emit recreate message clientside, on clientside catch that emit with socket.on recreate message clientside then re-populate the input field with previous message sent from the server.. should be simple enough)
+		m.val(''); //clear field -- doing it here because I want to keep the message in case user tried to type but did so too fast - so they dont have to rewrite entire message...
 		appendDatedMsg(messages, "<b>You changed your username to: " + username + ".</b>");
 		
 		socket.username = username;
 	});
+	
 	
 	socket.on('unacceptable characters', function() {
 		m.val(''); //clear field
@@ -1395,22 +1307,25 @@ $(document).ready(function(){
 		appendDatedMsg(messages, "<b>The username you wanted to change to contained unacceptable characters - try using only a-z, A-Z and 0-9</b>");
 	});
 	
-	socket.on('username change', function(data) {
 	
+	socket.on('username change', function(data) {
 		appendDatedMsg(messages, " <i>The user: " + data.oldNick + " changed username to: <b>" + data.newNick + "</b>.</i>");
 	});
 	
+	
 	socket.on('too fast typing', function() {
 		//what should happen when user gets "too fast typing", well, we want user to be informed
-		statusMsgContainer.text("You typed too fast, One message per 1/2 second is allowed. Try again in a little while.").show().delay(2000).fadeOut(500);
+		statusMsgContainer.text("You typed too fast, One message per 1/2 second is allowed. Try again in a little while.").show().delay(LONG_FADE_TIME).fadeOut(SHORT_FADE_TIME);
 		//set a timeout and then allow user to type again? show an active timer of how long they must wait? -- advanced (chose to skip this advanced additional feature and focus on whats important).
 	});
+	
 	
 	socket.on('recreate last message', function(lastMessage) {
 		//set both the value and the actual text in the input field
 		m.text(lastMessage);
 		m.val(lastMessage);
 	});
+	
 	
 	socket.on('disconnect', function() {
 		console.log("application lost connection with server, restart of application will occur on reconnection");
@@ -1433,6 +1348,7 @@ $(document).ready(function(){
 		//alternatively what could be done here is message the server with a specific event - on server when this event is received, everything is reset --- or recreated (recreation would however require that the data before server went down was stored in DB or similar persistent data storage, a feature I am not looking to implement at this time).
 	});
 	
+	
 	socket.on('reconnect', function() {
             console.log('reconnect fired!');
 			
@@ -1447,8 +1363,6 @@ $(document).ready(function(){
 				
 				dcText.text('');
 				dcText.append('Connection re-established,<br />we will reconnect you in ' + counter + ' seconds.');
-				//clearInterval(countDownTimer);
-				//countDownTimer = null;
 			}, SECOND);
 			
 			
@@ -1459,7 +1373,5 @@ $(document).ready(function(){
 				countDownTimer = null;
 				reconTimer = null;
 			}, 5000);
-			
         });
-	
 });
