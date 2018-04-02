@@ -34,7 +34,8 @@ app.use(express.static(__dirname));
 
 app.get('/', function(req, res) {
 	//res.send('<h1>Hello World!</h1>');
-	res.sendFile(__dirname + '/index.html');
+	//res.sendFile(__dirname + '/index.html');
+	res.sendFile('index.html');
 	
 });
 
@@ -1750,7 +1751,7 @@ io.on('connection', function(socket) {
 	});
 });
 
-http.listen(8080, function() {
+http.listen(8007, function() {
 	console.log('listening on *:8080');
 });
 
