@@ -2,12 +2,21 @@
 ## A Node.js, Express.js and Socket.io web application to utilize realtime multiplaying capabilities of the modern web with simpler mini-games
 
 ## Presentation
-This project is a combination of many various parts as you can read in the headline. It has combined a realtime socket.io chat with some quality-of-life features together with the socket.io multi-room functionality, HTML5 canvas and Express.js with Node.js for WebApp/JS server to be able to create an Online Multiplayer realtime minigame portal where people can enter to play with strangers or friends during downtime. Password protection for game rooms help to restrict access to rooms from random people so that friends can play together easily.
-This project was mainly meant as a learning experience and to get familiar with the various areas: Node, Express, Socket.io and how modern realtime web works (even explored HTML5 Web Workers and some other (for me) new areas, during this projects development process). But I also wanted to create some place online where minigames could be played in realtime together with friends and strangers without having to use Flash like minigame websites usually have been, and have such a place where friends could visit to play easily with one another during breaks or shorter spare times in their everyday lives - and building it initially with room for 1 mini-game, and eventually be able to add more mini-games for variety.
+This project is a combination of many various parts as you can read in the headline. It has combined a realtime socket.io chat with some quality-of-life features together with the socket.io multi-room functionality, HTML5 canvas and Express.js with Node.js for WebApp/JS server to be able to create an Online Multiplayer realtime minigame portal where people can enter to play with strangers or friends during downtime. 
+
+Password protection for game rooms help to restrict access to rooms from random people so that friends can play together easily.
+
+This project was mainly meant as a learning experience and to get familiar with the various areas: Node, Express, Socket.io and how modern realtime web works (even explored HTML5 Web Workers and some other (for me) new areas, during this projects development process). 
+
+But I also wanted to create some place online where minigames could be played in realtime together with friends and strangers without having to use Flash like minigame websites usually have been, and have such a place where friends could visit to play easily with one another during breaks or shorter spare times in their everyday lives - and building it initially with room for 1 mini-game, and eventually be able to add more mini-games for variety.
 
 ## Project process
 I struggled a lot at first to get started with this project, which lead me to "postpone" it a few years because I couldn't understand how I would possibly start, I envisioned exactly how I wanted everything to be, and work and look but I lacked the necessary knowledge and energy truth be told, and idea of approach to get started and making it work.
-After a few years though, I decided to get started again, this time I also struggled quite a bit at first, but then I decided to separate the project into "smaller pieces" or "units" as some might call them(?), where I divided the code I needed for the entirety of the project into a few groups that I needed to figure out and master before I could put everything together. This probably also helped minimize development time, as well as debugging efforts throughout the entire project - since it allowed me to focus on specific smaller areas, instead of having to step-through the massive interface just to reach the problemarea. I also put up a personal deadline for this project of a months time to help me keep motivated and productive and driven towards that goal.
+
+After a few years though, I decided to get started again, this time I also struggled quite a bit at first, but then I decided to separate the project into "smaller pieces" or "units" as some might call them(?), where I divided the code I needed for the entirety of the project into a few groups that I needed to figure out and master before I could put everything together. This probably also helped minimize development time, as well as debugging efforts throughout the entire project - since it allowed me to focus on specific smaller areas, instead of having to step-through the massive interface just to reach the problemarea. 
+
+I also put up a personal deadline for this project of a months time to help me keep motivated and productive and driven towards that goal.
+
 The areas I decided to divide my project into were the following:
 - Canvas, graphics and Tic Tac Toe specific graphics as well as basic game logics
 - Node.js, Socket.io and Express.js realtime chat application with some additional quality-of-life features
@@ -19,20 +28,32 @@ And here we are now...
 
 ## Installation, configuration and usage
 This project can easily be cloned with Git to then be run via node server.js command - assuming you have a Node server up and running.
+
 Port listened to for the node server can be altered at the end of server.js file.
+
 Global constant vars that allow for customization have been declared for Game turn timer, readycheck timer, long fade time, short fade time, min and max chars for username and lobbyname as well as Regexes used for clientside "validation" of username/lobbyname can be found and altered at will at the top of client.js.
+
 Styles can be easily found and altered from within the **styles.less** file residing in the **css** folder - the style doc is very well documented and structured to easily locate the styles you're looking for.
+
 For further customization options: gameColors constant object is also to be found at top of **client.js** file where the hexadec color codes used for the canvas painting procedures can be found and altered. Other constants holding board side size data as well as game plack info can also be found and altered, together with textStrings object constant that holds the text strings to be printed out on canvas throughout the game progressions. Line thickness can also be easily altered here for how "fat" X's and O's lines should be.
 
 ##Competitor analysis
-Compared to similar products on the internet today, my project is focused (for now) on tic tac toe, and will not be of as high focus perhaps on the game itself, but rather on the realtime functionality and interoperability of the various features I have coded to work together to create my endproduct which is a sort of dedicated platform for visitors to play multiple game sessions on and have the site keep score of that particular game as long as session is kept intact.
+Compared to similar products on the internet today, my project is focused (for now) on tic tac toe, and will not be of as high focus perhaps on the game itself, but rather on the realtime functionality and interoperability of the various features I have coded to work together to create my endproduct which is a sort of dedicated platform for visitors to play multiple game sessions on and have the site keep score of that particular game as long as session is kept alive.
+
 Other minigame websites are very focused on there games and have other people upload the games, so visitors then can play these. And on these sites Multiplaying capabilities seem to exist, but they do so "within" the games themselves, and don't seem to exist on the site basis.
+
 A sound majority of these minigame sites I looked into seem to still be favoring Flash games, whilst I am using HTML5 Canvas for the graphics and Socket.io to communicate the game data in realtime on the actual website/Application.
+
 In a way, for those who are looking for a nice quick game of tic tac toe, with their friends, and do a Best out of 5 or something like that - I believe my product to be superior to a lot of the alternatives that exist out on the web today.
-(Have made comparison to both Addictinggames.com as well as miniclip.com minigame portal websites)
+
+I have made comparison to both Addictinggames.com as well as miniclip.com minigame portal websites.
+
 Also compared to a site called papergames.io that offered Multiplayer capable Tic Tac Toe, and what I found was that their game was very sluggish, the countdown timer was delayed by like 2 seconds per second it was supposedly counting down, they lacked a proper realtime chat for the players facing off at tic tac toe, they had tons of useless added features about emojis and stuff, so in comparison to them I both offer a proper chat functionality as well as keeping it clean and fast to play tic tac toe with friends.
+
 Found another canvas based tic tac toe game site where you could play vs AI called novelgames.com - the graphics were not as straight forward as on my project, and there was a super annoying background music as well.
+
 Also found bejofo.net/ttt which offered a neat functionality which I myself had considered attempting to implement in the future - namely have a randomized link be generated with a created game to then be able to send as a link directly to the player you wish to play with.
+
 In summary compared to many of the competitor out there, my product seem to be much cleaner, and faster than the alternatives both graphic wise and feature wise.
 
 
@@ -41,25 +62,25 @@ In summary compared to many of the competitor out there, my product seem to be m
 + Username registration _(including swedish chars)_
 + Ability to create "game rooms" _(room names also allow swedish characters)_
 + Ability to join created "game rooms"
-+ Rooms can also be created with a password to "lock" the room and require login to join the room (helps if 2 users that know each other wish to play together)
++ Rooms can also be created with a password to **"lock"** the room and require login to join the room _(useful if 2 users that know each other wish to play together)_
 + Readycheck feature when 2 people join a room
-+ If/when two people Accept readycheck, game randomizes starting player and starts game
++ If/when 2 people Accept readycheck, game randomizes starting player and starts game
 + When win detected, win is painted for winner, lose for loser, game is concluded and both players will be returned to mainscreen within 10seconds
 + A draw is also declared if all pieces have been used on the board but still no win
 --------------------------
 #### Interface details:
-+ Username is length restricted and use RegEx to validate for and only allow a-zA-Z0-9 + swedish characters but NO whitespace characters
-+ Roomname is also length restricted and also use RegEx to validate for same as username BUT Allows whitespace in the name
-+ Interface show "status messages" for user when username is not complying with limitations set - same for roomname (and more)
-+ Rooms have a Leave room button for convenience and user friendliness
-+ Readycheck has a HTML5 progressbar it progressively fills up every second where 100% = amount of seconds readycheck lasts
++ Username is length restricted and use RegEx to validate for and only allow **a-zA-Z0-9 + swedish characters** but <u>NO</u> whitespace characters
++ Roomname is also length restricted and also use RegEx to validate for same as username BUT <u>Allows whitespace</u> in the name
++ Interface shows _"status messages"_ for user when username is not complying with limitations set (same for roomname)
++ Rooms have a **Leave room button** for convenience and user friendliness
++ Readycheck has a HTML5 progressbar it progressively fills up every second where **100% = amount of seconds** readycheck lasts
 + Roomlogin form that appears when trying to join PW protected rooms can be escaped with the push of a button to return to roomlist if one changes mind of joining the PW protected room
-+ Upon creating a room - that user gets catapulted automatically to join the room (no need to enter PW if PW protected room was created obviously since it was the creator catapulted into it)
++ Upon creating a room - that user gets catapulted _automatically_ to join the room (no need to enter PW if PW protected room was created obviously since it was the creator catapulted into it)
 + If a user leaves the room - the other user connected to the same room is informed in the chat that his counterpart left
-+ When game have started a realtime countdown clock is shown for the user- whos turn it is
++ When game have started a **realtime countdown clock** is shown for the user- whos turn it is
 + After every move made, visual representation of players boardPieces is also updated
-+ If turn timer runs out - user forfeits his turn and it passes to the other player
-+ On gameover game room is completely erased and players that played the game get updated gamestatistics and gets kicked back to mainpage within 10s
++ If turn timer runs out - user **forfeits his turn** and it passes to the other player
++ On gameover: game room is completely erased and players that played the game get **updated gamestatistics** and gets kicked back to mainpage within 10s
 + Clientside disconnect detection which will "update page" on connection break - causing the application to "restart" in interface to match the data-reset that occured if/when node was restarted.
 --------------------------
 #### Chat:
@@ -68,35 +89,35 @@ In summary compared to many of the competitor out there, my product seem to be m
 + Timestamped chat messages (toLocaleString used)
 + User chat messages are colored blue for opponent, black for the user
 + Chat have "special features" - one is to type command **/changeNick** to **change username**, the other is to press _"ARROW_UP"_ to **recreate last typed message** _(including command)_
-+ Chat is also equipped with Anti-Spam feature that won't allow messages within **500ms** of each other (and is prepared for implementing time delay punishment if anyone in future would like to add such an additional feature)
-+ Chat has a built-in feature to auto-scroll down to the latest typed message in the chatbox (Quality of life)
++ Chat is also equipped with **Anti-Spam** feature that won't allow messages within **500ms** of each other _(and is prepared for implementing time delay punishment if anyone in future would like to add such an additional feature)_
++ Chat has a built-in feature to **auto-scroll** down to the **latest typed message** in the chatbox _(Quality of life)_
 --------------------------
 #### Quality of life:
 + Room is temporarily "removed" from roomlist when 2 users have joined it (only 2 users allowed in one room)
-+ Roomlist shows created rooms with their designated roomname, as well as "created time ago" feature updated every 15th second
++ Roomlist shows created rooms with their designated roomname together with a **Lock-icon** if **PW protected**, as well as "created time ago" feature updated every 15th second
 + Mainscreen (after username registered) shows Game statistics such as Won games, total games, avg game time + total connected players (those who have registered) and players NOT in room currently
-+ Automatic focus is set to both username textfield when loaded, as well as the room lobbyname textfield once that has been loaded (Quality of life)
++ Automatic focus is set to both **username** textfield when loaded, as well as the room **lobbyname** textfield once that has been loaded
 --------------------------
 #### Code & Dev:
-+ Application uses Modernizr for feature detection and YepNope for Polyfill compensation
++ Application uses **Modernizr** for feature detection and **YepNope** for Polyfill compensation
 + Application is prepared for Touch event as alternative to Mouseclick - _not tested yet_ though, but code base for it is there and applied to project
-+ Useful reusable functions used by client.js or server.js are placed within projectFunctions and exported to server.js via exports and modules to keep client.js and server.js as _"clean"_ as possible
++ Useful reusable functions used by client.js or server.js are placed within **projectFunctions.js** and exported to server.js via _exports_ and _modules_ to keep client.js and server.js as _"clean"_ as possible
 + Roomlist keeps track of selected options even beyond the updating of "created time ago" feature
-+ No response on readycheck for person creating the room results in room getting deleted and all users in it kicked out, while No response from the user that did not create the room results in ONLY that user getting kicked out of the room
-+ If Readycheck timer runs out this is equivalent to a No response on the readycheck - readycheck timer is set to 30seconds
++ No response on readycheck for person creating the room results in **room getting deleted** and all users in it **kicked out**, while No response from the user that did not create the room results in ONLY that user getting kicked out of the room
++ If Readycheck timer runs out this is equivalent to a **No response** on the readycheck - readycheck timer is set to **30seconds**
 + TimerID tracking variables are declared globally for easier clearing of them throughout the interface
 + Semantic constants are declared to help ease the understanding of the code
-+ When readycheck is successfully completed and game stats - startingplayer is randomized and the available boardpieces are visually added to the interface
++ When readycheck is successfully completed and game stats - **startingplayer is randomized** and the available boardpieces are **visually added** to the interface
 + After every move made, checkWin is called to see if a Win has occurred
-+ On win - the winning cells are specially visually marked - if 2 rows when win - both cell lines are marked
++ On win - the winning cells are specially visually marked - if 2 rows when win - **both cell lines** are marked
 + Canvas is only clickable when it is users turn
 + To avoid "jumpy" interface for users in a room, once turn timer clock has been loaded once, it will maintain its interface size occupation and only be visibility: hidden, instead of display: none via .hide()
-+ Server.js doesnt only load index.html but also statically loads all files in the project directory (many files of which are used by the index.html)
-+ Application uses LESS for styles and jQuery for more 'efficient' use of JavaScript (personal opinion + shows whats been learned throughout the course in general)
++ Server.js doesnt only load index.html but also statically loads **all files in the project directory** (many files of which are used by the index.html)
++ Application uses **LESS** for styles and mostly **jQuery** for more 'efficient' use of JavaScript _(personal opinion + shows whats been learned throughout the course in general)_
 + Repeated use of similiar logic/functionality has been compressed into reusable functions to ease the code as well as to make it more efficient
 + Socket.io Multiple room functionality is used (obviously)
-+ Users alternate between 2 types of rooms - game rooms and default room (connected) - helps with the maintenance and update of interface information for individual connected- and registered sockets
-+ Both username registration and lobbyname registration got Anti-nameclash-feature that avoids duplicates of the same name.
++ Users alternate between 2 types of rooms - **game rooms** and **default room** _(connected)_ - helps with the maintenance and update of interface information for individual connected- and registered sockets
++ Both username registration and lobbyname registration got **Anti-nameclash-feature** that avoids duplicates of the same name.
 + 22mar18: Added JS clientside manipulation countermeasures for form actions to ensure as much as possible that users actually follow the set out path.
 + Added HTML sanitization on serverside everywhere I could find that form data was received and used for taking action.
 --------------------------
