@@ -1,10 +1,20 @@
 var exports = exports || {}; //thank you earendel from ##javascript @ IRC
 
+/**
+ *	Adds a dated message via jQuery .append method for <li> element to a chat <ul>
+ *	@param (elementObject)	el	- The element to append the message to (our chat)
+ *	@param (string)			str	- The string (message) to append with a <li> to chat <ul>
+ */
 function appendDatedMsg(el, str) {
 			var date = new Date();
 			el.append($('<li>').append(date.toLocaleTimeString() + " | " + str));
 }
 
+/**
+ *	Calculates and prepares presentation for time difference in string specific string format between a point in time (inparam) and now
+ *	@param (number) createdtime - Date.now() generated number to get time diff with
+ *	@return (string) createdStr - String presentation of the calculated time difference
+ */
 function getTimeDiffString(createdtime) {
 	var now = Date.now();
 	var timeDiff = now - createdtime;
@@ -65,12 +75,31 @@ function getTimeDiffString(createdtime) {
 					Canvas funcs
 =================================================================
 */
+/**
+ *	Draws background with certain color for a canvas
+ *	@param (canvas context) ctx		- The canvas context of where the background is to be painted
+ *	@param (number)			w		- The width number of the canvas to be painted
+ *	@param (number)			h		- The height number of the canvas to be painted
+ *	@param (string)			color	- The color to have the background be painted with 
+ */
 function drawBackground(ctx, w, h, color) {
 	ctx.clearRect(0,0,w,h);
 	ctx.fillStyle = color;
 	ctx.fillRect(0,0,w,h);
 }
 
+/**
+ *	Resets game graphics of canvas to a default "reset" stage - in our case clean tictactoe board - no painted pieces, the background color, and the info plack at top
+ *	@param (canvas context)	ctx			- The canvas context of where the background is to be painted
+ *	@param (number)		canvasWidth		- The width number of the canvas to paint in
+ *	@param (number)		canvasHeight	- The height number of the canvas to paint in
+ *	@param (JS Object)	gameColors		- A JS Object containing semantic keys with string value pairs for colors used in the application
+ *	@param (number)		plackMarginLeft	- SelfExplanatory variable name I think
+ *	@param (JS Object)	plackInfo		- JS object containing measurements, and other related information data to info plack to be painted in canvas
+ *	@param (number)	 tttBoardMarginLeft	- The number for tictactoe boards margin left
+ *	@param (number)	 tttBoardMarginTop	- The number for tictactoe boards margin top
+ *	@param (number)		boardSide		- The width number for squared board side
+ */
 function resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide) {
 	//repaint background, plack (no text or with text?), and base foundation no pieces added to TTTBoard
 	
@@ -81,30 +110,27 @@ function resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarg
 	drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 }
 
+/**
+ *	Felt easier calling resetLineWidth and looked a bit cleaner coding-wise to use compared to calling ctx.lineWidth = 1; multiple times (also allows to alter 1 function if its ever desired to reset to a different line width compared to whats being used now.
+ *	@param (canvas context)	ctx		- The canvas context where to reset the line width
+ */
 function resetLineWidth(ctx) {
 	ctx.lineWidth = 1;
 }
 
-function drawMoves(movesArray, ctx, XOLineThickness, gameColors, cellPos, cellSide) {
-	for(var i = 1; i <= movesArray.length; i++)
-		{
-			//cellHit will be i
-			if(movesArray[i-1] == 1)
-			{
-				//paint O
-				paintXO(ctx, "o", i, XOLineThickness, gameColors, cellPos, cellSide);
-				
-			}else if(movesArray[i-1] == -1)
-			{
-				//paint X
-				paintXO(ctx, "x", i, XOLineThickness, gameColors, cellPos, cellSide);
-				
-			}//nothing should happen on 0
-		}
-}
+//removed drawMoves function due to NOT in use
 
-//what is it that checkWin does --- I need somehow to paint all cells BUT win cells then paint Win Cells...
-
+/**
+ * 	Helpful to have only 1 function to paint both X's and O's (marked AND unmarked)
+ *	@param	(canvas context)	ctx		- The canvas context where to paint the X's and O's
+ *	@param	(char string)		xo		- A representative single-character string to tell whats to be painted, if X or O
+ *	@param	(number)		cellNmbr	- A number representing the cell number between 1-9 which should be painted
+ *	@param	(number)	XOLineThickness	- The line thickness number for the X or O that will be painted
+ *	@param	(JS Object)		gameColors	- A JS Object holding all application colors to use for painting
+ *	@param	(ref JS object)	cellPos		- A global reference JS Object containing all the X & Y coordinates for each and every tictactoe cell
+ *	@param	(number)		cellSide	- The cell square width number
+ *	@param	(boolean)	[marked=false]	- A boolean to help determine if the cell in which to paint the X or O should be "marked" meaning white background, or not (marked if win occurred)
+ */
 function paintXO(ctx, xo, cellNmbr, XOLineThickness, gameColors, cellPos, cellSide, marked = false) {
 	//to start out - paint X in first box:
 	//will need canvas context, marginleft, canvasWidth, marginTop
@@ -135,11 +161,27 @@ function paintXO(ctx, xo, cellNmbr, XOLineThickness, gameColors, cellPos, cellSi
 	}
 }
 
+/**
+ *	Helper function to paint the marked cells for wins etc
+ *	@param (canvas context)		ctx	- The canvas context on which to paint the marked cell
+ *	@param (number)		cellNmbr	- The cell number between 1-9 which is to be painted marked
+ *	@param (JS Object)	gameColors	- A JS Object that contains all colors used for the application
+ *	@param (ref JS Object)	cellPos	- A reference JS Object which holds X & Y Coordinate information about each and every tictactoe cell
+ *	@param (number)		cellSide	- The cell width
+ */
 function paintMarkedCell(ctx, cellNmbr, gameColors, cellPos, cellSide) {
 	ctx.fillStyle = gameColors.markedCellColor;
 	ctx.fillRect(cellPos[cellNmbr].x+1, cellPos[cellNmbr].y+1, cellSide-2, cellSide-2);
 }
 
+/**
+ *	The function that paints O's
+ *	@param (canvas context)		ctx	- The canvas context the O should be painted to
+ *	@param (number)		cellNmbr	- The cell number between 1-9 where the O should be painted
+ *	@param (number)	XOLineThickness	- The number representing the width of the Line the O should be painted with
+ *	@param (ref JS Object)	cellPos	- A reference JS Object which holds X & Y Coordinate information about each and every tictactoe cell
+ *	@param (number)		cellSide	- The cell width
+ */
 function paintO(ctx, cellNmbr, XOLineThickness, cellPos, cellSide) {
 	//boardMargins = {} for dot-notation access to data variables
 	//drawCircle for canvas
@@ -155,6 +197,14 @@ function paintO(ctx, cellNmbr, XOLineThickness, cellPos, cellSide) {
 	resetLineWidth(ctx);
 }
 
+/**
+ *	The function that paints X's
+ *	@param (canvas context)		ctx	- The canvas context the X should be painted to
+ *	@param (number)		cellNmbr	- The cell number between 1-9 where the X should be painted
+ *	@param (number)	XOLineThickness	- The number representing the width of the Line the X should be painted with
+ *	@param (ref JS Object)	cellPos	- A reference JS Object which holds X & Y Coordinate information about each and every tictactoe cell
+ *	@param (number)		cellSide	- The cell width
+ */
 function paintX(ctx, cellNmbr, XOLineThickness, cellPos, cellSide) {
 	
 	ctx.lineWidth = XOLineThickness;
@@ -179,11 +229,13 @@ function paintX(ctx, cellNmbr, XOLineThickness, cellPos, cellSide) {
 	resetLineWidth(ctx);
 }
 
-/*
-=================================================================
-					Canvas game funcs
-=================================================================
-*/
+/**
+ *	Paint the game info plack
+ *	@param (canvas context)	ctx			- The canvas context of where everything is to be painted
+ *	@param (JS Object)	gameColors		- A JS Object containing semantic keys with string value pairs for colors used in the application
+ *	@param (number)		plackMarginLeft	- SelfExplanatory variable name I think
+ *	@param (JS Object)	plackInfo		- JS object containing measurements, and other related information data to info plack to be painted in canvas
+ */
 function paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo) {
 	
 	ctx.fillStyle = gameColors.plackColor;
@@ -191,6 +243,14 @@ function paintGameInfoPlack(ctx, gameColors, plackMarginLeft, plackInfo) {
 	ctx.fillRect(plackMarginLeft, plackInfo.marginTop, plackInfo.width, plackInfo.height);
 }
 
+/**
+ *	Painting the actual text in the game info plack
+ *	@param (canvas context)	ctx			- The canvas context of where everything is to be painted
+ *	@param (string)		textString		- The text string that should be "written"/painted on the game info plack
+ *	@param (number)		plackMarginLeft	- SelfExplanatory variable name I think
+ *	@param (JS Object)	plackInfo		- JS object containing measurements, and other related information data to info plack to be painted in canvas
+ *	@param (JS Object)	gameColors		- A JS Object containing semantic keys with string value pairs for colors used in the application
+ */
 function drawPlackText(ctx, textString, plackMarginLeft, plackInfo, gameColors) {
 	
 	ctx.font = plackInfo.fontSize.toString() + "px " + plackInfo.fontFamily;
@@ -208,6 +268,14 @@ function drawPlackText(ctx, textString, plackMarginLeft, plackInfo, gameColors) 
 	
 }
 
+/**
+ * 	Painting the Tic Tac Toe gameboard
+ *	@param	(canvas context)	ctx		- The canvas context where to paint everything
+ *	@param	(JS Object)		gameColors	- A JS Object holding all application colors to use for painting
+ *	@param (number)	 tttBoardMarginLeft	- The number for tictactoe boards margin left
+ *	@param (number)	 tttBoardMarginTop	- The number for tictactoe boards margin top
+ *	@param (number)			boardSide	- The width number for the square board sides
+ */
 function drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, boardSide) {
 	//The idea here is to draw the "major" rectangle outline for the three boxes/squares
 	//then paint 3x3 rectangles within this one
@@ -240,6 +308,17 @@ function drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, bo
 	ctx.stroke();
 }
 
+/**
+ * 	Helps paint multiple cells easily
+ *	@param	(JS Object)		cellNmbrs	- A number representing the cell number between 1-9 which should be painted
+ *	@param	(array)			boardGrid	- The array holding moves that have been made in the game - for both players (total moves)
+ *	@param	(canvas context)	ctx		- The canvas context where to paint everything
+ *	@param	(number)	XOLineThickness	- The line thickness value for the X or O that will be painted
+ *	@param	(JS Object)		gameColors	- A JS Object holding all application colors to use for painting
+ *	@param	(ref JS object)	cellPos		- A global reference JS Object containing all the X & Y coordinates for each and every tictactoe cell
+ *	@param	(number)		cellSide	- The cell square width number
+ *	@param	(boolean)	[marked=false]	- A boolean to help determine if the cell in which to paint the X or O should be "marked" meaning white background, or not (marked if win occurred)
+ */
 function drawMultipleCells(cellNmbrs, boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide, marked = true) {
 	console.log("inside of drawMultipleCells function");
 	
@@ -260,6 +339,16 @@ function drawMultipleCells(cellNmbrs, boardGrid, ctx, XOLineThickness, gameColor
 	}
 }
 
+/**
+ * 	Helps paint multiple cells easily without cells to be excepted to be painted at a later time with a different function
+ *	@param	(array)			winCells	- The array holding the win cell numbers
+ *	@param	(array)			boardGrid	- The array holding moves that have been made in the game - for both players (total moves)
+ *	@param	(canvas context)	ctx		- The canvas context where to paint everything
+ *	@param	(number)	XOLineThickness	- The line thickness value for the X or O that will be painted
+ *	@param	(JS Object)		gameColors	- A JS Object holding all application colors to use for painting
+ *	@param	(ref JS object)	cellPos		- A global reference JS Object containing all the X & Y coordinates for each and every tictactoe cell
+ *	@param	(number)		cellSide	- The cell square width number
+ */
 function drawPiecesExceptWinPieces(winCells, boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide) {
 	//först måste denna få winCombo, sen måste den gå igenom boardGrid och göra en kopia av denne fast utan winPieces, sedan måste vi kalla på drawMultipleCells
 	//loop through boardGrid
@@ -307,112 +396,19 @@ function drawPiecesExceptWinPieces(winCells, boardGrid, ctx, XOLineThickness, ga
 	
 }
 
-function drawTicTacToeGamescene() {
-	drawBackground(ctx, canvasWidth, canvasHeight, gameColors.bgColor);
-	
-	paintGameInfoPlack();
-	
-	drawPlackText(textStrings.wfo, plackInfo.fontSize);
-	
-	drawTTTBoard();
-	
-	//adapting event listener based off on mobile or desktop
-	var eventName = Modernizr.touch ? 'touchstart' : 'click';
-	console.log("eventName: ", eventName);
-	
-	canvas.on(eventName, function(e) {
-		e.preventDefault();
-		
-		var position = getPosition(e);
-		//this gives us local coordiantes which consider (0,0) origin at to-left of canvas element
-		
-		console.log("canvas click/touch detected at pos: ", position);
-			
-		var cellHit = hitZoneDetection(position.x, position.y);
-		
-		for(var i = 1; i <= 9; i++)
-		{
-			if(cellHit == i)
-			{
-				boardGrid[i-1] = 1;
-			}
-		}
-		
-		if(cellHit != -1) //we don't want a paint action to occur if no hitzone is to be painted
-		{
-			paintXO("x", cellHit);
-			
-			var winstats = checkWin();
-			//winstats == winComboArray
-			for(var i = 0; i < winstats.length; i++)
-			{
-				console.log("winstats:", winstats[i]);
-			}
-			
-			if(winstats[0].player != 0) //if a winner exist
-			{
-				//atm this ONLY paints the win, meaning other selected pieces wont get painted also... need to fix this.. Only winpieces is to be painted marked, rest is to be painted normal.
-				resetGameGraphics();
-				drawPlackText(textStrings.uwin, plackInfo.fontSize);
-				
-				//calculate all winpieces cellnmbrs - ONLY if more than 1 win
-				
-				var uniqueWinCells; //store the unique ones that will need repainting (if 2 rows complete at win = 1 common cell)
-				if(winstats.length > 1) //if more than 1 completed row at win
-				{
-					var winCellNmbrs = [];
-					for(var i = 0; i < winstats.length; i++) //for every winrow
-					{
-						winCellNmbrs[i] = winCombos[winstats[i].wincombo]; //fetch wincells per row
-					}
-					console.log("winCellNmbrs[0]: ", winCellNmbrs[0]);
-					console.log("winCellNmbrs[1]: ", winCellNmbrs[1]);
-					
-					
-					//once we got all the cellNmbrs in 2 arrays within winCellNmbrs, somehow merge and delete duplicates
-					//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat
-					var winCellNmbrsConcat;
-					
-					if(winstats.length == 2)
-					{
-						winCellNmbrsConcat = winCellNmbrs[0].concat(winCellNmbrs[1]); //merge these two win rows
-					}else if(winstats.length == 3)
-					{
-						winCellNmbrsConcat = winCellNmbrs[0].concat(winCellNmbrs[1], winCellNmbrs[2]); //merge these two win rows
-					}
-					console.log("length of concatenated winCellNmbrs arrays: " + winCellNmbrsConcat.length);
-					
-					for(var i = 0; i < winCellNmbrsConcat.length; i++) 
-					{
-						console.log("Iterated winCellNmbrs " + i + ": " + winCellNmbrsConcat[i]);
-					}
-					
-					uniqueWinCells = removeDuplicatesFromArray(winCellNmbrsConcat); //remove duplicate (common) cells from win rows
-					console.log("uniqueWinCells: ", uniqueWinCells);
-					
-				}else {
-					uniqueWinCells = winCombos[winstats[0].wincombo]; //fetch wincells per row
-					
-					console.log("single row wincell nmbrs: ", uniqueWinCells);
-				}
-				//we want to redraw the win pieces as marked cells here.. start by drawing what is not part of the win I think I figured:
-				
-				drawPiecesExceptWinPieces(uniqueWinCells);
-				
-				drawMultipleCells(uniqueWinCells);
-			}
-		}
-		
-		return false;
-	});
-	
-}
+//removed drawTicTacToeGamescene function due to NOT in use
 
 /*
 =================================================================
 					Game logics funcs
 =================================================================
 */
+/**
+ *	Get position for mouse/touch events
+ *	@param	(event object)	e			- The event object that holds all the mouse/touch event data
+ *	@param	(JS Object)	canvasPosition	- A JS Object holding the canvas X & Y position
+ *	@return	(JS Object)	position		- A JS Object with the proper X & Y coordinates of the touch/click in relation to the canvas
+ */
 function getPosition(e, canvasPosition) {
 	var position = {
 		x: null, y: null
@@ -435,6 +431,18 @@ function getPosition(e, canvasPosition) {
 	return position;
 }
 
+/**
+ *	Check if a mouse/touch event hit a vital point and return a value for if hit - and if so - where action should be taken
+ *	@param	(number)			mx			- Mouse X value
+ *	@param	(number)			my			- Mouse Y value
+ *	@param	(number)			boardSide	- The board side value
+ *	@param	(ref JS Object)		cellPos		- A reference JS Object that holds all cells X and Y positions
+ *	@param	(number)	tttBoardMarginLeft	- Tic tac toe boards left margin value
+ *	@param	(number)	tttBoardMarginTop	- Tic tac toe boards top margin value
+ *	@param	(number)			cellSide	- The cell side value
+ *	@param	(array)				boardGrid	- Holds ALL total moves made in a game of Both players
+ *	@return	(number)			cellHit		- The number of the cell that was hit
+ */
 function hitZoneDetection(mx, my, boardSide, cellPos, tttBoardMarginLeft, tttBoardMarginTop, cellSide, boardGrid) {
 	//this function will be used to iterate through our hitzones, check our mouse x and mouse y to see what zone it lands in,
 	//then return that zone nmbr so that XO can be painted
@@ -460,7 +468,11 @@ function hitZoneDetection(mx, my, boardSide, cellPos, tttBoardMarginLeft, tttBoa
 	return cellHit;
 }
 
-
+/**
+ *	Checks if a win state has been reached - to be called after every move that will be made
+ *	@param	(array)	boardGrid		- The array holding ALL total moves made for a game from Both players
+ *	@return	(array)	winComboArray	- Holds what player won, also what cells that player won with
+ */
 function checkWin(boardGrid) {
 	//if first three are not 0 and are of same type = win, same with second and third row,
 	//same for 1st, 2nd, 3rd vertical rows
@@ -579,11 +591,21 @@ function checkWin(boardGrid) {
 	return winComboArray;
 }
 
-
+/**
+ *	Randomization function to get a random value between a min value and a max value
+ *	@param	(number)	min	- The min value
+ *	@param	(number)	max	- The max value
+ *	@return	(number)		- The randomized value between min and max
+ */
 function randomize(min, max) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+/**
+ *	A useful and handy function to remove duplicate values from arrays
+ *	@param	(array)		array		- The array from which to remove duplicate values from
+ *	@return	(array)	unique_array	- A new array with only unique values
+ */
 function removeDuplicatesFromArray(array) {
 		var unique_array = [];
 		for(var i = 0; i < array.length; i++)
