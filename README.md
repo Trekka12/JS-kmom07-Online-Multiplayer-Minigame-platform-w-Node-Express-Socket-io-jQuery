@@ -54,7 +54,7 @@ Found another canvas based tic tac toe game site where you could play vs AI call
 
 Also found bejofo.net/ttt which offered a neat functionality which I myself had considered attempting to implement in the future - namely have a randomized link be generated with a created game to then be able to send as a link directly to the player you wish to play with.
 
-In summary compared to many of the competitor out there, my product seem to be much cleaner, and faster than the alternatives both graphic wise and feature wise.
+**In summary:** compared to many of the competitor out there, my product seem to be much cleaner, and faster than the alternatives both graphic wise and feature wise.
 
 
 ## Current Features
@@ -69,8 +69,8 @@ In summary compared to many of the competitor out there, my product seem to be m
 + A draw is also declared if all pieces have been used on the board but still no win
 --------------------------
 #### Interface details:
-+ Username is length restricted and use RegEx to validate for and only allow **a-zA-Z0-9 + swedish characters** but <u>NO</u> whitespace characters
-+ Roomname is also length restricted and also use RegEx to validate for same as username BUT <u>Allows whitespace</u> in the name
++ Username is length restricted and use RegEx to validate for and only allow **a-zA-Z0-9 + swedish characters** but **NO whitespace** characters
++ Roomname is also length restricted and also use RegEx to validate for same as username BUT **Allows whitespace** in the name
 + Interface shows _"status messages"_ for user when username is not complying with limitations set (same for roomname)
 + Rooms have a **Leave room button** for convenience and user friendliness
 + Readycheck has a HTML5 progressbar it progressively fills up every second where **100% = amount of seconds** readycheck lasts
