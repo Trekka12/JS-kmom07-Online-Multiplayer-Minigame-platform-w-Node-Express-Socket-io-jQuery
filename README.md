@@ -27,34 +27,34 @@ And after having completed all of the above mini-sections and felt confident in 
 And here we are now...
 
 ## Installation, configuration and usage
-This project can easily be cloned with Git to then be run via node server.js command - assuming you have a Node server up and running.
+This project can easily be cloned with Git to then be run via **node server.js** command _(assuming you have a Node server up and running)_.
 
-Port listened to for the node server can be altered at the end of server.js file.
+Port listened to for the node server can be altered at the **end** of _server.js_ file.
 
-Global constant vars that allow for customization have been declared for Game turn timer, readycheck timer, long fade time, short fade time, min and max chars for username and lobbyname as well as Regexes used for clientside "validation" of username/lobbyname can be found and altered at will at the top of client.js.
+Global constant vars that allow for customization have been declared for: _Game turn timer_, _readycheck timer_, _long & short fade time_, _min and max chars for username and lobbyname_ as well as _Regexes used for clientside "validation" of username/lobbyname_ can be found and altered at will at the **top** of _client.js_.
 
 Styles can be easily found and altered from within the **styles.less** file residing in the **css** folder - the style doc is very well documented and structured to easily locate the styles you're looking for.
 
-For further customization options: gameColors constant object is also to be found at top of **client.js** file where the hexadec color codes used for the canvas painting procedures can be found and altered. Other constants holding board side size data as well as game plack info can also be found and altered, together with textStrings object constant that holds the text strings to be printed out on canvas throughout the game progressions. Line thickness can also be easily altered here for how "fat" X's and O's lines should be.
+For further customization options: **gameColors** constant object is also to be found at **top** of _client.js_ file where the hexadec color codes used for the canvas painting procedures can be found and altered. Other constants holding _board side size_ data as well as _game plack info_ can also be found and altered, together with _textStrings_ object constant that holds the text strings to be printed out on canvas throughout the game progressions. _Line thickness_ can also be easily altered here for how **"fat"** X's and O's lines should be.
 
 ## Competitor analysis
 Compared to similar products on the internet today, my project is focused _(for now)_ on tic tac toe, and will not be of as high focus perhaps on the game itself, but rather on the realtime functionality and interoperability of the various features I have coded to work together to create my endproduct which is a sort of dedicated platform for visitors to play multiple game sessions on and have the site keep score of that particular game as long as session is kept alive.
 
 Other minigame websites are very focused on their games and have other people upload games as well, so visitors then can play these. And on these sites Multiplaying capabilities seem to exist, but they do so _"within"_ the games themselves, and don't seem to exist on the site basis.
 
-A sound majority of these minigame sites I looked into seem to still be favoring Flash games, whilst I am using HTML5 Canvas for the graphics and Socket.io to communicate the game data in realtime on the actual website/Application.
+A sound majority of these minigame sites I looked into seem to still be favoring **Flash** games, whilst I am using **HTML5 Canvas** for the graphics and Socket.io to communicate the game data in realtime on the actual website/Application.
 
 In a way, for those who are looking for a nice quick game of tic tac toe, with their friends, and do a Best out of 5 or something like that - I believe my product to be superior to a lot of the alternatives that exist out on the web today.
 
-I have made comparison to both Addictinggames.com as well as miniclip.com minigame portal websites.
+I have made comparison to both **Addictinggames.com** as well as **miniclip.com** minigame portal websites.
 
-Also compared to a site called papergames.io that offered Multiplayer capable Tic Tac Toe, and what I found was that their game was very sluggish, the countdown timer was delayed by like 2 seconds per second it was supposedly counting down, they lacked a proper realtime chat for the players facing off at tic tac toe, they had tons of useless added features about emojis and stuff, so in comparison to them I both offer a proper chat functionality as well as keeping it clean and fast to play tic tac toe with friends.
+Also compared to a site called **papergames.io** that offered Multiplayer capable Tic Tac Toe, and what I found was that their game was very sluggish, the countdown timer was delayed by about 2 seconds per second it was supposedly counting down, they lacked a proper realtime chat for the players facing off at tic tac toe, they had tons of irrelevant _(to the game)_ added features about emojis and stuff, so in comparison to them I both offer a proper chat functionality as well as keeping it clean and fast to play tic tac toe with friends.
 
-Found another canvas based tic tac toe game site where you could play vs AI called novelgames.com - the graphics were not as straight forward as on my project, and there was a super annoying background music as well.
+Found another canvas based tic tac toe game site where you could play vs AI called **novelgames.com** - the graphics were not as straight forward as on my project, and there was a super annoying background music as well.
 
-Also found bejofo.net/ttt which offered a neat functionality which I myself had considered attempting to implement in the future - namely have a randomized link be generated with a created game to then be able to send as a link directly to the player you wish to play with.
+Also found **bejofo.net/ttt** which offered a neat functionality which I myself had considered attempting to implement in the future - namely have a randomized link be generated with a created game to then be able to send as a link directly to the player you wish to play with.
 
-**In summary:** compared to many of the competitor out there, my product seem to be much cleaner, and faster than the alternatives both graphic wise and feature wise.
+**In summary:** compared to many of the competitor out there, my product seem to be a lot cleaner, and faster than the alternatives both graphic-wise and feature-wise.
 
 
 ## Current Features
