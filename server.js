@@ -18,6 +18,7 @@ const winCombos = {	1: [1,2,3],
 					6: [3,6,9],
 					7: [1,5,9],
 					8: [3,5,7]};
+const PORT_NMBR = 8008;
 var funcs = require('./js/projectFunctions'); //thank you earendel from ##javascript @ IRC
 var sanitizeHtml = require('sanitize-html');
 
@@ -1745,7 +1746,7 @@ io.on('connection', function(socket) {
 	});
 });
 
-http.listen(8007, function() {
+http.listen(PORT_NMBR, function() {
 	console.log('listening on *:8080');
 });
 
