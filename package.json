@@ -4,6 +4,7 @@
   "description": "my js kmom07 endproject",
   "dependencies": {
     "express": "^4.15.2",
+    "sanitize-html": "^1.18.2",
     "socket.io": "^2.0.4"
   }
 }
