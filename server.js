@@ -3,7 +3,7 @@ var app = express();
 var http = require('http').Server(app);
 var path = require('path');
 var io = require('socket.io')(http);
-var port = process.env.PORT || 8007;
+var port = process.env.PORT || 8007; //thanks lrc bth irc
 var clientID = 0;
 var roomList = [];
 var activeFullRoomsList = [];
@@ -34,10 +34,7 @@ var sanitizeHtml = require('sanitize-html');
 app.use(express.static(__dirname));
 
 app.get('/', function(req, res) {
-	//res.send('<h1>Hello World!</h1>');
-	//res.sendFile(__dirname + '/index.html');
 	res.sendFile('index.html');
-	
 });
 
 
@@ -305,7 +302,6 @@ io.on('connection', function(socket) {
 					clientList[clientIndex].roomActive = true;
 					clientList[clientIndex].activeRoom = socket.room;
 					
-					//test this if this works..
 					activeFullRoomsList.push(roomList[roomIndex]); // push over all the room data over to the activeFullRoomsList to "save" the data while removing it from lobbylist..
 					var newRoomIndex = -1;
 					for(var i = 0; i < activeFullRoomsList.length; i++)
@@ -322,7 +318,6 @@ io.on('connection', function(socket) {
 					
 					console.log("roomList after spliced away the joined room consist of: ", roomList);
 					
-					//socket.to('connected').emit('instant interface update', roomList);
 					socket.to(DEFAULT_ROOM).emit('load roomlist', roomList);
 					//update interface for all looking at it instantly when someone joined the room so no1 else can join the room cuz its full.
 					
@@ -381,7 +376,6 @@ io.on('connection', function(socket) {
 				
 					socket.join(roomList[data.roomindex].name);
 					
-					//stop interval if it exists when a client joins a room..
 					var clientIndex = getClientIndex(socket.cid);
 					
 					socket.emit('stop lobby update interval');
@@ -393,7 +387,6 @@ io.on('connection', function(socket) {
 					roomList[data.roomindex].activeUserNmbr += 1;
 					clientList[clientIndex].activeRoom = roomList[data.roomindex].name;
 					
-					//test this if this works..
 					activeFullRoomsList.push(roomList[data.roomindex]); // push over all the room data over to the activeFullRoomsList to "save" the data while removing it from lobbylist..
 					roomList.splice(data.roomindex, 1); //remove from roomList
 					
@@ -527,19 +520,13 @@ io.on('connection', function(socket) {
 							//what data to scrub off of the room creator
 							//I cant do socket.leave from the creators end - gotta do that on the clients end...
 							//if I send out io.in the room - that would reach both client and creator
-							socket.leave(activeFullRoomsList[roomIndex].name);
-							socket.join(DEFAULT_ROOM); //this way next line emit only reaches client who is left in the room
+							
 							console.log("creator left room: " + activeFullRoomsList[roomIndex].name + " and joined connected");
 							
 							
 							clientList[clientIndex].createdRoom.name = "";
 							clientList[clientIndex].createdRoom.pw = "";
 							clientList[clientIndex].createdRoom.createdTime = 0;
-							clientList[clientIndex].activeRoom = "";
-							clientList[clientIndex].roomActive = false;
-							
-							socket.room = DEFAULT_ROOM;
-							socket.roomActive = false;
 							
 							
 							io.in(activeFullRoomsList[roomIndex].name).emit('roomleaving data scrubbing'); //do I have to send along the room that gets removed here?
@@ -567,10 +554,7 @@ io.on('connection', function(socket) {
 						{
 							console.log("1st readycheck response received from client was a Yes");
 							socket.emit('stop all readycheck chinanigans');
-							
-							//load boardPieces
-							
-							
+														
 						}else {
 							console.log("first readycheck response received from client was a No");
 							//if a no was sent:
@@ -634,7 +618,7 @@ io.on('connection', function(socket) {
 							if(activeFullRoomsList[roomIndex].readycheck[0].response)
 							{
 								//if client responded true:
-								//stop all readycheck bullshit, aand, broadcast start game to both clients
+								//stop all readycheck stuff, and, broadcast start game to both clients
 								//or determine who should start here already?
 								//RNG between 0 & 1 -> index for player response that holds player names
 								//if for example response 0 got to start, then I can broadcast to all in room EXCEPT this socket, if response 1 got to start - broadcast to this socket to get to start simple -- keep track of starting player as well in roomList?
@@ -662,13 +646,10 @@ io.on('connection', function(socket) {
 								{
 									console.log("starting player is first readycheck responder");
 									//if first response gets to start, broadcast to all except this socket in the room (a.k.a: the client)
-									//socket.to(socket.room).emit('setYourBoardPiecesValue', 4);
-									//socket.emit('setOpponentBoardPieceValue', 5);
 									socket.to(socket.room).emit('set board piece client value', 5);
 									socket.emit('set board piece client value', 4);
 									
 									io.in(socket.room).emit('prep for start of game');
-									//io.in(socket.room).emit('boardPieces paintout');
 									socket.to(socket.room).emit('boardPieces paintout');
 									socket.emit('boardPieces paintout');
 									
@@ -902,8 +883,6 @@ io.on('connection', function(socket) {
 	*/	
 	
 	socket.on('register tictactoe move', function(cellHit) {
-		//first I need to find out how I get roomIndex for the room this socket is in
-		//clientList.activeRoom should provide us with that..
 		console.log("inside of register tictactoe move");
 		
 		var clientIndex = getClientIndex(socket.cid);
@@ -943,20 +922,11 @@ io.on('connection', function(socket) {
 				io.in(socket.room).emit('boardPieces update', -1);
 			}
 			
-			// console.log("move was added to boardGrid");
-			
 			clientList[clientIndex].game.movesMade += 1;
 			
 			
 			//check win here?
 			var winstats = funcs.checkWin(activeFullRoomsList[roomIndex].boardGrid);
-			// for(var i = 0; i < winstats.length; i++)
-			// {
-			//		console.log("winstats: ", winstats[i]);
-			// }
-			
-			
-			//count how many 0's exist in boardGrid to find out if DRAW
 			
 			//loop it through and manually count every 0 there is in it
 			var zeroCounter = 0;
@@ -967,13 +937,11 @@ io.on('connection', function(socket) {
 					zeroCounter += 1;
 				}
 			}
-			// console.log("zeroCounter = " + zeroCounter);
 			
 			
 			
 			if(winstats[0].player != 0) //if a winner actually exists
 			{
-				// console.log("winner detected");
 				
 				//calculate all winpieces cellnmbrs - ONLY if more than 1 win
 				
@@ -985,8 +953,6 @@ io.on('connection', function(socket) {
 					{
 						winCellNmbrs[i] = winCombos[winstats[i].wincombo]; //fetch wincells per row
 					}
-					// console.log("winCellNmbrs[0]: ", winCellNmbrs[0]);
-					// console.log("winCellNmbrs[1]: ", winCellNmbrs[1]);
 					
 					
 					//once we got all the cellNmbrs in 2 arrays within winCellNmbrs, somehow merge and delete duplicates
@@ -1000,20 +966,12 @@ io.on('connection', function(socket) {
 					{
 						winCellNmbrsConcat = winCellNmbrs[0].concat(winCellNmbrs[1], winCellNmbrs[2]); //merge these two win rows
 					}
-					// console.log("length of concatenated winCellNmbrs arrays: " + winCellNmbrsConcat.length);
-					
-					// for(var i = 0; i < winCellNmbrsConcat.length; i++) 
-					// {
-					//		console.log("Iterated winCellNmbrs " + i + ": " + winCellNmbrsConcat[i]);
-					// }
 					
 					uniqueWinCells = funcs.removeDuplicatesFromArray(winCellNmbrsConcat); //remove duplicate (common) cells from win rows
-					// console.log("uniqueWinCells: ", uniqueWinCells);
 					
 				}else {
 					uniqueWinCells = winCombos[winstats[0].wincombo]; //fetch wincells per row
 					
-					// console.log("single row wincell nmbrs: ", uniqueWinCells);
 				}
 				
 				//we want to redraw the win pieces as marked cells here.. start by drawing what is not part of the win I think I figured:
@@ -1031,7 +989,6 @@ io.on('connection', function(socket) {
 				//for the Avg time I need a Date object to compare it to
 				var winTimestamp = Date.now();
 				var gameTime = winTimestamp - activeFullRoomsList[roomIndex].createdTime;
-				// console.log("gameTime = " + gameTime); //in the update avg game time event - have to convert it to seconds.. possibly minutes and seconds...
 				
 				io.in(socket.room).emit('update avg game time', gameTime); //add all times to clientList.games.time array and divide by the length
 				
@@ -1044,12 +1001,9 @@ io.on('connection', function(socket) {
 				io.in(socket.room).emit('ending game procedure');
 				io.in(socket.room).emit('deactivate leave room btn');
 				
-				//activeFullRoomsList.splice(roomIndex, 1);
-				
 				
 				//the only thing that separates draw win and draw lose really is the plack text... oh well
 			}else if(winstats[0].player == 0 && zeroCounter == 0) { //else if no boardPieces left and no winner, paint a draw FOR BOTH
-				// console.log("draw detected"); //total games incremented for clients, easy for socket.emit (this socket) - for other client can send emit event to clientside "increment total games" and get backt o serverside to increment total games counter..
 				io.in(socket.room).emit('draw draw', activeFullRoomsList[roomIndex].boardGrid); //paint as always but change placktext again..
 				
 				gameOver = true;
@@ -1058,7 +1012,6 @@ io.on('connection', function(socket) {
 				
 				var gameTimestamp = Date.now();
 				var gameTime = gameTimestamp - activeFullRoomsList[roomIndex].createdTime;
-				// console.log("gameTime = " + gameTime); //in the update avg game time event - have to convert it to seconds.. possibly minutes and seconds...
 				
 				io.in(socket.room).emit('update avg game time', gameTime);
 				
@@ -1071,7 +1024,6 @@ io.on('connection', function(socket) {
 				
 			} else {
 				//if no win, no lose, no draw:
-					// console.log("paint moves called serverside");
 				io.in(socket.room).emit('paint moves', activeFullRoomsList[roomIndex].boardGrid);
 			}
 			
@@ -1080,7 +1032,6 @@ io.on('connection', function(socket) {
 			//remember this shit should NOT happen if A WIN, A LOSE, or A DRAW --- only otherwise
 		}else {
 			//if it was -1 -- aka forfeit of turn -- decrement this sockets moves, while incrementing opponents
-			// console.log("if forfeit of turn on serverside");
 			var clientIndex = getClientIndex(socket.cid);
 			socket.emit('clear game timers');
 			
@@ -1110,29 +1061,24 @@ io.on('connection', function(socket) {
 	});
 	
 	socket.on('incrementing moves', function() {
-		// console.log("incrementing moves serverside");
 		var clientIndex = getClientIndex(socket.cid);
 		
 		clientList[clientIndex].game.movesMade += 1;
 	});
 	
 	socket.on('updating wins', function() {
-		// console.log("inside of updating wins serverside");
 		var clientIndex = getClientIndex(socket.cid);
 		
 		clientList[clientIndex].gameStats.wonGames += 1;
 	});
 	
 	socket.on('updating total games', function() {
-		// console.log("inside of updatig total games serverside");
-		
 		var clientIndex = getClientIndex(socket.cid);
 		
 		clientList[clientIndex].gameStats.totalGames += 1;
 	});
 	
 	socket.on('updating avg game time', function(gameTime) {
-		// console.log("inside of updating avg game time serverside");
 		//add all times to clientList.games.time array and divide by the length
 		var clientIndex = getClientIndex(socket.cid);
 		
@@ -1156,25 +1102,13 @@ io.on('connection', function(socket) {
 		//so I take it back, still some logics to fix:
 		
 		//every socket will reach this point
-		// console.log("inside of ending game procedure serverside");
 		
 		io.in(socket.room).emit('clear game timers');
 		
 		var clientIndex = getClientIndex(socket.cid);
 		
-		
-		
-		// console.log("clientIndex = " + clientIndex);
-		// console.log("socket.cid: ", socket.cid);
-		
-		// console.log("activeFullRoomsList contains: ", activeFullRoomsList);
-		// console.log("clientList[socket.cid].activeRoom = ", clientList[socket.cid].activeRoom);
-		
 		//get activeFullRoomsList specific roomIndex
 		var roomIndex = getRoomIndex(clientList[socket.cid].activeRoom, activeFullRoomsList); 
-		
-		// console.log("roomIndex printout in now we leave game: ", roomIndex);
-		// console.log("activeFullRoomsList[roomIndex] contains: ", activeFullRoomsList[roomIndex]);
 		
 		//if creator of the room, clear created room data activeFullRoomsList[roomIndex]
 		if(clientList[clientIndex].createdRoom.name == activeFullRoomsList[roomIndex].name)
@@ -1191,7 +1125,6 @@ io.on('connection', function(socket) {
 		
 		if(roomList.length == 0)
 		{
-			// console.log("send out a beacon to clear all intervals on room leave if no more created rooms.");
 			io.in(socket.room).emit('clear intervals');
 			firstRoomCreated = false;
 		}
@@ -1208,7 +1141,6 @@ io.on('connection', function(socket) {
 	*/
 	
 	socket.on('leave room', function(roomindex) {
-		// console.log("inside of leave room serverside");
 		
 		var clientIndex = getClientIndex(socket.cid);
 		
@@ -1269,7 +1201,6 @@ io.on('connection', function(socket) {
 						
 						if(roomList.length == 0)
 						{
-							// console.log("send out a beacon to clear all intervals on room leave");
 							io.in(activeFullRoomsList[roomIndex].name).emit('clear intervals');
 						}
 						
@@ -1316,11 +1247,8 @@ io.on('connection', function(socket) {
 						
 						//clear readycheck responses so that this eventdriven feature works the next time a single clinet leaves and then wants to rejoin
 						//only do this if previously readycheck response was a yes though..
-						// console.log("activeFullRoomsList contains: ", activeFullRoomsList[roomIndex].readycheck);
 						
 						activeFullRoomsList[roomIndex].readycheck.splice(0, 2);
-						
-						// console.log("activeFullRoomsList contains AFTER clearing readycheck: ", activeFullRoomsList[roomIndex].readycheck);
 						
 						
 						//if a client answers No --- activeFullRoomsList index should be copied back over to roomList
@@ -1331,7 +1259,6 @@ io.on('connection', function(socket) {
 						//reset the creator in the room to "simply be waiting"
 						//commit creator "reset room" -- aka if they were playing, all game vars should be reset, default room mode should be shown, 
 						clientList[clientIndex].game.movesMade = 0;
-						//clientList[clientIndex].game.startingPlayer = false;
 						clientList[clientIndex].lastMessageSent = 0;
 						clientList[clientIndex].lastMessage = "";
 						
@@ -1343,7 +1270,6 @@ io.on('connection', function(socket) {
 					//if creator wants to leave room before a client joined - do that here..
 					if(roomList.length == 0)
 					{
-						// console.log("send out a beacon to clear all intervals on room leave");
 						socket.emit(roomList[roomIndex].name).emit('clear intervals');
 					}
 					
@@ -1402,7 +1328,6 @@ io.on('connection', function(socket) {
 		}
 		
 		roomList[roomIndex].boardGrid = [0,0,0,0,0,0,0,0,0];
-		// console.log("roomList[].boardGrid: ", roomList[roomIndex].boardGrid);
 		
 		clientList[clientIndex].game.movesMade = 0;
 		clientList[clientIndex].lastMessageSent = 0;
@@ -1434,17 +1359,12 @@ io.on('connection', function(socket) {
 				{
 					//store command as last message here
 					clientList[clientIndex].lastMessage = command;
-					// console.log("in command storing lastMessage as: ", clientList[clientIndex].lastMessage);
 					
 					var theCommand = command.substr(1,10);
-					// console.log("command: ", command);
 					var type = "";
-					// console.log("theCommand: " + theCommand);
-					// console.log("theCommand length: " + theCommand.length);
 					
 					if(theCommand == "changenick")
 					{
-						// console.log("inside of changenick ifstatement");
 						
 						var newnick = command.substr(12); 
 						
@@ -1467,20 +1387,15 @@ io.on('connection', function(socket) {
 								
 								if(clientID === 0 || !clientNameExist)
 								{
-									// console.log("inside changenick for clientID === 0 || !clientNameExist.");
 									socket.username = newnick;
 									clientList[clientIndex].username = newnick;
 									
 								}else {
 									//if username DID exist:
-									// console.log("changenick when username did exist");
 									socket.username = newnick + clientList[clientIndex].clientID;
-									// console.log("socket.username changed to following when nick exist: ", socket.username);
 									
 									clientList[clientIndex].username = newnick + clientList[clientIndex].clientID;
-									// console.log("clientList[clientIndex].username changed to following when nick exist: ", clientList[clientIndex].username)
-								}
-								// console.log("socket.username after if statement in changenick: ", socket.username);								
+								}						
 								
 								socket.emit('username successfully changed', socket.username);
 								
@@ -1502,7 +1417,6 @@ io.on('connection', function(socket) {
 	});
 	
 	socket.on('chat message', function(data) {
-		// console.log("message: " + data.msg);
 		
 		data.msg = sanitizeData(data.msg);
 		
@@ -1515,25 +1429,13 @@ io.on('connection', function(socket) {
 			//to type successfully user must be part of a room
 			if(socket.userReg == true && clientList[clientIndex].roomActive == true)
 			{
-				
-				//declare socket.textColor instead of having it inside clientList hm?
-				//maybe even socket.lastMsgSent ? which is best?
-				// console.log("clientList: ", clientList);
-				// console.log("socket.username: ", socket.username); //<-- is correct, but not the changenick declaration for some reason hm...
-				
-				
-				// console.log("user data is as follows: ", clientList[clientIndex]);
-				
 				clientList[clientIndex].lastMessage = data.msg;
-				// console.log("in chat storing lastMessage as: ", clientList[clientIndex].lastMessage);
 				
 				var textColor = clientList[clientIndex].userColor;
 				var timeDiff = Date.now() - clientList[clientIndex].lastMessageSent;
-				// console.log("timeDiff between 2 sent messages is: " + timeDiff);
 				if(timeDiff >= 500)
 				{
 					clientList[clientIndex].lastMessageSent = data.timestamp;
-					// console.log("msgTimestamp: " + clientList[clientIndex].lastMessageSent);
 					
 					socket.emit('new message', {
 						username: socket.username,
@@ -1559,7 +1461,6 @@ io.on('connection', function(socket) {
 	
 	//when the client emits 'isTyping', we broadcast that to other clients
 	socket.on('isTyping', function() {
-		// console.log("server side receiving isTyping emit");
 		socket.to(socket.room).emit('isTyping', {
 			username: socket.username
 		});
@@ -1567,12 +1468,10 @@ io.on('connection', function(socket) {
 	
 	//when client emits stopTyping, we broadcast that to other clients as well
 	socket.on('stopTyping', function() {
-		// console.log("server side receiving stopTyping emit");
 		socket.to(socket.room).emit('stopTyping');
 	});
 	
 	socket.on('stopTypingEnter', function() {
-		// console.log("server side receving stopTypingEnter emit");
 		socket.to(socket.room).emit('stopTypingEnter');
 	});
 	
@@ -1595,7 +1494,6 @@ io.on('connection', function(socket) {
 	*/
 	
 	socket.on('disconnect', function() {
-		// console.log("user disconnected");
 		
 		var clientToRemoveFromClientList = getClientIndex(socket.cid);
 		
@@ -1612,20 +1510,15 @@ io.on('connection', function(socket) {
 					
 				var roomIndexActiveFullRoomsList = getRoomIndex(socket.room, activeFullRoomsList);
 				
-				// console.log("roomIndexRoomList on disconnect = " + roomIndexRoomList + ", roomIndexActiveFullRoomsList on disconnect = " + roomIndexActiveFullRoomsList);
-				
 				var roomArray = (roomIndexActiveFullRoomsList != -1 ? activeFullRoomsList : roomList);
 				
 				//as far as I can tell - there will be 2 creator scenarios, and only 1 client scenario -- creator scenarios: creator + 1, creator alone
-				
 				
 				//in case creator of room, and alone in the room (no client)
 				if(clientList[clientToRemoveFromClientList].createdRoom.name != "" && roomIndexRoomList != -1)
 				{
 					//if a room has been created by our client, and only creator in the room
 					//to do this I really would need to facking scroll through both roomList as well as activeFullRoomsList hm...
-					
-					// console.log("registered creator leave alone in room on disconnect");
 					
 					socket.emit('kick client from a room', roomList);
 					
@@ -1650,7 +1543,6 @@ io.on('connection', function(socket) {
 					
 				}else if(clientList[clientToRemoveFromClientList].createdRoom.name != "" && roomIndexActiveFullRoomsList != -1) 
 				{
-					// console.log("registered creator leave with full room on disconnect");
 					//if a room has been created by our client, check if 2 people in that room
 					//to do this I really would need to facking scroll through both roomList as well as activeFullRoomsList hm...
 					
@@ -1675,14 +1567,11 @@ io.on('connection', function(socket) {
 					
 					if(roomList.length == 0)
 					{
-						//firstRoomCreated = false;
-						// console.log("send out a beacon to clear all intervals on room leave");
 						io.in(DEFAULT_ROOM).emit('clear intervals');
 					}
 					
 				}else if(clientList[clientToRemoveFromClientList].createdRoom.name == "" && roomIndexActiveFullRoomsList != -1) 
 				{
-					// console.log("registered client leave in room on disconnect");
 					//its the client
 					clientList[clientToRemoveFromClientList].activeRoom = "";
 					clientList[clientToRemoveFromClientList].roomActive = false;
@@ -1709,8 +1598,6 @@ io.on('connection', function(socket) {
 					console.log("activeFullRoomsList contains: ", activeFullRoomsList[roomIndexActiveFullRoomsList].readycheck);
 					
 					activeFullRoomsList[roomIndexActiveFullRoomsList].readycheck.splice(0, 2);
-					
-					// console.log("activeFullRoomsList contains AFTER clearing readycheck: ", activeFullRoomsList[roomIndexActiveFullRoomsList].readycheck);
 					
 					
 					//if a client answers No --- activeFullRoomsList index should be copied back over to roomList
@@ -1778,11 +1665,9 @@ function getRoomIndex(selectedRoom, array) {
 }
 
 function sanitizeData(toSanitize) {
-	// console.log(toSanitize + " before sanitization: ", toSanitize);
 		toSanitize = sanitizeHtml(toSanitize, {
 		  allowedTags: [],
 		  allowedAttributes: []
 		});
-		// console.log(toSanitize + " after sanitization: ", toSanitize);
 	return toSanitize;
 }

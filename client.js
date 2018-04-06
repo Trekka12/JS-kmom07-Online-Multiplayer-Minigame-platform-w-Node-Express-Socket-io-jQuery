@@ -192,7 +192,7 @@ $(document).ready(function(){
 	*/
 	
 	$('#usernameRegForm').submit(function() {
-		console.log("inside of #usernameRegForm.submit");
+		//console.log("inside of #usernameRegForm.submit");
 		
 		//it can't be empty, AND it must be more than 2 characters or less than 25
 		if(usernameField.val().length >= MIN_USERNAME_CHARS && usernameField.val().length <= MAX_USERNAME_CHARS)
@@ -217,7 +217,7 @@ $(document).ready(function(){
 	
 	
 	$('#createRoomForm').submit(function() {
-		console.log("inside of submit func for createRoomBtn");
+		//console.log("inside of submit func for createRoomBtn");
 		//handle all the user input filtration on the server side and then also emit events from serverside based on what input was given - if sufficient or not.
 		//check clientside so input is neither empty nor faulty before sending it along
 		var lobbyName = lobbyNameField.val().trim();
@@ -249,8 +249,8 @@ $(document).ready(function(){
 		//fade in the login section if there is a pw for the room in question attempting to be joined
 		
 		//send join request to server, server checks if the room has a password set, if thats the case - send back show login form event, if not - proceed with allowing the user to pass the steps required to "join" the logical room.
-		console.log("inside of joinRoomForm submit");
-		console.log("selected room attempting to join: ", roomlist.val());
+		//console.log("inside of joinRoomForm submit");
+		//console.log("selected room attempting to join: ", roomlist.val());
 		socket.emit('join room', roomlist.val());
 		
 		return false;
@@ -261,9 +261,9 @@ $(document).ready(function(){
 		//what should happen when PW-form is submitted...
 		socket.emit('room login attempt', {roomindex: roomToLoginTo, pw: loginPWField.val()});
 		//on successful login - reset roomToLoginTo?
-		console.log("$('loginPW').val() = ", loginPWField.val());
+		//console.log("$('loginPW').val() = ", loginPWField.val());
 		
-		console.log("inside roomLoginForm.submit");
+		// console.log("inside roomLoginForm.submit");
 		loginPWField.val('');
 		
 		return false;
@@ -276,7 +276,7 @@ $(document).ready(function(){
 	
 	$('#yesBtn').on('click', function() {
 		//hide readycheck --do that on other receiving of event emitted from server
-		console.log("registering yesBtn click");
+		// console.log("registering yesBtn click");
 		
 		socket.emit('readycheck response', true);
 		
@@ -285,7 +285,7 @@ $(document).ready(function(){
 
 	$('#noBtn').on('click', function() {
 		
-		console.log("registering noBtn click");
+		// console.log("registering noBtn click");
 		
 		socket.emit('readycheck response', false);
 		
@@ -295,7 +295,7 @@ $(document).ready(function(){
 	$('#back2mainScreen').on('click', function() {
 		roomLogin.fadeOut(500);
 		
-		console.log("inside of back2mainScreen onclick");
+		// console.log("inside of back2mainScreen onclick");
 		
 		return false;
 	});
@@ -303,18 +303,18 @@ $(document).ready(function(){
 	
 	$('#roomlist').on('change', function() {
 		$('option[value="' + this.value + '"]').attr('selected', 'selected');
-		console.log("checking .val() if shows selected: " + roomlist.val());
+		// console.log("checking .val() if shows selected: " + roomlist.val());
 		
 		joinRoomBtn.prop('disabled', false);
 	});	
 	
 	$('#chatForm').submit(function() {
-		console.log("inside chatForm submit");
+		// console.log("inside chatForm submit");
 		
 		//check if first letter is a '/' <- then assume command, if not, assume chat msg
 		if(m.val().substr(0,1) === "/")
 		{
-			console.log("sending a command");
+			// console.log("sending a command");
 			socket.emit('command', m.val());
 			m.val('');
 			
@@ -332,32 +332,32 @@ $(document).ready(function(){
 		{
 			socket.emit('stopTypingEnter');
 			typing = false;
-			console.log("stopped typing by enter");
+			// console.log("stopped typing by enter");
 		}else if(e.which === 38) //arrow up
 		{
 			socket.emit("recreate last message");
-			console.log("detected arrow up keydown");
+			// console.log("detected arrow up keydown");
 		}
 	});
 	
 	
 	$('#m').on('input', function() {
-		console.log("someone is typing now");
+		// console.log("someone is typing now");
 
 		//on textfield input - type out whos/that someone is typing
 		socket.emit('isTyping'); //sending typing from client to server
-		console.log("typing");
+		// console.log("typing");
 			
 	});
 	
 	//https://schier.co/blog/2014/12/08/wait-for-user-to-stop-typing-using-javascript.html
 	$('#m').on('keyup', function() {
-		console.log("inside on keyup - aka stopped typing");
+		// console.log("inside on keyup - aka stopped typing");
 		clearTimeout(typingTimeout);
 	
 		typingTimeout = setTimeout(function() {
 			socket.emit('stopTyping');
-			console.log("stopped typing by timeout");
+			// console.log("stopped typing by timeout");
 			
 		}, TYPING_TIMER_LENGTH);
 	});
@@ -365,7 +365,7 @@ $(document).ready(function(){
 	
 	$('#leaveRoom').on('click', function() {
 		socket.emit('leave room', roomToLoginTo);
-		console.log("roomToLoginTo is of value: ", roomToLoginTo);
+		// console.log("roomToLoginTo is of value: ", roomToLoginTo);
 		//when leaving room, chat will be hidden again, user shall leave the room serverside, and rejoin "connected" room, 
 		return false;
 	});	
@@ -380,7 +380,7 @@ $(document).ready(function(){
 	
 	//adjust this response handle to be more "endproduct" suited (infinite clients should be able to connect - however joining a room is a different story - only allow for 2 clients in there...
 	socket.on('user registered', function(username) {
-		console.log("inside of user registered.");
+		// console.log("inside of user registered.");
 		
 		//what should happen on the clientside if user is registered for the endproduct of the project?: Well, that a user is successfully registered needs to be kept track of... maybe?, usernameRegForm need to be hidden, createdRoomForm and joinRoomForm need to be shown, somehow user should get a interface message that registration was successful
 		
@@ -440,11 +440,11 @@ $(document).ready(function(){
 	
 	socket.on('show login form', function(roomIndex) {
 	
-		console.log("inside of show login form event clientside");
+		// console.log("inside of show login form event clientside");
 		roomLogin.fadeIn(SHORT_FADE_TIME);
 		
 		roomToLoginTo = roomIndex;
-		console.log("roomIndex that is attempting to be logged into: ", roomToLoginTo);
+		// console.log("roomIndex that is attempting to be logged into: ", roomToLoginTo);
 	});
 	
 	
@@ -459,12 +459,12 @@ $(document).ready(function(){
 	
 	
 	socket.on('load roomlist', function(rooms) {
-		console.log("inside load roomlist");
+		// console.log("inside load roomlist");
 		
-		console.log("rooms contains: ", rooms);
+		// console.log("rooms contains: ", rooms);
 		
 		roomlist.empty();
-		console.log("amount of rooms: ", rooms.length);
+		// console.log("amount of rooms: ", rooms.length);
 		if(rooms.length > 0)
 		{
 			var createdStr = "";
@@ -479,7 +479,7 @@ $(document).ready(function(){
 			
 			if(intervalID == null) //otherwise assume its already running?
 			{
-				console.log("start roomlist update emitted from client here");
+				// console.log("start roomlist update emitted from client here");
 				socket.emit('start roomlist update');
 			}
 		}
@@ -497,7 +497,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('initiate roomlist update', function() {
-		console.log("inside of individual roomlist update");
+		// console.log("inside of individual roomlist update");
 		
 		//check if any of the alternatives are selected, if so, get its value
 		intervalID = setInterval(function() {
@@ -505,10 +505,10 @@ $(document).ready(function(){
 			if($('#roomlist').val())
 			{
 				selectedValue = $('#roomlist').val();
-				console.log("select value: ", selectedValue);
+				// console.log("select value: ", selectedValue);
 			}
-			console.log("selected value : ", selectedValue);
-			console.log("inside of timeout function should be called every 15s");
+			// console.log("selected value : ", selectedValue);
+			// console.log("inside of timeout function should be called every 15s");
 			socket.emit('update roomList', selectedValue);
 			
 		}, TIMER_TRIGGER_TIME); //every 15 secs
@@ -533,7 +533,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('update selected option', function(selectedValue) {
-		console.log("inside of update selected option clientside.");
+		// console.log("inside of update selected option clientside.");
 		$('option[value="' + selectedValue + '"]').attr('selected', 'selected');
 	});
 	
@@ -541,12 +541,12 @@ $(document).ready(function(){
 	socket.on('room login failed', function() {
 		loginStatus.text('Wrong password, try again - or return to lobbylist.').fadeIn(SECOND).fadeOut(LONG_FADE_TIME);
 		
-		console.log("inside of room login failed");
+		// console.log("inside of room login failed");
 	});
 	
 	
 	socket.on('creator joins room', function(data) {
-		console.log("creator joins room");
+		// console.log("creator joins room");
 		
 		createRoomForm.hide();
 		joinRoomForm.hide();
@@ -586,7 +586,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('reset creator on client leave', function() {
-		console.log("reset creator on client leave");
+		// console.log("reset creator on client leave");
 		
 		readyCheck.hide();
 		
@@ -615,7 +615,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('client joins room', function(data) {
-		console.log("client joins room");
+		// console.log("client joins room");
 		
 		roomLogin.hide();
 		createRoomForm.hide();
@@ -648,7 +648,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('load existing rooms on connect', function(rooms) {
-		console.log("inside of load existing rooms on connect and init update");
+		// console.log("inside of load existing rooms on connect and init update");
 		
 		//start by painting all the rooms and their timers, then initiate the update sequence.
 		var createdStr = "";
@@ -664,14 +664,15 @@ $(document).ready(function(){
 	
 	socket.on('stop lobby update interval', function() {
 		clearInterval(intervalID);
-		console.log("cleared interval of intervalID: ", intervalID);
+		// console.log("cleared interval of intervalID: ", intervalID);
 		intervalID = null;
 	});
 	
 	
 	socket.on('deactivate leave room btn', function() {
-		console.log("inside of deactivating leave room button clicker");
-		$('#leaveRoom').off('click');
+		// console.log("inside of deactivating leave room button clicker");
+		$('#leaveRoom').attr('disabled', 'disabled');
+		//off('click');
 	});
 	
 	
@@ -701,14 +702,14 @@ $(document).ready(function(){
 			
 			rCheckProgressBar.attr('value', progressBarValue);
 			progressBarValue += 1;
-			console.log("inside progressbar tick each sec");
+			// console.log("inside progressbar tick each sec");
 			
 		}, SECOND); //every second it should update the "ticker" and progressbar
 		
 		t2 = setTimeout(function() {
 			clearInterval(secondClockActionIValID);
 			secondClockActionIValID = null;
-			console.log("clearing progressbar tick interval");
+			// console.log("clearing progressbar tick interval");
 			socket.emit('readycheck response', false); //if it runs out -- Give out No replies.
 			
 		}, READYCHECK_TIME + 2000); //+2000 because takes 2s to get started give or take (rough estimation)
@@ -734,19 +735,19 @@ $(document).ready(function(){
 	
 	
 	socket.on('kick client from a room', function(rooms) {
-		console.log("inside of kick client from a room");
+		// console.log("inside of kick client from a room");
 		chat.hide();
 		createRoomForm.show();
 		joinRoomForm.show();
 		roomlist.empty();
-		console.log("amount of rooms: ", rooms.length);
+		// console.log("amount of rooms: ", rooms.length);
 		
 		statusMsgContainer.text("Either you or opponent declined readycheck or chose to leave the room or the game was finished. If creator of room for some reason left, then room got deleted and all in it kicked - same goes for finishing a game, if client that joined room left, then that client alone is kicked from room.").show().delay(12*SECOND).fadeOut(SHORT_FADE_TIME);
 		
 		//load roomlist instantaneously, and then initiate update
 		if(rooms.length > 0) //only if there are rooms in roomList, if none, room update should occur naturally from creating the room anyways.
 		{
-			console.log("inside of if rooms.length > 0");
+			// console.log("inside of if rooms.length > 0");
 			
 			var createdStr = "";
 			for(var i = 0; i < rooms.length; i++)
@@ -774,7 +775,7 @@ $(document).ready(function(){
 	*/
 	
 	socket.on('set starting player', function() {
-		console.log("set starting player");
+		// console.log("set starting player");
 		socket.emit('register starting player');
 	});	
 	
@@ -796,7 +797,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('prep for start of game', function() {
-		console.log("prep for start of game");
+		// console.log("prep for start of game");
 		boardPieces.show();
 		
 		//do nothing in event handler except cancel the event (drag and select)
@@ -829,7 +830,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('your turn in game', function(boardGrid = [0,0,0,0,0,0,0,0,0]) {
-		console.log("inside of your turn in game");
+		// console.log("inside of your turn in game");
 
 		gameClockElem.css('visibility', 'visible');
 		
@@ -841,33 +842,33 @@ $(document).ready(function(){
 		drawPlackText(ctx, textStrings.mymove, plackMarginLeft, plackInfo, gameColors);
 		
 		var eventName = Modernizr.touch ? 'touchstart' : 'click';
-		console.log("eventName: ", eventName);
+		// console.log("eventName: ", eventName);
 		
 		canvas.on(eventName, function(e) {
 			e.preventDefault();
 			
-			console.log("inside of canvas click");
+			// console.log("inside of canvas click");
 			
 			var canvasPosition = {
 				x: canvas.offset().left,
 				y: canvas.offset().top
 			};
 			
-			console.log("canvasPosition.x (canvas.offset().left): ", canvasPosition.x);
-			console.log("canvasPosition.y (canvas.offset().top): ", canvasPosition.y);
+			// console.log("canvasPosition.x (canvas.offset().left): ", canvasPosition.x);
+			// console.log("canvasPosition.y (canvas.offset().top): ", canvasPosition.y);
 			
 			var position = getPosition(e, canvasPosition);
 			//this gives us local coordiantes which consider (0,0) origin at top-left of canvas element
 			
-			console.log("canvas click/touch detected at pos: ", position);
+			// console.log("canvas click/touch detected at pos: ", position);
 				
 			var cellHit = hitZoneDetection(position.x, position.y, boardSide, cellPos, tttBoardMarginLeft, tttBoardMarginTop, cellSide, boardGrid);
 			
-			console.log("cellHit = " + cellHit);
+			// console.log("cellHit = " + cellHit);
 			
 			if(cellHit != -1)
 			{
-				console.log("registering tictactoe move");
+				// console.log("registering tictactoe move");
 				socket.emit('register tictactoe move', cellHit);
 				canvas.off(eventName); //detach event listener if hit was made
 			}
@@ -881,7 +882,7 @@ $(document).ready(function(){
 		gameClockElem.text("Time left on turn: 15");
 		gameClock = setInterval(function() {
 			//every second our "gameClock should be updated
-			console.log("inside of gameClock ticking every second");
+			// console.log("inside of gameClock ticking every second");
 			gameClockElem.text("Time left on turn: " + countdownTime);
 			countdownTime -= 1;
 		}, SECOND);
@@ -902,7 +903,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('opponents turn in game', function() {
-		console.log("opponents turn in game");
+		// console.log("opponents turn in game");
 		
 		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 
@@ -981,21 +982,21 @@ $(document).ready(function(){
 	
 	
 	socket.on('decrement boardPieces', function() {
-		console.log("inside of decrement boardPieces clientside");
+		// console.log("inside of decrement boardPieces clientside");
 		yourBoardPiecesLeft -= 1;
 		opponentBoardPiecesLeft += 1;
 	});
 	
 	
 	socket.on('increment boardPieces', function() {
-		console.log("inside of increment boardPieces clientside");
+		// console.log("inside of increment boardPieces clientside");
 		yourBoardPiecesLeft += 1;
 		opponentBoardPiecesLeft -= 1;
 	});
 	
 	
 	socket.on('boardPieces update', function(player) {
-		console.log("this clients yourBoardPiecesStartingValue holds: " + yourBoardPiecesStartingValue + ", and opponentBoardPiecesStartingValue holds: " + opponentBoardPiecesStartingValue);
+		// console.log("this clients yourBoardPiecesStartingValue holds: " + yourBoardPiecesStartingValue + ", and opponentBoardPiecesStartingValue holds: " + opponentBoardPiecesStartingValue);
 		
 		var textString = '';
 		
@@ -1115,25 +1116,25 @@ $(document).ready(function(){
 	
 	
 	socket.on('update wins', function() {
-		console.log("inside of update wins clientside");
+		// console.log("inside of update wins clientside");
 		socket.emit('updating wins');
 	});
 	
 	
 	socket.on('update total games', function() {
-		console.log("inside of update total games clientside");
+		// console.log("inside of update total games clientside");
 		socket.emit('updating total games');
 	});
 	
 	
 	socket.on('update avg game time', function(gameTime) {
-		console.log("inside of update avg game time clientside");
+		// console.log("inside of update avg game time clientside");
 		socket.emit('updating avg game time', gameTime);
 	});
 	
 	
 	socket.on('leaving room', function() {
-		console.log("inside of leaving room");
+		// console.log("inside of leaving room");
 		chat.hide()
 		createRoomForm.show();
 		joinRoomForm.show();
@@ -1141,12 +1142,12 @@ $(document).ready(function(){
 	
 	
 	socket.on('ending game procedure', function() {
-		console.log("inside of ending game procedure clientside");
+		// console.log("inside of ending game procedure clientside");
 		var countdownTime = 10; 
 		gameClockElem.text("You will be returned to create/join lobby room in: " + countdownTime).css('visibility', 'visible');
 		leaveRoomInt = setInterval(function() {
 			//every second our "gameClock should be updated
-			console.log("inside of gameClock ticking every second");
+			// console.log("inside of gameClock ticking every second");
 			gameClockElem.text("You will be returned to create/join lobby room in: " + countdownTime);
 			countdownTime -= 1;
 		}, SECOND);
@@ -1154,6 +1155,8 @@ $(document).ready(function(){
 		leaveRoomCountdown = setTimeout(function() {
 			gameClockElem.css('visibility', 'hidden');
 			socket.emit('now we leave game');
+			//$('#leaveRoom').on('click');
+			$('#leaveRoom').removeAttr('disabled');
 			
 		}, 10*SECOND);
 	});	
@@ -1165,8 +1168,8 @@ $(document).ready(function(){
 	*/
 	
 	socket.on('paint moves', function(movesArray) {
-		console.log("inside of paint moves");
-		console.log("movesArray.length: ", movesArray.length);
+		// console.log("inside of paint moves");
+		// console.log("movesArray.length: ", movesArray.length);
 		
 		//"scroll through each movesArray index, check if 1, -1, or 0 and paint accordingly
 		//that seemed easy enough.. we'll see how it turns out..
@@ -1189,7 +1192,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('draw lose', function(data) {
-		console.log("inside of draw lose");
+		// console.log("inside of draw lose");
 		
 		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 		
@@ -1203,7 +1206,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('draw win', function(data) {
-		console.log("inside of draw win");
+		// console.log("inside of draw win");
 		
 		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 		
@@ -1218,7 +1221,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('draw draw', function(movesArray) {
-		console.log("inside of draw draw");
+		// console.log("inside of draw draw");
 		
 		resetGameGraphics(ctx, canvasWidth, canvasHeight, gameColors, plackMarginLeft, plackInfo, tttBoardMarginLeft, tttBoardMarginTop, boardSide);
 		
@@ -1273,7 +1276,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('stopTyping', function() { 
-		console.log("clientside stopTyping");
+		// console.log("clientside stopTyping");
 		statusMsgContainer.hide();
 	});
 	
@@ -1328,7 +1331,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('disconnect', function() {
-		console.log("application lost connection with server, restart of application will occur on reconnection");
+		// console.log("application lost connection with server, restart of application will occur on reconnection");
 		
 		//my crude solution will be to try reconnecting every 20s
 		/*reconnectTimer = setInterval(function() {
@@ -1350,7 +1353,7 @@ $(document).ready(function(){
 	
 	
 	socket.on('reconnect', function() {
-            console.log('reconnect fired!');
+            // console.log('reconnect fired!');
 			
 			dcText.text("");
 			

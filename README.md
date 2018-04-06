@@ -56,6 +56,14 @@ Also found **bejofo.net/ttt** which offered a neat functionality which I myself 
 
 **In summary:** compared to many of the competitor out there, my product seem to be a lot cleaner, and faster than the alternatives both graphic-wise and feature-wise.
 
+## Known bugs (after some usertesting)
+Developing this project I have tried to predict as many possible scenarios as I could of how users might act and behave, to be able to deal with each scenario properly, unfortunately there are still some unusual bugs and errors that appear from time to time resulting in server crash, most likely this is due to me not having forseen that particular scenario.
++ One of these bugs was recently discovered by people I had testing the application, and was when a game had been finished and "ending game procedure" had been set in motion, one client got "kicked" from the room before the other one and closed down the app tab causing a server crash due to that clients information being used to "kick" the other client from the same room, and thereby causing a server malfunction due to lack of info required for certain actions to be taken.
++ Another one also discovered by people I had testing this application was that at random times it seems like the server "forgets" data from registration of some users, having them enter a game room to play a game where the server cant find the room, even though it should exist, and thereby leading up to after readycheck having been completed and its time for starting player to make a move - server crashes due to server attempting to do actions to a room it cannot find. Neither me or my testing users have at this point in time (6th of April 2018) any idea where to start looking for a cause for this error and bug, so all I can do is inform that it exists and may occur due to (as for now) unknown circumstances.
+
+##App hosting
+App is currently being hosted with Heroku cloud app hosting service - I will pay a fee to have it run continuously during teacher-review period for when handing it in.
+Although it could be tested also by cloning from GitHub and running it locally if Heroku should be down or the like.
 
 ## Current Features
 ### Application, interface and core functionality:
@@ -120,6 +128,8 @@ Also found **bejofo.net/ttt** which offered a neat functionality which I myself 
 + Both username registration and lobbyname registration got **Anti-nameclash-feature** that avoids duplicates of the same name.
 + 22mar18: Added JS clientside manipulation countermeasures for form actions to ensure as much as possible that users actually follow the set out path.
 + Added HTML sanitization on serverside everywhere I could find that form data was received and used for taking action.
++ If a user (not the one that created the room) leaves by leave button, "reset" game room for the creator that is still left inside the room - reset all room variables and remove all room-related vars from client that left the room
++ Fixed so that in case of a Node.js crash a (somewhat) "pleasant" info screen is displayed and when node.js is back up and running, connected clients will automatically reconnect and be "reset" data-wise, doesnt much everything up
 --------------------------
 #### Miscellaneous
 + A complete reference list has been compiled for everything used to answer questions, or simple references used to refresh memory, as well as simulators and special code sharing sites/tools used throughout the entirety of the development process
@@ -128,10 +138,7 @@ Also found **bejofo.net/ttt** which offered a neat functionality which I myself 
 
 ## Features currently being worked on
 + Have node.js run "forever" even with terminal shut down, also have it auto instant restart upon potential crash and have it add error message to a logfile if there is a crash
-+ If a user (not the one that created the room) leaves by leave button, "reset" game room for the creator that is still left inside the room - reset all room variables and remove all room-related vars from client that left the room
 + Confirm that 2 users is Maxlimit to be joined in a room, even if 2 users simultaneously press "join" at the same time for example
-+ Validate code using JSLint/ESLint
-+ Fix so that Node.js crash and then restart, doesnt fuck everything up - but instead "resets" users that was connected **before** the Node.js crashed...
 
 
 ## Features explored but was found not suited
@@ -139,6 +146,8 @@ Also found **bejofo.net/ttt** which offered a neat functionality which I myself 
 + consider and look into replacing var with let for variable declaration - Will stick with my var, since I am basing my project on EcmaScript 5 at this time and let seem to be part of ES6
 + Considered loading JS files via Require, found this to be too much of a hassle for this particular project (lack of time to invest figuring it all out and making it efficient)
 + Application is prepared to give punishment for chat spamming , but chosen not to implement due to not wanting to punish my visitors for now.
++ Also explored implementing Artificial Intelligence to be an option users could choose to play against, although this kind of would defeat the entire purpose of my application to have it be Multiplayer - but I also understand the appeal of having it since otherwise people may risk wait times etc. in lack of page visitors- that is unless they bring their own friends :) Another thing that made me choose NOT to have AI was the fact that (e.g. minimax AI), always Won or made the game into draw, which would be quite tiresome.
++ Validate code using JSLint/ESLint (have not done this from the start of the project, which in retrospect I should've - so chosen it was too late now, but know for future projects to use these during development much more frequently and vigilant)
 
 --------------------------
 
@@ -150,8 +159,10 @@ Also found **bejofo.net/ttt** which offered a neat functionality which I myself 
 + Make an "educational chart" mapping all eventdriven actions taken with arrows and client block/server block and specific events on each block to see how the communication passes back and forth - aka visual aid as it were
 + fix FontAwesome for Lock icon to make it stylishable (future potential extra)
 + Adapt web application project for Touch devices and Responsive design so mobile devices also can enjoy it (huge time investment to fix probably)
-+ Possibly see if I can fix so user session is remembered despite disconnect ? "Pick up where left off" - might not be as implicable for me in this case, as if it was only chat rooms, now its game rooms as well...
++ Possibly see if I can fix so user session is remembered despite disconnect ? "Pick up where left off" - might not be as implicable for me in this case, as if it was only chat rooms, now its game rooms as well... 
 + Doublecheck if swedish characters affect anything like joining of room, leaving room, reconnecting room etc.
 + Extend the project to support more "mini-games" and not _only_ TicTacToe, but maybe also sinking ships, rock-paper-scissor, etc. and have players select what game room type* they wish to have when creating new rooms :)
 + Could add persistent storage and profiles to registered users so that games won, avg game time, their usernames, total games, etc. is remembered - together with a "proper" login/new here-registration approach once entering the site, instead of just username registration - but not looking for this at the moment though.
++ Also fix feature to generate links of specific created rooms that can be shared with friends you wish to invite to PW protected rooms, so they instantly can join those rooms - would also be quite a neat feature to have.
 + Fix proper 404 page on disconnect served up via Express - un-manipulateble by client
++ Maybe also adjust interface to be more "segmented" so that not all interface components are in one index.html but maybe instead use Express to have it reach across multiple .html files, so that URL's can be used for rooms etc. perhaps. Also implement EJS/Jade templating engine to work with Express for easier HTML coding
