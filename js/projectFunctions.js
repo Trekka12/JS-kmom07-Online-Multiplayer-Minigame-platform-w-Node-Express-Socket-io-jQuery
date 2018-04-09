@@ -18,9 +18,9 @@ function appendDatedMsg(el, str) {
 function getTimeDiffString(createdtime) {
 	var now = Date.now();
 	var timeDiff = now - createdtime;
-	console.log("timeDiff: ", timeDiff);
+	//console.log("timeDiff: ", timeDiff);
 	var secs = Math.floor(timeDiff/1000);
-	console.log("secs = ", secs);
+	//console.log("secs = ", secs);
 	var mins = 0; 
 	var hour = 0;
 	
@@ -29,7 +29,7 @@ function getTimeDiffString(createdtime) {
 		
 		mins = Math.floor(secs / 60);
 		secs = secs % 60;
-		console.log("when a minute or more mins, secs = " + secs + ", and mins = " + mins);
+		//console.log("when a minute or more mins, secs = " + secs + ", and mins = " + mins);
 		
 	}else if(secs >= 3600)
 	{
@@ -38,7 +38,7 @@ function getTimeDiffString(createdtime) {
 		secs = Math.floor((secs % 3600) % 60);
 	}
 	
-	console.log("hour, mins, secs: " + hour + ", " + mins + ", " + secs);
+	//console.log("hour, mins, secs: " + hour + ", " + mins + ", " + secs);
 	var createdStr = "";
 	if(secs < 1 && mins == 0)
 	{
@@ -54,7 +54,7 @@ function getTimeDiffString(createdtime) {
 		createdStr = "1 minute";
 	}else if(mins >= 1 && mins < 60)
 	{
-		console.log("inside of more than 1 minute...");
+		//console.log("inside of more than 1 minute...");
 		createdStr = mins + " minutes";
 		if(secs > 0 && secs < 60)
 		{
@@ -64,7 +64,7 @@ function getTimeDiffString(createdtime) {
 	{
 		createdStr = hour + " hours, " + mins + " minutes and " + secs + " seconds";
 	}
-	console.log("timeDiffString: " + createdStr);
+	//console.log("timeDiffString: " + createdStr);
 	
 	return createdStr;
 }
@@ -138,7 +138,7 @@ function paintXO(ctx, xo, cellNmbr, XOLineThickness, gameColors, cellPos, cellSi
 	//call respective proper paint method from within here whenever its needed (saves us from implementing ctx etc from this method directly - and instead is done indirectly from the paint methods)
 	//marked = different bgcolor for the box - overlay box before painting the lines/circle
 	//cellpos = 1-9
-	console.log("inside of paint xo");
+	//console.log("inside of paint xo");
 	
 	ctx.lineWidth = XOLineThickness;
 	
@@ -320,7 +320,7 @@ function drawTTTBoard(ctx, gameColors, tttBoardMarginLeft, tttBoardMarginTop, bo
  *	@param	(boolean)	[marked=false]	- A boolean to help determine if the cell in which to paint the X or O should be "marked" meaning white background, or not (marked if win occurred)
  */
 function drawMultipleCells(cellNmbrs, boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide, marked = true) {
-	console.log("inside of drawMultipleCells function");
+	//console.log("inside of drawMultipleCells function");
 	
 	for(var i = 0; i < cellNmbrs.length; i++)
 	{
@@ -353,7 +353,7 @@ function drawPiecesExceptWinPieces(winCells, boardGrid, ctx, XOLineThickness, ga
 	//först måste denna få winCombo, sen måste den gå igenom boardGrid och göra en kopia av denne fast utan winPieces, sedan måste vi kalla på drawMultipleCells
 	//loop through boardGrid
 			
-	console.log("winCells: ", winCells);
+	//console.log("winCells: ", winCells);
 	
 	var cellNmbrs = [];
 	var counter = 0;
@@ -366,15 +366,15 @@ function drawPiecesExceptWinPieces(winCells, boardGrid, ctx, XOLineThickness, ga
 		//if the cell is not a match to one of the win cell - store as cellNmbr array value
 		//after the iteration - we can paint those..
 		//every cell must be Either OR a match to win, if it is (true?) store cellnmbr in cellnmbr array, if not, don't?
-		console.log("iteration for cellNmbr: " + (i+1));
+		//console.log("iteration for cellNmbr: " + (i+1));
 		
 		for(var j = 0; j < winCells.length; j++)
 		{
-			console.log("wincell iteration for wincell nr: " + j);
+			//console.log("wincell iteration for wincell nr: " + j);
 			//if its a match
 			if((i+1) == winCells[j])
 			{
-				console.log("wincell-boardGridCell match was found at cell: " + winCells[j]);
+				//console.log("wincell-boardGridCell match was found at cell: " + winCells[j]);
 				match = true; 
 				break;
 			}else
@@ -390,7 +390,7 @@ function drawPiecesExceptWinPieces(winCells, boardGrid, ctx, XOLineThickness, ga
 		}
 	}
 	
-	console.log("Last printout before draw multiple cells, cellNmbrs contain: ", cellNmbrs);
+	//console.log("Last printout before draw multiple cells, cellNmbrs contain: ", cellNmbrs);
 	
 	drawMultipleCells(cellNmbrs, boardGrid, ctx, XOLineThickness, gameColors, cellPos, cellSide, false);
 	
@@ -423,9 +423,9 @@ function getPosition(e, canvasPosition) {
 		}
 	}else {
 		position.x = e.pageX - canvasPosition.x;
-		console.log("position.x (inside of getPosition) = " + position.x);
+		//console.log("position.x (inside of getPosition) = " + position.x);
 		position.y = e.pageY - canvasPosition.y;
-		console.log("position.y (inside of getPosition) = " + position.y);
+		//console.log("position.y (inside of getPosition) = " + position.y);
 	}
 	
 	return position;
@@ -580,7 +580,7 @@ function checkWin(boardGrid) {
 	//efter for-satsen, scrolla igenom vår wincombinations array för att se vilka som var true, därefter få ut playern.... ugh...
 	
 	
-	console.log("winComboArrayLength: " + winComboArray.length);
+	//console.log("winComboArrayLength: " + winComboArray.length);
 	
 	//in case no win, return this...
 	if(!(winComboArray.length > 0))
