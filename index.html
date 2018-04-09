@@ -7,17 +7,14 @@
 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
 <![endif]-->
 
-<!-- To prevent from mobile default Zoom behaviours -->
+<!-- To prevent from mobile default Zoom behaviours (preparations for mobile adaptation for future) -->
 <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1" />
-
 
 <link rel="stylesheet/less" type="text/css" href="css/styles.less" />
 
 <script type="text/javascript" src="js/scripts/less-1.7.0.js"></script>
 
-<!--<script src="scripts/jquery-1.11.1.js" type="text/javascript"></script>-->
 <script src="js/scripts/modernizr-custom.js" type="text/javascript"></script>
-
 
 </head>
 <body>
@@ -34,7 +31,6 @@
 	
 		<h1 id="title"></h1>
 		<form id="createRoomForm">
-			<!-- Chat room name, PW input field (if empty no PW used - no asking of PW when entering room..), create room button -->
 			<input type="text" id="lobbyName" placeholder="Lobbyname here" autocomplete="off" required /><label>*</label>
 			<input type="password" id="pw" placeholder="password" />
 			<button id="createRoomBtn">Create Room</button>
@@ -105,7 +101,6 @@
 <script src="/js/reference_archive_code.js"></script>
 <script src="/js/scripts/yepnope-2.0.0.min.js" type="text/javascript"></script>
 <script src="/socket.io/socket.io.js" type="text/javascript"></script>
-<!--<script src="https://code.jquery.com/jquery-1.11.1.js"></script>-->
 <script src="/js/scripts/jquery-1.11.1.js"></script>
 <script src="/js/projectFunctions.js" type="text/javascript"></script>
 <script src="/client.js" type="text/javascript"></script>
