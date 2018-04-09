@@ -62,7 +62,7 @@ Developing this project I have tried to predict as many possible scenarios as I 
 + Another one also discovered by people I had testing this application was that at random times it seems like the server "forgets" data from registration of some users, having them enter a game room to play a game where the server cant find the room, even though it should exist, and thereby leading up to after readycheck having been completed and its time for starting player to make a move - server crashes due to server attempting to do actions to a room it cannot find. Neither me nor my testing users have at this point in time (6th of April 2018) any idea where to start looking for a cause for this error and bug, so all I can do is inform that it exists and may occur due to (as for now) unknown circumstances.
 
 ## App hosting
-App is currently being hosted with Heroku cloud app hosting service - I will pay a fee to have it run continuously during teacher-review period for when handing it in.
+App is currently being hosted with Heroku cloud app hosting service.
 Although it could be tested also by cloning from GitHub and running it locally if Heroku should be down or the like.
 
 ## Current Features

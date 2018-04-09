@@ -774,10 +774,10 @@ $(document).ready(function(){
 	=================================================================
 	*/
 	
-	socket.on('set starting player', function() {
+	// socket.on('set starting player', function() {
 		// console.log("set starting player");
-		socket.emit('register starting player');
-	});	
+		// socket.emit('register starting player');
+	// });	
 	
 	
 	socket.on('set board piece client value', function(value) {
@@ -894,11 +894,6 @@ $(document).ready(function(){
 			
 		}, GAME_TURN_TIME);
 		
-	});
-	
-	
-	socket.on('increment moves', function() {
-		socket.emit('incrementing moves');
 	});
 	
 	
