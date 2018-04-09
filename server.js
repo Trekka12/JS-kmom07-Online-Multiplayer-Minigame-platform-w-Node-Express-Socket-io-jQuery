@@ -10,7 +10,7 @@ var activeFullRoomsList = []; //once 2 people enter a room, then get transfered 
 var clientList = []; //this array will keep track of ALL the registered clients and their specific data necessary to run the application properly
 var firstRoomCreated = false;
 var leavingGameProcedure = false;
-// var movesCounter = 0;
+var roomLeaverCounter = 0;
 const DEFAULT_ROOM = "connected"; //declared our default room a constant since its reused so many times, and this helps if the name ever needs to change in future
 const winCombos = {	1: [1,2,3], //the winCombos array keep track of all available win combinations of tictactoe (cell-wise) for example one win combo is cells 1,2 and 3 all marked by same player
 					2: [4,5,6],
@@ -202,8 +202,8 @@ io.on('connection', function(socket) {
 								createdTime: clientList[clientIndex].createdRoom.createdTime, 
 								readycheck: [],
 								startingPlayerCID: -1, //not defined until readycheck completed aka -1
-								boardGrid: [0,0,0,0,0,0,0,0,0], //will keep track of both players every moves made for this game room's tic tac toe
-								movesMade: 0});
+								boardGrid: [0,0,0,0,0,0,0,0,0] //will keep track of both players every moves made for this game room's tic tac toe
+								});
 								
 				console.log("roomList: ", roomList);
 				
@@ -959,6 +959,9 @@ io.on('connection', function(socket) {
 				//our ending game procedure will trigger 10s countdown to leave game room and be returned to "main screen", it will also inform user of this interface-wise and trigger "now we leave game" event to serverside
 				io.in(socket.room).emit('ending game procedure');
 				
+				//splice away the finished game
+				//activeFullRoomsList.splice(roomIndex, 1);
+				
 				//we deactivate button by adding disabled attribute to it, tried adding jQuery .off('click') but was kind of hard to turn it back on after, so disable attribute will have to do - I am however aware that there is a risk of user js manipulation to make this button clickable despite my efforts.. I'll simply have to deal with it serverside when time comes for that.
 				io.in(socket.room).emit('deactivate leave room btn');
 				
@@ -978,6 +981,8 @@ io.on('connection', function(socket) {
 				io.in(socket.room).emit('ending game procedure');
 				io.in(socket.room).emit('deactivate leave room btn');
 				
+				//splice away the finished game
+				
 				//if draw total games should still increment for both clients
 				
 			} else {
@@ -987,7 +992,6 @@ io.on('connection', function(socket) {
 			
 		}else {
 			//if it was -1 -- aka forfeit of turn -- decrement this sockets moves, while incrementing opponents
-			var clientIndex = getClientIndex(socket.cid);
 			socket.emit('clear game timers');
 			
 			socket.emit('decrement boardPieces');
@@ -999,14 +1003,14 @@ io.on('connection', function(socket) {
 		
 		if(gameOver == false) //when game is running
 		{
-			clientList[socket.cid].game.currentMoveMaker = true;
+			clientList[clientIndex].game.currentMoveMaker = true;
 			
-			if(clientList[socket.cid].game.currentMoveMaker)
+			if(clientList[clientIndex].game.currentMoveMaker)
 			{
 				socket.emit('opponents turn in game');
 				socket.to(socket.room).emit('your turn in game', activeFullRoomsList[roomIndex].boardGrid); 
 				io.in(socket.room).emit('paint moves', activeFullRoomsList[roomIndex].boardGrid);
-				clientList[socket.cid].game.currentMoveMaker = false;
+				clientList[clientIndex].game.currentMoveMaker = false;
 			}
 		}
 	});
@@ -1046,6 +1050,7 @@ io.on('connection', function(socket) {
 		//win/draw/lose basically means destroy the room and go back to main page for both clients
 		
 		//every socket will reach this point
+		roomLeaverCounter += 1; //helps keep track of when the last person is leaving room so we know when to safely splice it away from activeFullRoomsList
 		
 		leavingGameProcedure = true; //will be useful to determine serverside if the countdown for ending game procedure is active and running (when it is - leave room button should not work despite clientside js manipulation -- should be set to false again once players have been kicked from room)
 		
@@ -1055,6 +1060,7 @@ io.on('connection', function(socket) {
 		
 		//get activeFullRoomsList specific roomIndex
 		var roomIndex = getRoomIndex(socket.room, activeFullRoomsList);
+		console.log("activeFullRoomsList contains: ", activeFullRoomsList);
 		
 		//if creator of the room, clear created room data activeFullRoomsList[roomIndex]
 		if(clientList[clientIndex].createdRoom.name == activeFullRoomsList[roomIndex].name)
@@ -1062,7 +1068,6 @@ io.on('connection', function(socket) {
 			clientList[clientIndex].createdRoom.name = "";
 			clientList[clientIndex].createdRoom.pw = "";
 			clientList[clientIndex].createdRoom.createdTime = 0;
-			clientList[clientIndex].createdRoom.roomActive = false;
 		}
 		
 		socket.emit('kick client from a room', roomList);
@@ -1075,6 +1080,13 @@ io.on('connection', function(socket) {
 		
 		//logically leave the room
 		socket.emit('roomleaving data scrubbing');
+		
+		if(roomLeaverCounter == 2) //then we can assume first player already left and this is the second player leaving the room
+		{
+			activeFullRoomsList.splice(roomIndex, 1);
+			console.log("inside of roomLeaverCounter == 2, activeFullRoomsList contains after splice: ", activeFullRoomsList);
+			roomLeaverCounter = 0;
+		}
 		
 		//clear the leave room 10s countdown timer on room leave
 		socket.emit('clear leave room timers');
