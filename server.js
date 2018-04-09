@@ -10,7 +10,7 @@ var activeFullRoomsList = []; //once 2 people enter a room, then get transfered 
 var clientList = []; //this array will keep track of ALL the registered clients and their specific data necessary to run the application properly
 var firstRoomCreated = false;
 var leavingGameProcedure = false;
-var roomLeaverCounter = 0;
+var roomLeaverCounter = 0; //helps track the people leaving game rooms, so that the game room being left can be spliced away properly once last person leaves
 const DEFAULT_ROOM = "connected"; //declared our default room a constant since its reused so many times, and this helps if the name ever needs to change in future
 const winCombos = {	1: [1,2,3], //the winCombos array keep track of all available win combinations of tictactoe (cell-wise) for example one win combo is cells 1,2 and 3 all marked by same player
 					2: [4,5,6],
